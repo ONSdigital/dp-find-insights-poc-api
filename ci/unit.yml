@@ -1,0 +1,18 @@
+---
+
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: golang
+    tag: 1.17
+
+inputs:
+  - name: dp-find-insights-poc-api
+
+caches:
+  - path: go/
+
+run:
+  path: dp-find-insights-poc-api/ci/scripts/unit.sh
