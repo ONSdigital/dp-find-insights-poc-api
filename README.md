@@ -1,5 +1,5 @@
 # dp-find-insights-poc-api
-Find Insights Proof of Concept
+Experimental application for developing CI/CD pipeline
 
 ### Getting started
 

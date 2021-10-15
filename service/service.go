@@ -3,10 +3,12 @@ package service
 import (
 	"context"
 
-	"github.com/ONSdigital/dp-find-insights-poc-api/api"
+	"github.com/ONSdigital/dp-api-clients-go/middleware"
+	"github.com/ONSdigital/dp-find-insights-poc-api/api/public"
 	"github.com/ONSdigital/dp-find-insights-poc-api/config"
+	"github.com/ONSdigital/dp-find-insights-poc-api/handlers"
 	"github.com/ONSdigital/log.go/log"
-	"github.com/gorilla/mux"
+	"github.com/justinas/alice"
 	"github.com/pkg/errors"
 )
 
@@ -14,8 +16,6 @@ import (
 type Service struct {
 	Config      *config.Config
 	Server      HTTPServer
-	Router      *mux.Router
-	Api         *api.API
 	ServiceList *ExternalServiceList
 	HealthCheck HealthChecker
 }
@@ -27,29 +27,28 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 
 	log.Event(ctx, "using service configuration", log.Data{"config": cfg}, log.INFO)
 
-	// Get HTTP Server and ... // TODO: Add any middleware that your service requires
-	r := mux.NewRouter()
-
-	s := serviceList.GetHTTPServer(cfg.BindAddr, r)
-
-	// TODO: Add other(s) to serviceList here
-
 	// Setup the API
-	a := api.Setup(ctx, r)
+	a := handlers.New()
 
+	// Setup health checks
 	hc, err := serviceList.GetHealthCheck(cfg, buildTime, gitCommit, version)
-
 	if err != nil {
 		log.Event(ctx, "could not instantiate healthcheck", log.FATAL, log.Error(err))
 		return nil, err
 	}
-
 	if err := registerCheckers(ctx, hc); err != nil {
 		return nil, errors.Wrap(err, "unable to register checkers")
 	}
-
-	r.StrictSlash(true).Path("/health").HandlerFunc(hc.Handler)
 	hc.Start(ctx)
+
+	// put health checker at beginning of middleware chain
+	chain := alice.New(middleware.Whitelist(middleware.HealthcheckFilter(hc.Handler)))
+
+	// attach the appropriate api to the chain to create full router
+	rtr := chain.Then(public.Handler(a))
+
+	// bind router handler to http server
+	s := serviceList.GetHTTPServer(cfg.BindAddr, rtr)
 
 	// Run the http server in a new go-routine
 	go func() {
@@ -60,8 +59,6 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 
 	return &Service{
 		Config:      cfg,
-		Router:      r,
-		Api:         a,
 		HealthCheck: hc,
 		ServiceList: serviceList,
 		Server:      s,
