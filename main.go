@@ -34,7 +34,7 @@ func main() {
 	ctx := context.Background()
 
 	if err := run(ctx); err != nil {
-		log.Event(nil, "fatal runtime error", log.Error(err), log.FATAL)
+		log.Event(ctx, "fatal runtime error", log.Error(err), log.FATAL)
 		os.Exit(1)
 	}
 }
