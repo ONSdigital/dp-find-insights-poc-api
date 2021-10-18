@@ -7,7 +7,7 @@ import (
 	"github.com/ONSdigital/dp-find-insights-poc-api/api/public"
 	"github.com/ONSdigital/dp-find-insights-poc-api/config"
 	"github.com/ONSdigital/dp-find-insights-poc-api/handlers"
-	"github.com/ONSdigital/log.go/log"
+	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/justinas/alice"
 	"github.com/pkg/errors"
 )
@@ -23,9 +23,9 @@ type Service struct {
 // Run the service
 func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceList, buildTime, gitCommit, version string, svcErrors chan error) (*Service, error) {
 
-	log.Event(ctx, "running service", log.INFO)
+	log.Info(ctx, "running service")
 
-	log.Event(ctx, "using service configuration", log.Data{"config": cfg}, log.INFO)
+	log.Info(ctx, "using service configuration", log.Data{"config": cfg})
 
 	// Setup the API
 	a := handlers.New()
@@ -33,7 +33,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	// Setup health checks
 	hc, err := serviceList.GetHealthCheck(cfg, buildTime, gitCommit, version)
 	if err != nil {
-		log.Event(ctx, "could not instantiate healthcheck", log.FATAL, log.Error(err))
+		log.Fatal(ctx, "could not instantiate healthcheck", err)
 		return nil, err
 	}
 	if err := registerCheckers(ctx, hc); err != nil {
@@ -68,7 +68,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 // Close gracefully shuts the service down in the required order, with timeout
 func (svc *Service) Close(ctx context.Context) error {
 	timeout := svc.Config.GracefulShutdownTimeout
-	log.Event(ctx, "commencing graceful shutdown", log.Data{"graceful_shutdown_timeout": timeout}, log.INFO)
+	log.Info(ctx, "commencing graceful shutdown", log.Data{"graceful_shutdown_timeout": timeout})
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 
 	// track shutown gracefully closes up
@@ -84,7 +84,7 @@ func (svc *Service) Close(ctx context.Context) error {
 
 		// stop any incoming requests before closing any outbound connections
 		if err := svc.Server.Shutdown(ctx); err != nil {
-			log.Event(ctx, "failed to shutdown http server", log.Error(err), log.ERROR)
+			log.Error(ctx, "failed to shutdown http server", err)
 			hasShutdownError = true
 		}
 
@@ -96,18 +96,18 @@ func (svc *Service) Close(ctx context.Context) error {
 
 	// timeout expired
 	if ctx.Err() == context.DeadlineExceeded {
-		log.Event(ctx, "shutdown timed out", log.ERROR, log.Error(ctx.Err()))
+		log.Error(ctx, "shutdown timed out", ctx.Err())
 		return ctx.Err()
 	}
 
 	// other error
 	if hasShutdownError {
 		err := errors.New("failed to shutdown gracefully")
-		log.Event(ctx, "failed to shutdown gracefully ", log.ERROR, log.Error(err))
+		log.Error(ctx, "failed to shutdown gracefully ", err)
 		return err
 	}
 
-	log.Event(ctx, "graceful shutdown was successful", log.INFO)
+	log.Info(ctx, "graceful shutdown was successful")
 	return nil
 }
 
