@@ -9,14 +9,12 @@ import (
 )
 
 func TestConfig(t *testing.T) {
-	os.Clearenv()
 	var err error
 	var configuration *Config
 
 	Convey("Given an environment with no environment variables set", t, func() {
-		Convey("Then cfg should be nil", func() {
-			So(cfg, ShouldBeNil)
-		})
+		os.Clearenv()
+		cfg = nil
 
 		Convey("When the config values are retrieved", func() {
 
