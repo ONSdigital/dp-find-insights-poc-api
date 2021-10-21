@@ -10,3 +10,7 @@
 .idea/
 *.iml
 *.iws
+
+# vim
+.*.un~
+Session.vim
