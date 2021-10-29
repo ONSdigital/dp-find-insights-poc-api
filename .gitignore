@@ -1,4 +1,5 @@
 /build
+.lambda.out
 
 # Mac
 .DS_Store

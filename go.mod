@@ -10,6 +10,7 @@ require (
 	github.com/ONSdigital/dp-healthcheck v1.1.3
 	github.com/ONSdigital/dp-net v1.2.0
 	github.com/ONSdigital/log.go/v2 v2.0.9
+	github.com/aws/aws-lambda-go v1.27.0
 	github.com/cucumber/godog v0.12.1
 	github.com/go-chi/chi/v5 v5.0.4
 	github.com/google/go-cmp v0.5.6 // indirect
