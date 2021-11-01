@@ -52,7 +52,7 @@ provider "aws" {
 }
 
 # I wanted to use something like the aws cli to upload new versions of the lambda into S3.
-# But tha doesn't play well with terraform.
+# But that doesn't play well with terraform.
 # So for now using terraform to push new artifacts.
 # Maybe there is a way to do this with lambda aliases?
 
@@ -88,34 +88,6 @@ resource "aws_cloudwatch_log_group" "fi-group" {
   }
 }
 
-# Policy allowing CloudWatch logging
-# 
-resource "aws_iam_policy" "fi-logging" {
-  name        = "find-insights-logging"
-  description = "policy to allow find insights lambda to log to cloudwatch"
-  path        = "/"
-  policy      = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": [
-        "logs:CreateLogGroup",
-        "logs:CreateLogStream",
-        "logs:PutLogEvents"
-      ],
-      "Resource": "arn:aws:logs:*:*:*",
-      "Effect": "Allow"
-    }
-  ]
-}
-EOF
-  # AccessDenied: User: arn:aws:iam::352437599875:user/DanielLawrence is not authorized to perform: iam:TagPolicy on resource: policy find-insights-logging
-  #tags = {
-  #  Project = var.project_tag
-  #}
-}
-
 # Role which AWS Lambda can assume when running our lambda
 #
 resource "aws_iam_role" "fi-lambda-execution" {
@@ -147,14 +119,7 @@ EOF
 #
 resource "aws_iam_role_policy_attachment" "fi-lambda-basic" {
   role       = aws_iam_role.fi-lambda-execution.name
-  policy_arn = aws_iam_policy.fi-logging.arn
-}
-
-# Attach logging policy to runtime role
-#
-resource "aws_iam_role_policy_attachment" "fi-lambda-logs" {
-  role       = aws_iam_role.fi-lambda-execution.name
-  policy_arn = aws_iam_policy.fi-logging.arn
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
 # The lambda itself
@@ -165,15 +130,8 @@ resource "aws_lambda_function" "fi-hello" {
   role             = aws_iam_role.fi-lambda-execution.arn
   handler          = "hello"
   runtime          = "go1.x"
-  filename         = "../hello.zip"
-  source_code_hash = filebase64sha256("../hello.zip")
-
-  # Permissions to log to cloudwatch have to be set up before the lambda runs,
-  # but this resource doesn't directly reference the policy attachment, so
-  # terraform's dag doesn't know that.
-  depends_on = [
-    aws_iam_role_policy_attachment.fi-lambda-logs
-  ]
+  filename         = "../build/hello.zip"
+  source_code_hash = filebase64sha256("../build/hello.zip")
 
   tags = {
     project = var.project_tag
