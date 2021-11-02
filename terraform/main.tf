@@ -122,6 +122,49 @@ resource "aws_iam_role_policy_attachment" "fi-lambda-basic" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
+# Policy to allow reading pg password
+#
+resource "aws_iam_policy" "fi-read-pg-password" {
+  name        = "fi-read-pg-password"
+  description = "allows reading postgress password"
+  policy      = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "secretsmanager:GetResourcePolicy",
+                "secretsmanager:GetSecretValue",
+                "secretsmanager:DescribeSecret",
+                "secretsmanager:ListSecretVersionIds"
+            ],
+            "Resource": [
+              "${aws_secretsmanager_secret.fi-pg.arn}"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": "secretsmanager:ListSecrets",
+            "Resource": "*"
+        }
+    ]
+}
+EOF
+
+  # AccessDenied: User: arn:aws:iam::352437599875:user/DanielLawrence is not authorized to perform: iam:TagPolicy on resource: policy fi-read-pg-password
+  #tags = {
+  #  Project = var.project_tag
+  #}
+}
+
+# Attach pg password policy to runtime role
+#
+resource "aws_iam_role_policy_attachment" "fi-lambda-pg-password" {
+  role       = aws_iam_role.fi-lambda-execution.name
+  policy_arn = aws_iam_policy.fi-read-pg-password.arn
+}
+
 # The lambda itself
 #
 resource "aws_lambda_function" "fi-hello" {
@@ -132,6 +175,16 @@ resource "aws_lambda_function" "fi-hello" {
   runtime          = "go1.x"
   filename         = "../build/hello.zip"
   source_code_hash = filebase64sha256("../build/hello.zip")
+
+  environment {
+    variables = {
+      PGHOST          = "fi-database-1.cbhpmcuqy9vo.eu-central-1.rds.amazonaws.com"
+      PGPORT          = "54322"
+      PGUSER          = "insights"
+      PGDATABASE      = "postgres"
+      FI_PG_SECRET_ID = aws_secretsmanager_secret.fi-pg.id
+    }
+  }
 
   tags = {
     project = var.project_tag
@@ -202,4 +255,61 @@ resource "aws_lambda_permission" "fi-allow-apigw" {
   function_name = aws_lambda_function.fi-hello.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_api_gateway_rest_api.fi-hello.execution_arn}/*"
+}
+
+# Create a KMS customer master key to encrypt/decrypt sensitive data needed by the lambda,
+# such as the postgres password.
+#
+# The first statement preserves permissions for normal users to access the key.
+# The second statement is specific to the lambda.
+#
+resource "aws_kms_key" "fi-cmk" {
+  description = "master key for find insights lambda passwords"
+  policy      = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "Enable IAM User Permissions",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::352437599875:root"
+      },
+      "Action": "kms:*",
+      "Resource": "*"
+    },
+    {
+      "Sid": "Allow lambda to use the key",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": [
+          "${aws_iam_role.fi-lambda-execution.arn}"
+        ]
+      },
+      "Action": [
+        "kms:Encrypt",
+        "kms:Decrypt",
+        "kms:ReEncrypt*",
+        "kms:GenerateDataKey*",
+        "kms:DescribeKey"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+EOF
+
+  tags = {
+    Project = var.project_tag
+  }
+}
+
+# Secret holding pg password
+#
+resource "aws_secretsmanager_secret" "fi-pg" {
+  name       = "fi-pg"
+  kms_key_id = aws_kms_key.fi-cmk.id
+  tags = {
+    Project = var.project_tag
+  }
 }
