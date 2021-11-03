@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/csv"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -134,6 +135,14 @@ func gatherTokens(values []string) []string {
 // colspec is a list of columns to include in the result. Empty means all columns.
 //
 func (app *App) query(ctx context.Context, dataset string, rowspec, colspec []string) (string, error) {
+
+	// check allow-list for valid table
+
+	if !validTable(dataset) {
+		log.Println("invalid table: " + dataset)
+		return "", errors.New("invalid table")
+	}
+
 	// We use a string as the output buffer for now.
 	// Might hit size limits, so investigate if there can be some kind of streaming output.
 	var body strings.Builder
@@ -244,6 +253,86 @@ func (app *App) Handler(ctx context.Context, req *events.APIGatewayProxyRequest)
 	}
 
 	return response, nil
+}
+
+// XXX probably needs a better solution
+
+func validTable(dataset string) bool {
+
+	m := map[string]bool{
+		"atlas2011.qs101ew": true,
+		"atlas2011.qs103ew": true,
+		"atlas2011.qs104ew": true,
+		"atlas2011.qs105ew": true,
+		"atlas2011.qs106ew": true,
+		"atlas2011.qs108ew": true,
+		"atlas2011.qs110ew": true,
+		"atlas2011.qs111ew": true,
+		"atlas2011.qs112ew": true,
+		"atlas2011.qs113ew": true,
+		"atlas2011.qs114ew": true,
+		"atlas2011.qs115ew": true,
+		"atlas2011.qs116ew": true,
+		"atlas2011.qs117ew": true,
+		"atlas2011.qs118ew": true,
+		"atlas2011.qs119ew": true,
+		"atlas2011.qs201ew": true,
+		"atlas2011.qs202ew": true,
+		"atlas2011.qs203ew": true,
+		"atlas2011.qs204ew": true,
+		"atlas2011.qs205ew": true,
+		"atlas2011.qs208ew": true,
+		"atlas2011.qs210ew": true,
+		"atlas2011.qs211ew": true,
+		"atlas2011.qs301ew": true,
+		"atlas2011.qs302ew": true,
+		"atlas2011.qs303ew": true,
+		"atlas2011.qs401ew": true,
+		"atlas2011.qs402ew": true,
+		"atlas2011.qs403ew": true,
+		"atlas2011.qs404ew": true,
+		"atlas2011.qs405ew": true,
+		"atlas2011.qs406ew": true,
+		"atlas2011.qs407ew": true,
+		"atlas2011.qs408ew": true,
+		"atlas2011.qs409ew": true,
+		"atlas2011.qs410ew": true,
+		"atlas2011.qs411ew": true,
+		"atlas2011.qs412ew": true,
+		"atlas2011.qs413ew": true,
+		"atlas2011.qs414ew": true,
+		"atlas2011.qs415ew": true,
+		"atlas2011.qs416ew": true,
+		"atlas2011.qs417ew": true,
+		"atlas2011.qs418ew": true,
+		"atlas2011.qs419ew": true,
+		"atlas2011.qs420ew": true,
+		"atlas2011.qs421ew": true,
+		"atlas2011.qs501ew": true,
+		"atlas2011.qs502ew": true,
+		"atlas2011.qs601ew": true,
+		"atlas2011.qs602ew": true,
+		"atlas2011.qs603ew": true,
+		"atlas2011.qs604ew": true,
+		"atlas2011.qs605ew": true,
+		"atlas2011.qs606ew": true,
+		"atlas2011.qs607ew": true,
+		"atlas2011.qs608ew": true,
+		"atlas2011.qs609ew": true,
+		"atlas2011.qs610ew": true,
+		"atlas2011.qs611ew": true,
+		"atlas2011.qs612ew": true,
+		"atlas2011.qs613ew": true,
+		"atlas2011.qs701ew": true,
+		"atlas2011.qs702ew": true,
+		"atlas2011.qs703ew": true,
+		"atlas2011.qs801ew": true,
+		"atlas2011.qs802ew": true,
+		"atlas2011.qs803ew": true,
+	}
+
+	return m[dataset]
+
 }
 
 func main() {
