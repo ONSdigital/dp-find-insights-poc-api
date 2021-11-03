@@ -181,7 +181,7 @@ resource "aws_lambda_function" "fi-hello" {
       PGHOST          = "fi-database-1.cbhpmcuqy9vo.eu-central-1.rds.amazonaws.com"
       PGPORT          = "54322"
       PGUSER          = "insights"
-      PGDATABASE      = "postgres"
+      PGDATABASE      = "insights"
       FI_PG_SECRET_ID = aws_secretsmanager_secret.fi-pg.id
     }
   }

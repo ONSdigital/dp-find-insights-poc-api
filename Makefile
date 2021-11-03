@@ -78,4 +78,4 @@ invoke-api:	## invoke lambda via api gateway
 invoke-curl:	## invoke lambda via curl
 	REST_API_ID=$$(aws --profile development --region eu-central-1 apigateway get-rest-apis --query 'items[?name==`find-insights-api`]' | jq -r '.[0] .id') ; \
 	echo $$REST_API_ID ; \
-	curl --include https://$$REST_API_ID.execute-api.eu-central-1.amazonaws.com/dev/hello/mydataset?cols=ALL\&rows=ALL
+	curl --include https://$$REST_API_ID.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs101ew
