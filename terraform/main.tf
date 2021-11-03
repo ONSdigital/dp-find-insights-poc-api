@@ -209,21 +209,29 @@ resource "aws_api_gateway_resource" "fi-hello" {
   path_part   = "hello"
 }
 
-# GET /hello
+# /hello/{dataset}
+#
+resource "aws_api_gateway_resource" "fi-hello-dataset" {
+  rest_api_id = aws_api_gateway_rest_api.fi-hello.id
+  parent_id   = aws_api_gateway_resource.fi-hello.id
+  path_part   = "{dataset+}"
+}
+
+# GET /hello/{dataset}
 # (I can't get POST to work yet.)
 #
 resource "aws_api_gateway_method" "fi-get-hello" {
   rest_api_id   = aws_api_gateway_rest_api.fi-hello.id
-  resource_id   = aws_api_gateway_resource.fi-hello.id
+  resource_id   = aws_api_gateway_resource.fi-hello-dataset.id
   http_method   = "GET"
   authorization = "NONE"
 }
 
-# Integrate GET /hello method with lambda
+# Integrate GET /hello/{dataset} method with lambda
 #
 resource "aws_api_gateway_integration" "fi-get-hello" {
   rest_api_id = aws_api_gateway_rest_api.fi-hello.id
-  resource_id = aws_api_gateway_resource.fi-hello.id
+  resource_id = aws_api_gateway_resource.fi-hello-dataset.id
   http_method = aws_api_gateway_method.fi-get-hello.http_method
 
   # lambda methods can only be invoked with POST integration_http_method
@@ -237,6 +245,23 @@ resource "aws_api_gateway_integration" "fi-get-hello" {
 
 resource "aws_api_gateway_deployment" "fi-hello" {
   rest_api_id = aws_api_gateway_rest_api.fi-hello.id
+
+  # must be redeployed after any change, so set triggers to detect changes in
+  # all dependencies
+  # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/api_gateway_deployment
+  #
+  triggers = {
+    redeployment = sha1(jsonencode([
+      aws_api_gateway_resource.fi-hello.id,
+      aws_api_gateway_resource.fi-hello-dataset.id,
+      aws_api_gateway_method.fi-get-hello.id,
+      aws_api_gateway_integration.fi-get-hello.id,
+    ]))
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_api_gateway_stage" "dev" {

@@ -65,16 +65,17 @@ invoke-lambda:	## invoke lambda and display response
 invoke-api:	## invoke lambda via api gateway
 	REST_API_ID=$$(aws --profile development --region eu-central-1 apigateway get-rest-apis --query 'items[?name==`find-insights-api`]' | jq -r '.[0] .id') ; \
 	echo $$REST_API_ID ; \
-	RESOURCE_ID=$$(aws --profile development --region eu-central-1 apigateway get-resources --rest-api-id $$REST_API_ID --query 'items[?path==`/hello`]' | jq -r '.[0] .id') ; \
+	RESOURCE_ID=$$(aws --profile development --region eu-central-1 apigateway get-resources --rest-api-id $$REST_API_ID --query 'items[?path==`/hello/{dataset+}`]' | jq -r '.[0] .id') ; \
 	echo $$RESOURCE_ID ; \
 	aws --profile development --region eu-central-1 \
 		apigateway test-invoke-method \
 			--rest-api-id $$REST_API_ID \
 			--resource-id $$RESOURCE_ID \
-			--http-method GET
+			--http-method GET \
+			--path-with-query-string /hello/foo
 
 .PHONY: invoke-curl
 invoke-curl:	## invoke lambda via curl
 	REST_API_ID=$$(aws --profile development --region eu-central-1 apigateway get-rest-apis --query 'items[?name==`find-insights-api`]' | jq -r '.[0] .id') ; \
 	echo $$REST_API_ID ; \
-	curl --include https://$$REST_API_ID.execute-api.eu-central-1.amazonaws.com/dev/hello
+	curl --include https://$$REST_API_ID.execute-api.eu-central-1.amazonaws.com/dev/hello/mydataset?cols=ALL\&rows=ALL

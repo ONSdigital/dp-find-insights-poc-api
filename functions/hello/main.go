@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -17,8 +18,8 @@ import (
 )
 
 type App struct {
-	aws *session.Session // AWS session
-	sm  *secretsmanager.SecretsManager
+	aws *session.Session               // AWS session
+	sm  *secretsmanager.SecretsManager // secrets manager client
 	db  *sql.DB
 
 	// It's hard to return usable errors from a lambda main function.
@@ -27,13 +28,38 @@ type App struct {
 	err    error
 }
 
-func errorResponse(status int, msg string, err error) *events.APIGatewayProxyResponse {
-	log.Printf("%s: %s", msg, err.Error())
+func errorResponse(status int, logmsg string, err error, usermsg string) *events.APIGatewayProxyResponse {
+	if err == nil {
+		log.Println(logmsg)
+	} else {
+		log.Printf("%s: %s", logmsg, err.Error())
+	}
+	if usermsg == "" {
+		usermsg = logmsg
+	}
+
+	response := struct {
+		Status  string `json:"status"`
+		Message string `json:"message"`
+	}{
+		Status:  http.StatusText(status),
+		Message: usermsg,
+	}
+
+	body, err := json.MarshalIndent(&response, "", "    ")
+	if err != nil {
+		log.Println(err.Error())
+		body = []byte(err.Error())
+	}
 
 	return &events.APIGatewayProxyResponse{
 		StatusCode: status,
-		Body:       http.StatusText(status),
+		Body:       string(body),
 	}
+}
+
+func clientResponse(msg string) *events.APIGatewayProxyResponse {
+	return errorResponse(http.StatusBadRequest, msg, nil, "")
 }
 
 func NewApp() *App {
@@ -89,30 +115,67 @@ func NewApp() *App {
 	return app
 }
 
+// gatherTokens collects and combines multiple query parameters.
+// For example, turns rows=a,b&rows=c into [a,b,c]
+//
+func gatherTokens(values []string) []string {
+	var tokens []string
+	for _, value := range values {
+		t := strings.Split(value, ",")
+		for _, s := range t {
+			if s != "" {
+				tokens = append(tokens, s)
+			}
+		}
+	}
+	return tokens
+}
+
 func (app *App) Handler(ctx context.Context, req *events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
 	// return any init errors
 	if app.err != nil {
-		return errorResponse(http.StatusInternalServerError, app.errmsg, app.err), nil
+		return errorResponse(http.StatusInternalServerError, app.errmsg, app.err, "problem setting up database connection"), nil
+	}
+
+	// grab parameters from path and query string
+	//
+	dataset := req.PathParameters["dataset"]
+	if dataset == "" {
+		return clientResponse("missing dataset path parameter"), nil
+	}
+	rows := gatherTokens(req.MultiValueQueryStringParameters["rows"])
+	if len(rows) == 0 {
+		return clientResponse("missing rows query parameter"), nil
+	}
+	cols := gatherTokens(req.MultiValueQueryStringParameters["cols"])
+	if len(cols) == 0 {
+		return clientResponse("missing cols query parameter"), nil
 	}
 
 	// ping db before replying
 	err := app.db.PingContext(ctx)
 	if err != nil {
-		return errorResponse(http.StatusInternalServerError, "cannot ping db", err), nil
+		return errorResponse(http.StatusInternalServerError, "cannot ping db", err, "problem pinging database"), nil
 	}
 
-	buf, err := json.MarshalIndent(*req, "", "    ")
-	if err != nil {
-		response := &events.APIGatewayProxyResponse{
-			StatusCode: http.StatusInternalServerError,
-			Body:       http.StatusText(http.StatusInternalServerError),
-		}
-		return response, nil
-	}
 	response := &events.APIGatewayProxyResponse{
 		StatusCode: http.StatusOK,
-		Body:       string(buf),
+		Body:       fmt.Sprintf("dataset=%s\nrows=%v\ncols=%v\n", dataset, rows, cols),
 	}
+	/*
+		buf, err := json.MarshalIndent(*req, "", "    ")
+		if err != nil {
+			response := &events.APIGatewayProxyResponse{
+				StatusCode: http.StatusInternalServerError,
+				Body:       http.StatusText(http.StatusInternalServerError),
+			}
+			return response, nil
+		}
+		response := &events.APIGatewayProxyResponse{
+			StatusCode: http.StatusOK,
+			Body:       string(buf),
+		}
+	*/
 	return response, nil
 }
 
