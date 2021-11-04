@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/timer"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
@@ -174,10 +175,12 @@ func (app *App) query(ctx context.Context, dataset string, rowspec, colspec []st
 	fmt.Printf("sql: %s\n", sql)
 
 	// Query the db.
+	t := timer.New("query")
 	rows, err := app.db.QueryContext(ctx, sql)
 	if err != nil {
 		return "", err
 	}
+	t.Stop()
 	defer rows.Close()
 
 	// Print column names as first row of CSV.
@@ -203,6 +206,7 @@ func (app *App) query(ctx context.Context, dataset string, rowspec, colspec []st
 	// Retrieve each row and print it as a CSV row.
 	// For this to work, csv Write has to be given a []string.
 	cols := make([]string, 0, len(names))
+	t = timer.New("scans")
 	for rows.Next() {
 		err := rows.Scan(values...)
 		if err != nil {
@@ -219,6 +223,7 @@ func (app *App) query(ctx context.Context, dataset string, rowspec, colspec []st
 		}
 		w.Write(cols)
 	}
+	t.Stop()
 
 	// check if we stopped because of an error
 	if err := rows.Err(); err != nil {
