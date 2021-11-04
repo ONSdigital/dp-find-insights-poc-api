@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/where"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
@@ -143,6 +144,12 @@ func (app *App) query(ctx context.Context, dataset string, rowspec, colspec []st
 		return "", errors.New("invalid table")
 	}
 
+	// parse all the row= variables
+	rowvalues, err := where.ParseRows(rowspec)
+	if err != nil {
+		return "", err
+	}
+
 	// We use a string as the output buffer for now.
 	// Might hit size limits, so investigate if there can be some kind of streaming output.
 	var body strings.Builder
@@ -165,9 +172,10 @@ func (app *App) query(ctx context.Context, dataset string, rowspec, colspec []st
 		colstring = strings.Join(colspec, ",")
 	}
 	sql := fmt.Sprintf(
-		`SELECT %s FROM %s`,
+		`SELECT %s FROM %s %s`,
 		colstring,
 		dataset,
+		where.Clause(rowvalues),
 	)
 
 	// Query the db.
