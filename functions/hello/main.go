@@ -170,6 +170,9 @@ func (app *App) query(ctx context.Context, dataset string, rowspec, colspec []st
 		dataset,
 	)
 
+	// log SQL
+	fmt.Printf("sql: %s\n", sql)
+
 	// Query the db.
 	rows, err := app.db.QueryContext(ctx, sql)
 	if err != nil {
@@ -227,6 +230,10 @@ func (app *App) query(ctx context.Context, dataset string, rowspec, colspec []st
 }
 
 func (app *App) Handler(ctx context.Context, req *events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
+
+	// log req (probably too verbose)
+	fmt.Printf("req: %#v\n", req)
+
 	// return any init errors
 	if app.err != nil {
 		return errorResponse(http.StatusInternalServerError, app.errmsg, app.err), nil
