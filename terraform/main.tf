@@ -235,6 +235,14 @@ module "cors" {
 
   api_id          = aws_api_gateway_rest_api.fi-hello.id
   api_resource_id = aws_api_gateway_resource.fi-hello-dataset.id
+  allow_headers = [
+  "Authorization",
+  "Content-Type",
+  "Content-Encoding",
+  "X-Amz-Date",
+  "X-Amz-Security-Token",
+  "X-Api-Key"
+]
 }
 
 # Integrate GET /hello/{dataset} method with lambda
