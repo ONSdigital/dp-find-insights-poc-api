@@ -194,8 +194,9 @@ resource "aws_lambda_function" "fi-hello" {
 # External API for our lambda
 #
 resource "aws_api_gateway_rest_api" "fi-hello" {
-  name        = "find-insights-api"
-  description = "api for find insights alpha lambda"
+  name                     = "find-insights-api"
+  description              = "api for find insights alpha lambda"
+  minimum_compression_size = 1500 # set minimum compression size to roughly one packet?
   tags = {
     Project = var.project_tag
   }
