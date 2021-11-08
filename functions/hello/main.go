@@ -17,7 +17,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
-	_ "github.com/lib/pq"
+
+	//_ "github.com/lib/pq"
+	_ "github.com/jackc/pgx/v4"
 )
 
 type App struct {
@@ -88,8 +90,8 @@ func NewApp() *App {
 		}
 	}
 
-	// totally environment variables for now, so no connection string
-	db, err := sql.Open("postgres", fmt.Sprintf("password=%s", secret))
+	//db, err := sql.Open("postgres", fmt.Sprintf("password=%s", secret))
+	db, err := sql.Open("pgx", fmt.Sprintf("password=%s", secret))
 	if err != nil {
 		return &App{
 			errmsg: "cannot Open postgres",
