@@ -1,7 +1,9 @@
 # aws-database
 
+XXX THIS RELATES TO THE "OLD DB" (WITH MANY TABLES/COLS RATHER THAN THE "NEW DB")
+
 Various scripts to provision & load data into a AWS RDS (Postgres 13.4)
-instance used by the Find Insights back-end team.  
+instance used by the Find Insights back-end team.
 
 Most are dependent on the existance of Postgres client utilities being
 installed and also a configured aws command line client.
@@ -29,7 +31,7 @@ to create "create.env"
   * And produces a Postgres SQL dump suitable for use by 'awsloaddata.sh'
 
 * awscreate.sh
-  * Tactical solution to create AWS RDS instance and security group opening (non-standard) postgres port of 54322.  
+  * Tactical solution to create AWS RDS instance and security group opening (non-standard) postgres port of 54322.
   * Probably should be migrated to Terraform.
 
 * awsloaddata.sh
