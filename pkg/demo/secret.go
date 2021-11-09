@@ -1,4 +1,4 @@
-package main
+package demo
 
 // Use this code snippet in your app.
 // If you need more information about configurations or implementing the sample code, visit the AWS docs:
@@ -14,7 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
 )
 
-func (app *App) getSecret() (string, error) {
+func (app *Demo) getSecret() (string, error) {
 	//secretName := "arn:aws:secretsmanager:eu-central-1:352437599875:secret:fi-pg-x8rw4a"
 
 	input := &secretsmanager.GetSecretValueInput{

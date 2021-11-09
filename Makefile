@@ -72,10 +72,22 @@ invoke-api:	## invoke lambda via api gateway
 			--rest-api-id $$REST_API_ID \
 			--resource-id $$RESOURCE_ID \
 			--http-method GET \
-			--path-with-query-string /hello/foo
+			--path-with-query-string /hello/atlas2011.qs101ew
 
 .PHONY: invoke-curl
 invoke-curl:	## invoke lambda via curl
 	REST_API_ID=$$(aws --profile development --region eu-central-1 apigateway get-rest-apis --query 'items[?name==`find-insights-api`]' | jq -r '.[0] .id') ; \
 	echo $$REST_API_ID ; \
 	curl --include https://$$REST_API_ID.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs101ew
+
+#
+# cli targets
+#
+
+.PHONY: build-cli
+build-cli:	## build the hello cli (build/hello-cli)
+	go build -o build/demo ./cmd/demo/...
+
+.PHONY: run-cli
+run-cli:	## quick sanity test on cli (must set env vars)
+	build/demo --dataset atlas2011.qs119ew

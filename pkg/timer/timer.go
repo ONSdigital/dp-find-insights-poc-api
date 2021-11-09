@@ -7,16 +7,24 @@ import (
 
 type Timer struct {
 	note  string
+	accum time.Duration
 	start time.Time
 }
 
 func New(note string) *Timer {
 	return &Timer{
-		note:  note,
-		start: time.Now(),
+		note: note,
 	}
 }
 
+func (t *Timer) Start() {
+	t.start = time.Now()
+}
+
 func (t *Timer) Stop() {
-	log.Printf("%s: %s\n", t.note, time.Since(t.start))
+	t.accum += time.Since(t.start)
+}
+
+func (t *Timer) Print() {
+	log.Printf("%s: %s", t.note, t.accum)
 }

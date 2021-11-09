@@ -19,7 +19,7 @@ require (
 	github.com/justinas/alice v1.2.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/klauspost/compress v1.12.3 // indirect
-	github.com/lib/pq v1.10.3 // indirect
+	github.com/lib/pq v1.10.3
 	github.com/pkg/errors v0.9.1
 	github.com/smartystreets/goconvey v1.6.6
 	github.com/stretchr/testify v1.7.0
