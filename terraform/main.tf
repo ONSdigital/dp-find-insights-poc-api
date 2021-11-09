@@ -175,6 +175,7 @@ resource "aws_lambda_function" "fi-hello" {
   runtime          = "go1.x"
   filename         = "../build/hello.zip"
   source_code_hash = filebase64sha256("../build/hello.zip")
+  memory_size      = 256
 
   environment {
     variables = {
