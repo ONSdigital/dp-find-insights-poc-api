@@ -269,9 +269,13 @@ func (app *App) Handler(ctx context.Context, req *events.APIGatewayProxyRequest)
 		return errorResponse(http.StatusInternalServerError, "problem with query", err), nil
 	}
 
+	// headers
+	headers := map[string]string{"Access-Control-Allow-Origin": "*"}
+
 	response := &events.APIGatewayProxyResponse{
 		StatusCode: http.StatusOK,
 		Body:       body,
+		Headers:		headers,
 	}
 
 	return response, nil
