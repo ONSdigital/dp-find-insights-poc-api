@@ -53,7 +53,7 @@ func (app *App) Handler(ctx context.Context, req *events.APIGatewayProxyRequest)
 		return clientResponse("missing dataset path parameter"), nil
 	}
 	// empty list means ALL
-	rows := gatherTokens(req.MultiValueQueryStringParameters["rows"])
+	rows := req.MultiValueQueryStringParameters["rows"]
 	cols := gatherTokens(req.MultiValueQueryStringParameters["cols"])
 
 	body, err := app.d.Query(ctx, dataset, rows, cols)
