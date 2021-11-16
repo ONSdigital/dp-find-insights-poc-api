@@ -21,6 +21,7 @@ require (
 	github.com/klauspost/compress v1.12.3 // indirect
 	github.com/lib/pq v1.10.3
 	github.com/pkg/errors v0.9.1
+	github.com/sergi/go-diff v1.2.0
 	github.com/smartystreets/goconvey v1.6.6
 	github.com/stretchr/testify v1.7.0
 	golang.org/x/net v0.0.0-20210913180222-943fd674d43e // indirect
