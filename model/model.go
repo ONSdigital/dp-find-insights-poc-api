@@ -2,6 +2,19 @@ package model
 
 // this is the schema for the "new" (row-based Postgres database)
 
+// THIS TABLE NEEDS RESTRUCTURING & FIELDS RENAMING
+
+type YearMapping struct {
+	ID           int32 `gorm:"primaryKey"`
+	Lsoa2011code string
+	Lad2020code  string
+}
+
+// don't pluralise table name
+func (YearMapping) TableName() string {
+	return "lsoa2011_lad2020_lookup"
+}
+
 type GeoType struct {
 	ID          int32 `gorm:"primaryKey;autoIncrement:false"`
 	GeoTypeName string
@@ -14,7 +27,7 @@ func (GeoType) TableName() string {
 }
 
 type Geo struct {
-	ID        int32 `gorm:"primaryKey;autoIncrement:false"`
+	ID        int32 `gorm:"primaryKey"`
 	GeoTypeID int32
 	GeoCode   string
 	GeoName   string
