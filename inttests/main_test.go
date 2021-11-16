@@ -17,11 +17,19 @@ func TestAPI(t *testing.T) {
 
 		t.Run(test.desc, func(t *testing.T) {
 
-			b, err := HTTPget(test.url)
+			b, header, err := HTTPget(test.url)
 
 			if err != nil {
 				t.Errorf("Error getting %s: %v", test.url, err)
 			} else {
+				cors, ok := header["Access-Control-Allow-Origin"]
+				if ok {
+					if !IsStringInSlice("*", cors) {
+						t.Errorf("Expected '*' to be included in CORS header value for response from %s, got %v", test.url, cors)
+					}
+				} else {
+					t.Errorf("CORS header missing in response from %s", test.url)
+				}
 				wantfiles, err := MatchingRespFile(test.desc)
 				if err != nil {
 					t.Fail()
@@ -66,7 +74,7 @@ func TestAPI(t *testing.T) {
 func BenchmarkAllTestAPI(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		for _, test := range Tests {
-			_, err := HTTPget(test.url)
+			_, _, err := HTTPget(test.url)
 			if err != nil {
 				panic(err)
 			}
