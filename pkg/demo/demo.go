@@ -85,12 +85,28 @@ func New(pgpwd string) (*Demo, error) {
 	return app, nil
 }
 
+func (app *Demo) Query(ctx context.Context, dataset string, rows, cols []string) (string, error) {
+	if dataset == "skinny" {
+		return app.skinnyQuery(ctx, rows, cols)
+	}
+	cols = gatherTokens(cols)
+	return app.tableQuery(ctx, dataset, rows, cols)
+}
+
+func (app *Demo) skinnyQuery(ctx context.Context, rows, cols []string) (string, error) {
+	clause, err := where.SkinnyWhere(rows, cols)
+	if err != nil {
+		return "", err
+	}
+	return clause, nil
+}
+
 // query runs a SQL query against the db and returns the resulting CSV as a string.
 // dataset is the name of the table to query.
 // rowspec is not used at present.
 // colspec is a list of columns to include in the result. Empty means all columns.
 //
-func (app *Demo) Query(ctx context.Context, dataset string, rowspec, colspec []string) (string, error) {
+func (app *Demo) tableQuery(ctx context.Context, dataset string, rowspec, colspec []string) (string, error) {
 
 	// check allow-list for valid table
 
@@ -211,6 +227,22 @@ func (app *Demo) Query(ctx context.Context, dataset string, rowspec, colspec []s
 
 	w.Flush()
 	return body.String(), err
+}
+
+// gatherTokens collects and combines multiple query parameters.
+// For example, turns rows=a,b&rows=c into [a,b,c]
+//
+func gatherTokens(values []string) []string {
+	var tokens []string
+	for _, value := range values {
+		t := strings.Split(value, ",")
+		for _, s := range t {
+			if s != "" {
+				tokens = append(tokens, s)
+			}
+		}
+	}
+	return tokens
 }
 
 // XXX probably needs a better solution
