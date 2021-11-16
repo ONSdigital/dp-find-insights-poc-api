@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -54,7 +53,7 @@ func (app *App) Handler(ctx context.Context, req *events.APIGatewayProxyRequest)
 	}
 	// empty list means ALL
 	rows := req.MultiValueQueryStringParameters["rows"]
-	cols := gatherTokens(req.MultiValueQueryStringParameters["cols"])
+	cols := req.MultiValueQueryStringParameters["cols"]
 
 	body, err := app.d.Query(ctx, dataset, rows, cols)
 	if err != nil {
@@ -101,22 +100,6 @@ func errorResponse(status int, logmsg string, err error) *events.APIGatewayProxy
 
 func clientResponse(msg string) *events.APIGatewayProxyResponse {
 	return errorResponse(http.StatusBadRequest, msg, nil)
-}
-
-// gatherTokens collects and combines multiple query parameters.
-// For example, turns rows=a,b&rows=c into [a,b,c]
-//
-func gatherTokens(values []string) []string {
-	var tokens []string
-	for _, value := range values {
-		t := strings.Split(value, ",")
-		for _, s := range t {
-			if s != "" {
-				tokens = append(tokens, s)
-			}
-		}
-	}
-	return tokens
 }
 
 func main() {
