@@ -35,6 +35,7 @@ func main() {
 		&model.NomisDesc{},
 		&model.NomisCategory{},
 		&model.GeoMetric{},
+		&model.YearMapping{},
 	); err != nil {
 		log.Print(err)
 	}

@@ -2,10 +2,23 @@ package model
 
 // this is the schema for the "new" (row-based Postgres database)
 
+// THIS TABLE NEEDS RESTRUCTURING & FIELDS RENAMING
+
+type YearMapping struct {
+	ID           int32 `gorm:"primaryKey"`
+	Lsoa2011code string
+	Lad2020code  string
+}
+
+// don't pluralise table name
+func (YearMapping) TableName() string {
+	return "lsoa2011_lad2020_lookup"
+}
+
 type GeoType struct {
-	ID          int32 `gorm:"primaryKey;autoIncrement:false"`
-	GeoTypeName string
-	Geos        []Geo `gorm:"foreignKey:GeoTypeID;references:ID"`
+	ID          int32  `gorm:"primaryKey;autoIncrement:false"`
+	GeoTypeName string // TODO remove GeoType
+	Geos        []Geo  `gorm:"foreignKey:GeoTypeID;references:ID"`
 }
 
 // don't pluralise table name
@@ -14,9 +27,9 @@ func (GeoType) TableName() string {
 }
 
 type Geo struct {
-	ID        int32 `gorm:"primaryKey;autoIncrement:false"`
-	GeoTypeID int32
-	GeoCode   string
+	ID        int32  `gorm:"primaryKey"`
+	GeoTypeID int32  // TODO remove Geo prefix
+	GeoCode   string `gorm:"index:unique"`
 	GeoName   string
 	GoMetrics []GeoMetric `gorm:"foreignKey:GeoID;references:ID"`
 }
@@ -28,7 +41,7 @@ func (Geo) TableName() string {
 
 type GeoMetric struct {
 	ID         int32 `gorm:"primaryKey"`
-	GeoID      int32
+	GeoID      int32 `gorm:"index"`
 	CategoryID int32
 	Metric     float64
 	Year       int32
@@ -57,9 +70,9 @@ func (NomisCategory) TableName() string {
 }
 
 type NomisDesc struct {
-	ID              int32 `gorm:"primaryKey"`
-	LongDesc        string
-	ShortDesc       string
+	ID              int32  `gorm:"primaryKey"`
+	LongDesc        string // bad name. what is this?
+	ShortDesc       string // bad name. what is this?
 	ShortNomisCode  string
 	Year            int32
 	NomisCategories []NomisCategory `gorm:"foreignKey:NomisDescID;references:ID"`
