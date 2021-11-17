@@ -11,6 +11,8 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 
+	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/aws"
+	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/database"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/demo"
 )
 
@@ -24,15 +26,61 @@ type App struct {
 }
 
 func NewApp() *App {
-	d, err := demo.New(os.Getenv("PGPASSWORD"))
-	app := &App{
+	// Set up AWS
+	//
+	awsclients, err := aws.New()
+	if err != nil {
+		return &App{
+			errmsg: "cannot set up AWS clients",
+			err:    err,
+		}
+	}
+
+	// Get postgres password
+	//
+	pgpwd := os.Getenv("PGPASSWORD")
+	if pgpwd == "" {
+		var err error
+		pgpwd, err = awsclients.GetSecret(os.Getenv("FI_PG_SECRET_ID"))
+		if err != nil {
+			return &App{
+				errmsg: "cannot get postgres password from secrets manager",
+				err:    err,
+			}
+		}
+	}
+
+	// Open postgres connection
+	//
+	dsn := fmt.Sprintf(
+		"postgres://%s:%s@%s:%s/%s",
+		os.Getenv("PGUSER"),
+		pgpwd,
+		os.Getenv("PGHOST"),
+		os.Getenv("PGPORT"),
+		os.Getenv("PGDATABASE"),
+	)
+	db, err := database.Open("pgx", dsn)
+	if err != nil {
+		return &App{
+			errmsg: "cannot open connection to postgres",
+			err:    err,
+		}
+	}
+
+	// Initialise our function's app
+	//
+	d, err := demo.New(db)
+	if err != nil {
+		return &App{
+			errmsg: "cannot initialise demo app",
+			err:    err,
+		}
+	}
+
+	return &App{
 		d: d,
 	}
-	if err != nil {
-		app.err = err
-		app.errmsg = err.Error()
-	}
-	return app
 }
 
 func (app *App) Handler(ctx context.Context, req *events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {

@@ -2,87 +2,28 @@ package demo
 
 import (
 	"context"
-	"database/sql"
 	"encoding/csv"
 	"errors"
 	"fmt"
 	"log"
-	"os"
 	"strings"
 
+	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/database"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/timer"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/where"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/secretsmanager"
 
 	_ "github.com/jackc/pgx/v4/stdlib"
 	_ "github.com/lib/pq"
 )
 
 type Demo struct {
-	aws *session.Session               // AWS session
-	sm  *secretsmanager.SecretsManager // secrets manager client
-	db  *sql.DB
+	db *database.Database
 }
 
-func New(pgpwd string) (*Demo, error) {
-	app := &Demo{}
-
-	if pgpwd == "" {
-		// Set up AWS session
-		cfg := aws.NewConfig()
-		sess, err := session.NewSession(cfg)
-		if err != nil {
-			return nil, fmt.Errorf("cannot get session: %w", err)
-		}
-		app.aws = sess
-
-		// Create Secrets Manager client
-		app.sm = secretsmanager.New(app.aws, aws.NewConfig())
-
-		// Look up postgres password
-		pgpwd, err = app.getSecret()
-		if err != nil {
-			log.Println("getSecret returned error")
-			return nil, fmt.Errorf("cannot get secret: %w", err)
-		}
-	}
-
-	//db, err := sql.Open("postgres", fmt.Sprintf("password=%s", pgpwd))
-	url := fmt.Sprintf(
-		"postgres://%s:%s@%s:%s/%s",
-		os.Getenv("PGUSER"),
-		pgpwd,
-		os.Getenv("PGHOST"),
-		os.Getenv("PGPORT"),
-		os.Getenv("PGDATABASE"),
-	)
-	//fmt.Sprintf("password=%s", pgpwd)
-	//db, err := sql.Open("pgx", url)
-	db, err := sql.Open("pgx", url)
-	if err != nil {
-		return nil, fmt.Errorf("cannot Open postgres: %w", err)
-	}
-
-	/*
-		ctx := context.Background()
-		ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
-		defer cancel()
-
-		// check db visible
-		log.Printf("ping\n")
-		err = db.PingContext(ctx)
-		if err != nil {
-			return &Demo{
-				errmsg: "cannot Ping postgres",
-				err:    err,
-			}
-		}
-	*/
-
-	app.db = db
-	return app, nil
+func New(db *database.Database) (*Demo, error) {
+	return &Demo{
+		db: db,
+	}, nil
 }
 
 func (app *Demo) Query(ctx context.Context, dataset string, rows, cols []string) (string, error) {
@@ -155,7 +96,7 @@ func (app *Demo) tableQuery(ctx context.Context, dataset string, rowspec, colspe
 	// Query the db.
 	t := timer.New("query")
 	t.Start()
-	rows, err := app.db.QueryContext(ctx, sql)
+	rows, err := app.db.DB().QueryContext(ctx, sql)
 	if err != nil {
 		return "", err
 	}

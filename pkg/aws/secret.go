@@ -1,30 +1,23 @@
-package demo
-
-// Use this code snippet in your app.
-// If you need more information about configurations or implementing the sample code, visit the AWS docs:
-// https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/setting-up.html
+package aws
 
 import (
 	"encoding/base64"
 	"log"
-	"os"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
 )
 
-func (app *Demo) getSecret() (string, error) {
-	//secretName := "arn:aws:secretsmanager:eu-central-1:352437599875:secret:fi-pg-x8rw4a"
-
+// GetSecret looks up the secret named in arn.
+// arn looks like: "arn:aws:secretsmanager:eu-central-1:352437599875:secret:fi-pg-x8rw4a"
+func (clients *Clients) GetSecret(arn string) (string, error) {
 	input := &secretsmanager.GetSecretValueInput{
-		SecretId:     aws.String(os.Getenv("FI_PG_SECRET_ID")),
+		SecretId:     aws.String(arn),
 		VersionStage: aws.String("AWSCURRENT"), // VersionStage defaults to AWSCURRENT if unspecified
 	}
 
-	// In this sample we only handle the specific exceptions for the 'GetSecretValue' API.
-	// See https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
-	result, err := app.sm.GetSecretValue(input)
+	result, err := clients.sm.GetSecretValue(input)
 	if err != nil {
 		if aerr, ok := err.(awserr.Error); ok {
 			log.Println(aerr.Error())
