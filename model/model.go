@@ -16,9 +16,9 @@ func (YearMapping) TableName() string {
 }
 
 type GeoType struct {
-	ID          int32 `gorm:"primaryKey;autoIncrement:false"`
-	GeoTypeName string
-	Geos        []Geo `gorm:"foreignKey:GeoTypeID;references:ID"`
+	ID          int32  `gorm:"primaryKey;autoIncrement:false"`
+	GeoTypeName string // TODO remove GeoType
+	Geos        []Geo  `gorm:"foreignKey:GeoTypeID;references:ID"`
 }
 
 // don't pluralise table name
@@ -28,7 +28,7 @@ func (GeoType) TableName() string {
 
 type Geo struct {
 	ID        int32 `gorm:"primaryKey"`
-	GeoTypeID int32
+	GeoTypeID int32 // TODO remove Geo prefix
 	GeoCode   string
 	GeoName   string
 	GoMetrics []GeoMetric `gorm:"foreignKey:GeoID;references:ID"`
@@ -70,9 +70,9 @@ func (NomisCategory) TableName() string {
 }
 
 type NomisDesc struct {
-	ID              int32 `gorm:"primaryKey"`
-	LongDesc        string
-	ShortDesc       string
+	ID              int32  `gorm:"primaryKey"`
+	LongDesc        string // bad name. what is this?
+	ShortDesc       string // bad name. what is this?
 	ShortNomisCode  string
 	Year            int32
 	NomisCategories []NomisCategory `gorm:"foreignKey:NomisDescID;references:ID"`
