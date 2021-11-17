@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/database"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/demo"
 )
 
@@ -31,7 +32,23 @@ func main() {
 		fmt.Printf("\t%s\n", c)
 	}
 
-	app, err := demo.New(os.Getenv("PGPASSWORD"))
+	// Open postgres connection
+	//
+	dsn := fmt.Sprintf(
+		"postgres://%s:%s@%s:%s/%s",
+		os.Getenv("PGUSER"),
+		os.Getenv("PGPASSWORD"),
+		os.Getenv("PGHOST"),
+		os.Getenv("PGPORT"),
+		os.Getenv("PGDATABASE"),
+	)
+	db, err := database.Open("pgx", dsn)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	// Set up our demo app
+	app, err := demo.New(db)
 	if err != nil {
 		log.Fatalln(err)
 	}
