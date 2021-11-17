@@ -27,9 +27,9 @@ func (GeoType) TableName() string {
 }
 
 type Geo struct {
-	ID        int32 `gorm:"primaryKey"`
-	GeoTypeID int32 // TODO remove Geo prefix
-	GeoCode   string
+	ID        int32  `gorm:"primaryKey"`
+	GeoTypeID int32  // TODO remove Geo prefix
+	GeoCode   string `gorm:"index:unique"`
 	GeoName   string
 	GoMetrics []GeoMetric `gorm:"foreignKey:GeoID;references:ID"`
 }
@@ -41,7 +41,7 @@ func (Geo) TableName() string {
 
 type GeoMetric struct {
 	ID         int32 `gorm:"primaryKey"`
-	GeoID      int32
+	GeoID      int32 `gorm:"index"`
 	CategoryID int32
 	Metric     float64
 	Year       int32
