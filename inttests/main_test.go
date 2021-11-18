@@ -20,44 +20,44 @@ func TestAPI(t *testing.T) {
 			b, err := HTTPget(test.url)
 
 			if err != nil {
-				t.Fail()
-			}
-
-			wantfiles, err := MatchingRespFile(test.desc)
-			if err != nil {
-				t.Fail()
-			}
-			switch len(wantfiles) {
-			case 0:
-				t.Errorf("No response file found for test '%s', looks like you need to re-run main.go!", test.desc)
-			case 1:
-				wantfile := wantfiles[0]
-				wantsha1 := RespFileSha1(wantfile)
-				h := sha1Hash(b)
-				if h != wantsha1 {
-					t.Errorf("wrongly got: %s", h)
-
-					// use 'go test ./... -args extra'
-					// for diff
-
-					if os.Args[len(os.Args)-1] == "extra" {
-
-						dmp := diffmatchpatch.New()
-
-						f, _ := os.Open(DataPref + wantsha1)
-
-						wanted, _ := io.ReadAll(f)
-
-						diffs := dmp.DiffMain(string(b), string(wanted), true)
-
-						t.Log(dmp.DiffPrettyText(diffs))
-					}
+				t.Errorf("Error getting %s: %v", test.url, err)
+			} else {
+				wantfiles, err := MatchingRespFile(test.desc)
+				if err != nil {
+					t.Fail()
 				}
-			default:
-				t.Errorf(
-					"Multiple response files found for test '%s', try manually auditing files and re-run main.go",
-					test.desc,
-				)
+				switch len(wantfiles) {
+				case 0:
+					t.Errorf("No response file found for test '%s', looks like you need to re-run main.go!", test.desc)
+				case 1:
+					wantfile := wantfiles[0]
+					wantsha1 := RespFileSha1(wantfile)
+					h := sha1Hash(b)
+					if h != wantsha1 {
+						t.Errorf("wrongly got: %s", h)
+
+						// use 'go test ./... -args extra'
+						// for diff
+
+						if os.Args[len(os.Args)-1] == "extra" {
+
+							dmp := diffmatchpatch.New()
+
+							f, _ := os.Open(DataPref + wantsha1)
+
+							wanted, _ := io.ReadAll(f)
+
+							diffs := dmp.DiffMain(string(b), string(wanted), true)
+
+							t.Log(dmp.DiffPrettyText(diffs))
+						}
+					}
+				default:
+					t.Errorf(
+						"Multiple response files found for test '%s', try manually auditing files and re-run main.go",
+						test.desc,
+					)
+				}
 			}
 		})
 	}

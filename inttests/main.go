@@ -4,6 +4,7 @@ package main
 
 import (
 	"crypto/sha1"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -122,6 +123,11 @@ func HTTPget(s string) (b []byte, err error) {
 	}
 
 	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		err := errors.New(fmt.Sprintf("API responded with status code %v", resp.StatusCode))
+		return b, err
+	}
 
 	// or just io. in go 1.16+
 	b, err = ioutil.ReadAll(resp.Body)
