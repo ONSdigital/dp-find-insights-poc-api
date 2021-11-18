@@ -8,47 +8,14 @@ import (
 	"github.com/lib/pq"
 )
 
-// The where clause for queries against the geo_metrics table looks like this:
-//
-// WHERE (
+// WherePart returns the part of the where clause between parens, as in:
+// (
 //	   geography_code IN ( ... )
 //     OR
 //     geography_code BETWEEN (low, high)
 //	   ...
-// ) AND (
-//	   category_code IN ( ... )
-//     OR
-//     category_code BETWEEN (low, high)
-//     ...
 // )
 //
-// Because of the size of the geo_metrics table, we require at least one geography_code
-// and at least one category_code to be specified.
-//
-//
-
-// SkinnyWhere generates the WHERE clause for queries against the geo_metrics table.
-// rows and cols are the multivalue rows= and cols= arguments.
-//
-func SkinnyWhere(rows, cols []string) (string, error) {
-	if len(rows) == 0 || len(cols) == 0 {
-		return "", errors.New("rows and cols required")
-	}
-
-	geo, err := WherePart("geography_code", rows)
-	if err != nil {
-		return "", err
-	}
-
-	cat, err := WherePart("category_code", cols)
-	if err != nil {
-		return "", err
-	}
-
-	return fmt.Sprintf("WHERE (\n%s) AND (\n%s)\n", geo, cat), nil
-}
-
-// WherePart returns the part of the where clause (see above) between parens.
 // col is the name of the column we are matching (eg, "geography_code" or "category_code").
 // args is the list of query string values taken from MultiValueQueryStringParameters.
 //
