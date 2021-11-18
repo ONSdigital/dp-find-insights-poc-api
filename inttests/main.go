@@ -16,11 +16,78 @@ var Tests = []struct {
 	desc     string
 	url      string
 }{
-	{"no params", `https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew`},
-	{"cols param", `https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew?cols=geography_code,total,_1`},
-	{"rows param", `https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew?rows=geography_code:E01000001,E01000003...E01000006`},
-	// TODO Viv "rows and cols param"
-	// etc.
+	{
+		"no params",
+		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew`,
+	},
+	{
+		"cols param single",
+		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew?cols=_1`,
+	},
+	{
+		"cols param multi",
+		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew?cols=geography_code,total,_1`,
+	},
+	{
+		"rows param single",
+		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew?rows=geography_code:E01000001`,
+	},
+	{
+		"rows param multi single",
+		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew?rows=geography_code:E01000011&rows=geography_code:E01000012&rows=geography_code:E01000013`,
+	},
+	{
+		"rows param multi array",
+		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew?rows=geography_code:E01000001,E01000002,E01000003,E01000005`,
+	},
+	{
+		"rows param range",
+		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew?rows=geography_code:E01000005...E01000010`,
+	},
+	{
+		"rows param mixed",
+		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew?rows=geography_code:E01000001,E01000005...E01000010&rows=geography_code:E01000079`,
+	},
+	{
+		"rows cols params single col single row",
+		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew?cols=_1&rows=geography_code:E01000081`,
+	},
+	{
+		"rows cols params multi col single row",
+		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew?cols=geography_code,total,_1&rows=geography_code:E01000081`,
+	},
+	{
+		"rows cols params multi col multi single row",
+		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew?cols=geography_code,total,_1&rows=geography_code:E01000081&rows=geography_code:E01000073`,
+	},
+	{
+		"rows cols params multi col multi array row",
+		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew?cols=geography_code,total,_1&rows=geography_code:E01000124,E01000130,E01000264`,
+	},
+	{
+		"rows cols params multi col multi range row",
+		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew?cols=geography_code,total,_1&rows=geography_code:E01000296...E01000355`,
+	},
+	{
+		"rows cols params multi col multi mixed row",
+		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew?cols=geography_code,total,_1&rows=geography_code:E01000275,E01000281,E01001146...E01001194&rows=geography_code:E01000027`,
+	},
+	{
+		"rows cols params single col multi single row",
+		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew?cols=_1&rows=geography_code:E01000081&rows=geography_code:E01000073`,
+	},
+	{
+		"rows cols params single col multi array row",
+		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew?cols=_1&rows=geography_code:E01000124,E01000130,E01000264`,
+	},
+	{
+		"rows cols params single col multi range row",
+		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew?cols=_1&rows=geography_code:E01000296...E01000355`,
+	},
+	{
+		"rows cols params single col multi mixed row",
+		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew?cols=_1&rows=geography_code:E01000275,E01000281,E01001146...E01001194&rows=geography_code:E01000027`,
+	},
 }
 
 var DataPref = "resp/"
