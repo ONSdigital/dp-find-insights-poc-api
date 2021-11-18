@@ -23,24 +23,33 @@ func TestAPI(t *testing.T) {
 				t.Fail()
 			}
 
-			h := sha1Hash(b)
-			if h != test.wantsha1 {
-				t.Errorf("wrongly got: %s", h)
+			wantfile, err := MatchingRespFile(test.desc)
+			if err != nil {
+				t.Fail()
+			}
+			if wantfile == "" {
+				t.Errorf("No response file found for test '%s', looks like you need to re-run main.go!", test.desc)
+			} else {
+				wantsha1 := RespFileSha1(wantfile)
+				h := sha1Hash(b)
+				if h != wantsha1 {
+					t.Errorf("wrongly got: %s", h)
 
-				// use 'go test ./... -args extra'
-				// for diff
+					// use 'go test ./... -args extra'
+					// for diff
 
-				if os.Args[len(os.Args)-1] == "extra" {
+					if os.Args[len(os.Args)-1] == "extra" {
 
-					dmp := diffmatchpatch.New()
+						dmp := diffmatchpatch.New()
 
-					f, _ := os.Open(DataPref + test.wantsha1)
+						f, _ := os.Open(DataPref + wantsha1)
 
-					wanted, _ := io.ReadAll(f)
+						wanted, _ := io.ReadAll(f)
 
-					diffs := dmp.DiffMain(string(b), string(wanted), true)
+						diffs := dmp.DiffMain(string(b), string(wanted), true)
 
-					t.Log(dmp.DiffPrettyText(diffs))
+						t.Log(dmp.DiffPrettyText(diffs))
+					}
 				}
 			}
 		})

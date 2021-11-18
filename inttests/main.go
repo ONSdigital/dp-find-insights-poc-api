@@ -9,16 +9,16 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 )
 
 var Tests = []struct {
 	desc     string
 	url      string
-	wantsha1 string
 }{
-	{"no parms", `https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew`, "91231b61eb345125ee4c10cf4594c6c961b8c623"},
-	{"cols parm", `https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew?cols=geography_code,total,_1`, "3adf545d8107914418bf9c3cf8d6ebb8ea075761"},
-	{"rows param", `https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew?rows=geography_code:E01000001,E01000003...E01000006`, "5407abf563b559e57b5a487f83f48965b9fc4afc"},
+	{"no params", `https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew`},
+	{"cols param", `https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew?cols=geography_code,total,_1`},
+	{"rows param", `https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew?rows=geography_code:E01000001,E01000003...E01000006`},
 	// TODO Viv "rows and cols param"
 	// etc.
 }
@@ -37,16 +37,13 @@ func main() {
 		h := sha1Hash(b)
 		fmt.Printf("url: %s resp hash: %s\n", test.url, h)
 
-		// only save if right hash
-		// check-in changes
-		if h == test.wantsha1 {
-			f, err := os.Create(DataPref + h)
-			if err != nil {
-				panic(err)
-			}
-			f.WriteString(string(b))
-			f.Close()
+		fn := DataPref + RespFilePrefix(test.desc) + h
+		f, err := os.Create(fn)
+		if err != nil {
+			panic(err)
 		}
+		f.WriteString(string(b))
+		f.Close()
 	}
 }
 
@@ -76,4 +73,30 @@ func sha1Hash(b []byte) string {
 	bs := h.Sum(nil)
 
 	return fmt.Sprintf("%x", bs)
+}
+
+// make resp file name prefix from test desc
+func RespFilePrefix(testDesc string) string {
+	return strings.Replace(testDesc, " ", "-", -1) + "-"
+}
+
+// parse sha1 from resp file name
+func RespFileSha1(fn string) string {
+	return fn[strings.LastIndex(fn, "-") + 1:]
+}
+
+// file file in DataPref directory that matches testDesc
+func MatchingRespFile(testDesc string) (fn string, err error) {
+	filesInDataPref, err := ioutil.ReadDir(DataPref)
+	if err != nil {
+		return fn, err
+	}
+	targetFnPrefix := RespFilePrefix(testDesc)
+	for _, file := range filesInDataPref {
+		fn := file.Name()
+		if strings.HasPrefix(fn, targetFnPrefix) {
+			return fn, err
+		}
+	}
+	return fn, err
 }
