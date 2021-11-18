@@ -1,6 +1,20 @@
 package model
 
+import "gorm.io/gorm"
+
 // this is the schema for the "new" (row-based Postgres database)
+
+type SchemaVer struct {
+	gorm.Model // updated_at etc
+	BuildTime  string
+	GitCommit  string
+	Version    string
+}
+
+// don't pluralise table name
+func (SchemaVer) TableName() string {
+	return "schema_ver"
+}
 
 // THIS TABLE NEEDS RESTRUCTURING & FIELDS RENAMING
 

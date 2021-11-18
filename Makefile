@@ -8,8 +8,10 @@ BINPATH ?= build
 BUILD_TIME=$(shell date +%s)
 GIT_COMMIT=$(shell git rev-parse HEAD)
 VERSION ?= $(shell git tag --points-at HEAD | grep ^v | head -n 1)
+VERSIONDIRTY := $(shell git diff --quiet HEAD; git describe --tags --always --long --dirty | sed 's/-/+/' | sed 's/-/./g')
 
 LDFLAGS = -ldflags "-X main.BuildTime=$(BUILD_TIME) -X main.GitCommit=$(GIT_COMMIT) -X main.Version=$(VERSION)"
+LDFLAGSDIRTY = -ldflags "-X main.BuildTime=$(BUILD_TIME) -X main.GitCommit=$(GIT_COMMIT) -X main.Version=$(VERSIONDIRTY)"
 
 .PHONY: all	## run audit, test and build
 all: audit test build
@@ -95,3 +97,13 @@ build-cli:	## build the hello cli (build/hello-cli)
 .PHONY: run-cli
 run-cli:	## quick sanity test on cli (must set env vars)
 	build/demo --dataset atlas2011.qs119ew
+
+#
+# creatschema
+#
+
+.PHONY: update-schema
+update-schema:
+	@go build $(LDFLAGSDIRTY) -o $(BINPATH)/creatschema ./cmd/creatschema/...
+	@$(BINPATH)/creatschema
+
