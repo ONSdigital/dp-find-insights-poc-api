@@ -29,6 +29,14 @@ func (svr *Server) GetHello(w http.ResponseWriter, r *http.Request) {
 }
 
 func (svr *Server) GetDevHelloDataset(w http.ResponseWriter, r *http.Request, dataset string, params api.GetDevHelloDatasetParams) {
+	if !svr.private {
+		sendError(w, http.StatusNotFound, "endpoint not enabled")
+		return
+	}
+	if svr.queryDemo == nil {
+		sendError(w, http.StatusNotImplemented, "database not enabled")
+		return
+	}
 	var rows []string
 	var cols []string
 	if dataset == "" {
