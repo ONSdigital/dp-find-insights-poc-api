@@ -4,11 +4,12 @@
 package mock
 
 import (
+	"github.com/ONSdigital/dp-find-insights-poc-api/config"
+	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/aws"
+	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/database"
+	"github.com/ONSdigital/dp-find-insights-poc-api/service"
 	"net/http"
 	"sync"
-
-	"github.com/ONSdigital/dp-find-insights-poc-api/config"
-	"github.com/ONSdigital/dp-find-insights-poc-api/service"
 )
 
 // Ensure, that InitialiserMock does implement service.Initialiser.
@@ -17,29 +18,35 @@ var _ service.Initialiser = &InitialiserMock{}
 
 // InitialiserMock is a mock implementation of service.Initialiser.
 //
-//     func TestSomethingThatUsesInitialiser(t *testing.T) {
+// 	func TestSomethingThatUsesInitialiser(t *testing.T) {
 //
-//         // make and configure a mocked service.Initialiser
-//         mockedInitialiser := &InitialiserMock{
-//             DoGetHTTPServerFunc: func(bindAddr string, router http.Handler) service.HTTPServer {
-// 	               panic("mock out the DoGetHTTPServer method")
-//             },
-//             DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
-// 	               panic("mock out the DoGetHealthCheck method")
-//             },
-//             DoGetS3UploadedFunc: func(ctx context.Context, cfg *config.Config) (api.S3Clienter, error) {
-// 	               panic("mock out the DoGetS3Uploaded method")
-//             },
-//             DoGetVaultFunc: func(ctx context.Context, cfg *config.Config) (api.VaultClienter, error) {
-// 	               panic("mock out the DoGetVault method")
-//             },
-//         }
+// 		// make and configure a mocked service.Initialiser
+// 		mockedInitialiser := &InitialiserMock{
+// 			DoGetAWSFunc: func() (*aws.Clients, error) {
+// 				panic("mock out the DoGetAWS method")
+// 			},
+// 			DoGetDatabaseFunc: func(driverName string, dsn string) (*database.Database, error) {
+// 				panic("mock out the DoGetDatabase method")
+// 			},
+// 			DoGetHTTPServerFunc: func(bindAddr string, router http.Handler) service.HTTPServer {
+// 				panic("mock out the DoGetHTTPServer method")
+// 			},
+// 			DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
+// 				panic("mock out the DoGetHealthCheck method")
+// 			},
+// 		}
 //
-//         // use mockedInitialiser in code that requires service.Initialiser
-//         // and then make assertions.
+// 		// use mockedInitialiser in code that requires service.Initialiser
+// 		// and then make assertions.
 //
-//     }
+// 	}
 type InitialiserMock struct {
+	// DoGetAWSFunc mocks the DoGetAWS method.
+	DoGetAWSFunc func() (*aws.Clients, error)
+
+	// DoGetDatabaseFunc mocks the DoGetDatabase method.
+	DoGetDatabaseFunc func(driverName string, dsn string) (*database.Database, error)
+
 	// DoGetHTTPServerFunc mocks the DoGetHTTPServer method.
 	DoGetHTTPServerFunc func(bindAddr string, router http.Handler) service.HTTPServer
 
@@ -48,6 +55,16 @@ type InitialiserMock struct {
 
 	// calls tracks calls to the methods.
 	calls struct {
+		// DoGetAWS holds details about calls to the DoGetAWS method.
+		DoGetAWS []struct {
+		}
+		// DoGetDatabase holds details about calls to the DoGetDatabase method.
+		DoGetDatabase []struct {
+			// DriverName is the driverName argument value.
+			DriverName string
+			// Dsn is the dsn argument value.
+			Dsn string
+		}
 		// DoGetHTTPServer holds details about calls to the DoGetHTTPServer method.
 		DoGetHTTPServer []struct {
 			// BindAddr is the bindAddr argument value.
@@ -67,8 +84,71 @@ type InitialiserMock struct {
 			Version string
 		}
 	}
+	lockDoGetAWS         sync.RWMutex
+	lockDoGetDatabase    sync.RWMutex
 	lockDoGetHTTPServer  sync.RWMutex
 	lockDoGetHealthCheck sync.RWMutex
+}
+
+// DoGetAWS calls DoGetAWSFunc.
+func (mock *InitialiserMock) DoGetAWS() (*aws.Clients, error) {
+	if mock.DoGetAWSFunc == nil {
+		panic("InitialiserMock.DoGetAWSFunc: method is nil but Initialiser.DoGetAWS was just called")
+	}
+	callInfo := struct {
+	}{}
+	mock.lockDoGetAWS.Lock()
+	mock.calls.DoGetAWS = append(mock.calls.DoGetAWS, callInfo)
+	mock.lockDoGetAWS.Unlock()
+	return mock.DoGetAWSFunc()
+}
+
+// DoGetAWSCalls gets all the calls that were made to DoGetAWS.
+// Check the length with:
+//     len(mockedInitialiser.DoGetAWSCalls())
+func (mock *InitialiserMock) DoGetAWSCalls() []struct {
+} {
+	var calls []struct {
+	}
+	mock.lockDoGetAWS.RLock()
+	calls = mock.calls.DoGetAWS
+	mock.lockDoGetAWS.RUnlock()
+	return calls
+}
+
+// DoGetDatabase calls DoGetDatabaseFunc.
+func (mock *InitialiserMock) DoGetDatabase(driverName string, dsn string) (*database.Database, error) {
+	if mock.DoGetDatabaseFunc == nil {
+		panic("InitialiserMock.DoGetDatabaseFunc: method is nil but Initialiser.DoGetDatabase was just called")
+	}
+	callInfo := struct {
+		DriverName string
+		Dsn        string
+	}{
+		DriverName: driverName,
+		Dsn:        dsn,
+	}
+	mock.lockDoGetDatabase.Lock()
+	mock.calls.DoGetDatabase = append(mock.calls.DoGetDatabase, callInfo)
+	mock.lockDoGetDatabase.Unlock()
+	return mock.DoGetDatabaseFunc(driverName, dsn)
+}
+
+// DoGetDatabaseCalls gets all the calls that were made to DoGetDatabase.
+// Check the length with:
+//     len(mockedInitialiser.DoGetDatabaseCalls())
+func (mock *InitialiserMock) DoGetDatabaseCalls() []struct {
+	DriverName string
+	Dsn        string
+} {
+	var calls []struct {
+		DriverName string
+		Dsn        string
+	}
+	mock.lockDoGetDatabase.RLock()
+	calls = mock.calls.DoGetDatabase
+	mock.lockDoGetDatabase.RUnlock()
+	return calls
 }
 
 // DoGetHTTPServer calls DoGetHTTPServerFunc.

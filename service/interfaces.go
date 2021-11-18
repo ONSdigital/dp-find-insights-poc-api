@@ -5,6 +5,8 @@ import (
 	"net/http"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/config"
+	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/aws"
+	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/database"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 )
 
@@ -16,6 +18,8 @@ import (
 type Initialiser interface {
 	DoGetHTTPServer(bindAddr string, router http.Handler) HTTPServer
 	DoGetHealthCheck(cfg *config.Config, buildTime, gitCommit, version string) (HealthChecker, error)
+	DoGetAWS() (*aws.Clients, error)
+	DoGetDatabase(driverName, dsn string) (*database.Database, error)
 }
 
 // HTTPServer defines the required methods from the HTTP server

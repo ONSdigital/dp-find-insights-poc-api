@@ -54,6 +54,43 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  /dev/hello/{dataset}:
+    get:
+      tags:
+        - public
+      summary: query census
+      parameters:
+        - in: path
+          name: dataset
+          description: name of datset to query, or skinny
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: rows
+          schema:
+            type: array
+            items:
+              type: string
+        - in: query
+          name: cols
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: true
+      responses:
+        200:
+          content:
+            text/csv:
+        default:
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
 components:
   schemas:
 
@@ -147,3 +184,5 @@ components:
           type: string
           description: "The last failed health check date and time of the external service"
           example: "2019-09-22T11:48:51.0000001Z"
+
+  

@@ -4,6 +4,8 @@ import (
 	"net/http"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/config"
+	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/aws"
+	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/database"
 
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	dphttp "github.com/ONSdigital/dp-net/http"
@@ -32,6 +34,14 @@ func (e *ExternalServiceList) GetHTTPServer(bindAddr string, router http.Handler
 	return s
 }
 
+func (e *ExternalServiceList) GetAWS() (*aws.Clients, error) {
+	return e.Init.DoGetAWS()
+}
+
+func (e *ExternalServiceList) GetDatabase(driverName, dsn string) (*database.Database, error) {
+	return e.Init.DoGetDatabase(driverName, dsn)
+}
+
 // GetHealthCheck creates a healthcheck with versionInfo and sets the HealthCheck flag to true
 func (e *ExternalServiceList) GetHealthCheck(cfg *config.Config, buildTime, gitCommit, version string) (HealthChecker, error) {
 	hc, err := e.Init.DoGetHealthCheck(cfg, buildTime, gitCommit, version)
@@ -57,4 +67,12 @@ func (e *Init) DoGetHealthCheck(cfg *config.Config, buildTime, gitCommit, versio
 	}
 	hc := healthcheck.New(versionInfo, cfg.HealthCheckCriticalTimeout, cfg.HealthCheckInterval)
 	return &hc, nil
+}
+
+func (e *Init) DoGetAWS() (*aws.Clients, error) {
+	return aws.New()
+}
+
+func (e *Init) DoGetDatabase(driverName, dsn string) (*database.Database, error) {
+	return database.Open(driverName, dsn)
 }

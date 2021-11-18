@@ -24,11 +24,11 @@ lint:	## doesn't really lint
 
 .PHONY: build
 build:	## build poc service
-	go build -tags 'production' $(LDFLAGS) -o $(BINPATH)/dp-find-insights-poc-api
+	go build -tags 'production' $(LDFLAGS) -o $(BINPATH)/dp-find-insights-poc-api ./cmd/dp-find-insights-poc-api
 
 .PHONY: debug
 debug:	## run poc service in debug mode
-	go build -tags 'debug' $(LDFLAGS) -o $(BINPATH)/dp-find-insights-poc-api
+	go build -tags 'debug' $(LDFLAGS) -o $(BINPATH)/dp-find-insights-poc-api ./cmd/dp-find-insights-poc-api
 	HUMAN_LOG=1 DEBUG=1 $(BINPATH)/dp-find-insights-poc-api
 
 .PHONY: test
