@@ -2,11 +2,15 @@ package service
 
 import (
 	"context"
+	"fmt"
+	"os"
 
 	"github.com/ONSdigital/dp-api-clients-go/middleware"
-	"github.com/ONSdigital/dp-find-insights-poc-api/api/public"
+	"github.com/ONSdigital/dp-find-insights-poc-api/api"
 	"github.com/ONSdigital/dp-find-insights-poc-api/config"
 	"github.com/ONSdigital/dp-find-insights-poc-api/handlers"
+	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/database"
+	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/demo"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/justinas/alice"
 	"github.com/pkg/errors"
@@ -27,8 +31,46 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 
 	log.Info(ctx, "using service configuration", log.Data{"config": cfg})
 
+	var db *database.Database
+	var queryDemo *demo.Demo
+	var err error
+	if cfg.EnableDatabase {
+		// figure out postgres password
+		pgpwd := os.Getenv("PGPASSWORD")
+		if pgpwd == "" {
+			aws, err := serviceList.GetAWS()
+			if err != nil {
+				return nil, err
+			}
+			pgpwd, err = aws.GetSecret(os.Getenv("FI_PG_SECRET_ID"))
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		// open postgres connection
+		dsn := fmt.Sprintf(
+			"postgres://%s:%s@%s:%s/%s",
+			os.Getenv("PGUSER"),
+			pgpwd,
+			os.Getenv("PGHOST"),
+			os.Getenv("PGPORT"),
+			os.Getenv("PGDATABASE"),
+		)
+		db, err = database.Open("pgx", dsn)
+		if err != nil {
+			return nil, err
+		}
+
+		// set up our query functionality if we have a db
+		queryDemo, err = demo.New(db)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	// Setup the API
-	a := handlers.New()
+	a := handlers.New(true, queryDemo) // always include private handlers for now
 
 	// Setup health checks
 	hc, err := serviceList.GetHealthCheck(cfg, buildTime, gitCommit, version)
@@ -36,7 +78,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		log.Fatal(ctx, "could not instantiate healthcheck", err)
 		return nil, err
 	}
-	if err := registerCheckers(ctx, hc); err != nil {
+	if err := registerCheckers(ctx, hc, db); err != nil {
 		return nil, errors.Wrap(err, "unable to register checkers")
 	}
 	hc.Start(ctx)
@@ -45,7 +87,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	chain := alice.New(middleware.Whitelist(middleware.HealthcheckFilter(hc.Handler)))
 
 	// attach the appropriate api to the chain to create full router
-	rtr := chain.Then(public.Handler(a))
+	rtr := chain.Then(api.Handler(a))
 
 	// bind router handler to http server
 	s := serviceList.GetHTTPServer(cfg.BindAddr, rtr)
@@ -112,9 +154,14 @@ func (svc *Service) Close(ctx context.Context) error {
 }
 
 func registerCheckers(ctx context.Context,
-	hc HealthChecker) (err error) {
+	hc HealthChecker,
+	db *database.Database,
+) (err error) {
 
 	// TODO: add other health checks here, as per dp-upload-service
 
+	if db != nil {
+		err = hc.AddCheck("postgres", db.Checker)
+	}
 	return nil
 }
