@@ -23,13 +23,15 @@ func TestAPI(t *testing.T) {
 				t.Fail()
 			}
 
-			wantfile, err := MatchingRespFile(test.desc)
+			wantfiles, err := MatchingRespFile(test.desc)
 			if err != nil {
 				t.Fail()
 			}
-			if wantfile == "" {
+			switch len(wantfiles) {
+			case 0:
 				t.Errorf("No response file found for test '%s', looks like you need to re-run main.go!", test.desc)
-			} else {
+			case 1:
+				wantfile := wantfiles[0]
 				wantsha1 := RespFileSha1(wantfile)
 				h := sha1Hash(b)
 				if h != wantsha1 {
@@ -51,6 +53,11 @@ func TestAPI(t *testing.T) {
 						t.Log(dmp.DiffPrettyText(diffs))
 					}
 				}
+			default:
+				t.Errorf(
+					"Multiple response files found for test '%s', try manually auditing files and re-run main.go",
+					test.desc,
+				)
 			}
 		})
 	}

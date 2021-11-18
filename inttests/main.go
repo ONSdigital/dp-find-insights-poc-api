@@ -152,18 +152,18 @@ func RespFileSha1(fn string) string {
 	return fn[strings.LastIndex(fn, "-") + 1:]
 }
 
-// file file in DataPref directory that matches testDesc
-func MatchingRespFile(testDesc string) (fn string, err error) {
+// find file(s) in DataPref directory that matches testDesc
+func MatchingRespFile(testDesc string) (fns []string, err error) {
 	filesInDataPref, err := ioutil.ReadDir(DataPref)
 	if err != nil {
-		return fn, err
+		return fns, err
 	}
 	targetFnPrefix := RespFilePrefix(testDesc)
 	for _, file := range filesInDataPref {
 		fn := file.Name()
 		if strings.HasPrefix(fn, targetFnPrefix) {
-			return fn, err
+			fns = append(fns, fn)
 		}
 	}
-	return fn, err
+	return fns, err
 }
