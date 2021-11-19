@@ -85,7 +85,7 @@ AND geo_metric.category_id = nomis_category.id
 
 	// Allocate output table
 	//
-	tbl, err := table.New("geography_code", cats)
+	tbl, err := table.New("geography_code")
 	if err != nil {
 		return "", err
 	}
@@ -128,10 +128,7 @@ AND geo_metric.category_id = nomis_category.id
 			return "", err
 		}
 
-		err = tbl.SetCell(geo, cat, value)
-		if err != nil {
-			return "", err
-		}
+		tbl.SetCell(geo, cat, value)
 	}
 	tnext.Print()
 	tscan.Print()
@@ -140,7 +137,12 @@ AND geo_metric.category_id = nomis_category.id
 		return "", err
 	}
 
-	if err = tbl.Generate(&body); err != nil {
+	tgen := timer.New("generate")
+	tgen.Start()
+	err = tbl.Generate(&body)
+	tgen.Stop()
+	tgen.Print()
+	if err != nil {
 		return "", err
 	}
 

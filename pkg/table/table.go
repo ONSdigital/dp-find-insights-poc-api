@@ -1,6 +1,6 @@
 // The table package implements a simplistic 2-dimensional array that can be populated one cell at a time,
 // and output as a CSV.
-// It is intended to be used to build up a wide table from results of queries on the new "skinny" table.
+// It is intended to be used to build up a wide table from results of queries on the geo_metric table.
 //
 // So input that looks like this:
 //
@@ -15,113 +15,98 @@
 //	HERE	10		20
 //	THERE	30		40
 //
-// Expected column names must be known in advance (which they are because they are used in the SQL query),
-// and you have to provide some name for the geography_code column (GEO in the example above).
-//
-// This implementation can be optimised when we know more about the problem:
-//	* we hold all row and column until the very end; if we know geography codes will be contiguous on input,
-//    we could conceivably only hold a row at a time and print each row as it is finished
-//  * the simplistic [][]string data structure requires linear searches through row and column keys to find a match;
-//    with big datasets this might be inefficient
-//
 package table
 
 import (
 	"encoding/csv"
 	"errors"
-	"fmt"
 	"io"
-	"os"
+	"sort"
 )
 
 type Table struct {
-	colnames []string
-	rows     [][]string
+	primary string
+	geos    map[string]bool              // geography codes seen
+	cats    map[string]bool              // category code seen
+	rows    map[string]map[string]string // indexed by geography code, each row indexed by category code
 }
 
 // New creates a new table.
 // primary is the column name you want to use for the geography_code column in output.
-// colnames is the list of columns (categories or attributes) you expect to see on input.
-// It is an error to have an empty primary or colname, and it is an error to have duplicate
-// column names.
+// primary must not be empty.
 //
-func New(primary string, colnames []string) (*Table, error) {
+func New(primary string) (*Table, error) {
 	if primary == "" {
 		return nil, errors.New("primary must not be blank")
 	}
-	if len(colnames) == 0 {
-		return nil, errors.New("table requires at least one column")
-	}
 
-	fmt.Fprintf(os.Stderr, "table.New colnames=%+v\n", colnames)
-	seen := map[string]bool{}
-	for _, name := range colnames {
-		if name == "" {
-			return nil, errors.New("blank column name")
-		}
-		if seen[name] {
-			return nil, errors.New("duplicate column names")
-		}
-		seen[name] = true
-	}
-
-	tbl := &Table{
-		colnames: append([]string{primary}, colnames...),
-	}
-
-	fmt.Fprintf(os.Stderr, "tbl=%+v\n", tbl)
-	return tbl, nil
+	return &Table{
+		primary: primary,
+		geos:    map[string]bool{},
+		cats:    map[string]bool{},
+		rows:    map[string]map[string]string{},
+	}, nil
 }
 
 // SetCell sets the value of a cell on the row matching geocode and the column matching colname.
-// New rows are created dynamically, but colname must be one specified in the call to New.
+// New rows and columns are created dynamically.
 //
-// value is a string because we are building up a data structure that can be used directly by the csv library.
-//
-func (tbl *Table) SetCell(geocode, colname, value string) error {
-	i := tbl.colIndex(colname)
-	if i == -1 {
-		return fmt.Errorf("invalid column name %q", colname)
+func (tbl *Table) SetCell(geocode, catcode, value string) {
+	// Remember the geo and cat codes for when we generate the table
+	tbl.geos[geocode] = true
+	tbl.cats[catcode] = true
+
+	// Look up or create row for this geocode
+	r, ok := tbl.rows[geocode]
+	if !ok {
+		r = map[string]string{}
+		tbl.rows[geocode] = r
 	}
-	tbl.findRow(geocode)[i] = value
-	return nil
+
+	// Set this geo/cat value
+	r[catcode] = value
 }
 
 // Generate produces a CSV version of the table on w.
 // It doesn't close w.
 //
 func (tbl *Table) Generate(w io.Writer) error {
+	// sort the geography codes we have seen
+	geos := sort.StringSlice{}
+	for geo := range tbl.geos {
+		geos = append(geos, geo)
+	}
+	geos.Sort()
+
+	// sort the category codes we have seen
+	cats := sort.StringSlice{}
+	for cat := range tbl.cats {
+		cats = append(cats, cat)
+	}
+	cats.Sort()
+
+	// set up csv output on w
 	cw := csv.NewWriter(w)
 
-	cw.Write(tbl.colnames)
-	cw.WriteAll(tbl.rows)
+	// print column headings
+	colnames := append([]string{tbl.primary}, cats...)
+	cw.Write(colnames)
+
+	// pre-allocate slice to hold column values
+	row := make([]string, len(cats)+1)
+
+	// generate column values in order for each row in order
+	for _, geo := range geos {
+		row = row[:0]
+		row = append(row, geo)
+
+		for _, cat := range cats {
+			row = append(row, tbl.rows[geo][cat])
+		}
+
+		cw.Write(row)
+	}
+
 	cw.Flush()
 	return cw.Error()
-}
-
-// find Row locates the row corresponding to geocode.
-// If the row is not found, a new one is created.
-// The []string that is returned corresponds to the row in the table, with element 0 set to geocode and all the other elements empty strings.
-//
-func (tbl *Table) findRow(geocode string) []string {
-	for _, row := range tbl.rows {
-		if row[0] == geocode {
-			return row
-		}
-	}
-	newrow := make([]string, len(tbl.colnames))
-	newrow[0] = geocode
-	tbl.rows = append(tbl.rows, newrow)
-	return newrow
-}
-
-// colIndex returns the index of the colunm named name, or -1 if the column doesn't exist.
-//
-func (tbl *Table) colIndex(name string) int {
-	for i, s := range tbl.colnames {
-		if s == name {
-			return i
-		}
-	}
-	return -1
 }
