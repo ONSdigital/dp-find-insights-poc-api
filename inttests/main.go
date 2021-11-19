@@ -13,10 +13,12 @@ import (
 	"strings"
 )
 
-var Tests = []struct {
+type APITest = struct {
 	desc     string
 	url      string
-}{
+}
+
+var Tests = []APITest{
 	{
 		"no params",
 		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew`,

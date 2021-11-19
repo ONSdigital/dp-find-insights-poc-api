@@ -21,7 +21,7 @@ testv:
 # Very verbose test - displays long coloured diffs for failures
 .PHONY: testvv
 testvv:
-	 @go test -v ./... -args extra -tags=integration
+	 @go test -v ./... -tags=integration -args extra
 
 
 # Benchmark
