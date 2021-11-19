@@ -163,5 +163,5 @@ func registerCheckers(ctx context.Context,
 	if db != nil {
 		err = hc.AddCheck("postgres", db.Checker)
 	}
-	return nil
+	return err
 }

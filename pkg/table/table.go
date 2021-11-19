@@ -29,7 +29,9 @@ package table
 import (
 	"encoding/csv"
 	"errors"
+	"fmt"
 	"io"
+	"os"
 )
 
 type Table struct {
@@ -51,6 +53,7 @@ func New(primary string, colnames []string) (*Table, error) {
 		return nil, errors.New("table requires at least one column")
 	}
 
+	fmt.Fprintf(os.Stderr, "table.New colnames=%+v\n", colnames)
 	seen := map[string]bool{}
 	for _, name := range colnames {
 		if name == "" {
@@ -62,9 +65,12 @@ func New(primary string, colnames []string) (*Table, error) {
 		seen[name] = true
 	}
 
-	return &Table{
+	tbl := &Table{
 		colnames: append([]string{primary}, colnames...),
-	}, nil
+	}
+
+	fmt.Fprintf(os.Stderr, "tbl=%+v\n", tbl)
+	return tbl, nil
 }
 
 // SetCell sets the value of a cell on the row matching geocode and the column matching colname.
@@ -75,7 +81,7 @@ func New(primary string, colnames []string) (*Table, error) {
 func (tbl *Table) SetCell(geocode, colname, value string) error {
 	i := tbl.colIndex(colname)
 	if i == -1 {
-		return errors.New("invalid column name")
+		return fmt.Errorf("invalid column name %q", colname)
 	}
 	tbl.findRow(geocode)[i] = value
 	return nil

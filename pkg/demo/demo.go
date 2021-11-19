@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/database"
+	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/table"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/timer"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/where"
 
@@ -34,12 +35,116 @@ func (app *Demo) Query(ctx context.Context, dataset string, rows, cols []string)
 	return app.tableQuery(ctx, dataset, rows, cols)
 }
 
-func (app *Demo) skinnyQuery(ctx context.Context, rows, cols []string) (string, error) {
-	clause, err := where.SkinnyWhere(rows, cols)
+func (app *Demo) skinnyQuery(ctx context.Context, geos, cats []string) (string, error) {
+
+	if len(geos) == 0 || len(cats) == 0 {
+		return "", errors.New("skinny requires rows and cols")
+	}
+
+	// Construct SQL
+	//
+	template := `
+SELECT
+    geo.geo_code AS geography_code,
+    nomis_category.long_nomis_code AS category_code,
+    geo_metric.metric AS value
+FROM
+    geo_metric,
+    geo,
+    nomis_category
+WHERE (
+%s
+)
+AND geo_metric.geo_id = geo.id
+AND geo_metric.year = %d
+AND (
+%s
+)
+AND nomis_category.year = %d
+AND geo_metric.category_id = nomis_category.id
+`
+
+	geoWhere, err := where.WherePart("geo.geo_code", geos)
 	if err != nil {
 		return "", err
 	}
-	return clause, nil
+
+	catWhere, err := where.WherePart("nomis_category.long_nomis_code", cats)
+	if err != nil {
+		return "", err
+	}
+
+	sql := fmt.Sprintf(
+		template,
+		geoWhere,
+		2011,
+		catWhere,
+		2011,
+	)
+	fmt.Printf("sql: %s\n", sql)
+
+	// Allocate output table
+	//
+	tbl, err := table.New("geography_code", cats)
+	if err != nil {
+		return "", err
+	}
+
+	// Set up output buffer
+	//
+	var body strings.Builder
+	body.Grow(1000000)
+
+	// Query the db.
+	//
+	t := timer.New("query")
+	t.Start()
+	rows, err := app.db.DB().QueryContext(ctx, sql)
+	if err != nil {
+		return "", err
+	}
+	t.Stop()
+	t.Print()
+	defer rows.Close()
+
+	tnext := timer.New("next")
+	tscan := timer.New("scan")
+	for {
+		tnext.Start()
+		ok := rows.Next()
+		tnext.Stop()
+		if !ok {
+			break
+		}
+
+		var geo string
+		var cat string
+		var value string
+
+		tscan.Start()
+		err := rows.Scan(&geo, &cat, &value)
+		tscan.Stop()
+		if err != nil {
+			return "", err
+		}
+
+		err = tbl.SetCell(geo, cat, value)
+		if err != nil {
+			return "", err
+		}
+	}
+	tnext.Print()
+	tscan.Print()
+
+	if err := rows.Err(); err != nil {
+		return "", err
+	}
+
+	if err = tbl.Generate(&body); err != nil {
+		return "", err
+	}
+
+	return body.String(), nil
 }
 
 // query runs a SQL query against the db and returns the resulting CSV as a string.

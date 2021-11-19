@@ -12,7 +12,7 @@ import (
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/config"
 	"github.com/ONSdigital/dp-find-insights-poc-api/service"
-	"github.com/ONSdigital/dp-find-insights-poc-api/service/mock"
+
 	serviceMock "github.com/ONSdigital/dp-find-insights-poc-api/service/mock"
 
 	"github.com/pkg/errors"
@@ -207,7 +207,7 @@ func TestClose(t *testing.T) {
 		}
 
 		// server Shutdown will fail if healthcheck is not stopped
-		serverMock := &mock.HTTPServerMock{
+		serverMock := &serviceMock.HTTPServerMock{
 			ListenAndServeFunc: func() error { return nil },
 			ShutdownFunc: func(ctx context.Context) error {
 				if !hcStopped {
@@ -219,7 +219,7 @@ func TestClose(t *testing.T) {
 
 		Convey("Closing the service results in all the dependencies being closed in the expected order", func() {
 
-			initMock := &mock.InitialiserMock{
+			initMock := &serviceMock.InitialiserMock{
 				DoGetHTTPServerFunc: func(bindAddr string, router http.Handler) service.HTTPServer { return serverMock },
 				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 					return hcMock, nil
@@ -239,14 +239,14 @@ func TestClose(t *testing.T) {
 
 		Convey("If services fail to stop, the Close operation tries to close all dependencies and returns an error", func() {
 
-			failingserverMock := &mock.HTTPServerMock{
+			failingserverMock := &serviceMock.HTTPServerMock{
 				ListenAndServeFunc: func() error { return nil },
 				ShutdownFunc: func(ctx context.Context) error {
 					return errors.New("Failed to stop http server")
 				},
 			}
 
-			initMock := &mock.InitialiserMock{
+			initMock := &serviceMock.InitialiserMock{
 				DoGetHTTPServerFunc: func(bindAddr string, router http.Handler) service.HTTPServer { return failingserverMock },
 				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 					return hcMock, nil
@@ -266,7 +266,7 @@ func TestClose(t *testing.T) {
 
 		Convey("If service times out while shutting down, the Close operation fails with the expected error", func() {
 			cfg.GracefulShutdownTimeout = 1 * time.Millisecond
-			timeoutServerMock := &mock.HTTPServerMock{
+			timeoutServerMock := &serviceMock.HTTPServerMock{
 				ListenAndServeFunc: func() error { return nil },
 				ShutdownFunc: func(ctx context.Context) error {
 					time.Sleep(2 * time.Millisecond)
