@@ -17,13 +17,14 @@ func (SchemaVer) TableName() string {
 }
 
 type DataVer struct {
+	gorm.Model       // updated_at etc
 	ID         int32 `gorm:"primaryKey;autoIncrement:false"`
 	CensusYear int32
 	VerString  string
 	Source     string
 	Notes      string
 	Public     bool
-	GoMetrics  []GeoMetric `gorm:"foreignKey:DataVerID;references:ID"` // XXX
+	GoMetrics  []GeoMetric `gorm:"foreignKey:DataVerID;references:ID"`
 }
 
 // don't pluralise table name
