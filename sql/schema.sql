@@ -26,6 +26,9 @@ SET default_table_access_method = heap;
 
 CREATE TABLE public.data_ver (
     id integer NOT NULL,
+    created_at timestamp with time zone,
+    updated_at timestamp with time zone,
+    deleted_at timestamp with time zone,
     census_year integer,
     ver_string text,
     source text,
@@ -374,6 +377,13 @@ ALTER TABLE ONLY public.nomis_desc
 
 ALTER TABLE ONLY public.schema_ver
     ADD CONSTRAINT schema_ver_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: idx_data_ver_deleted_at; Type: INDEX; Schema: public; Owner: insights
+--
+
+CREATE INDEX idx_data_ver_deleted_at ON public.data_ver USING btree (deleted_at);
 
 
 --
