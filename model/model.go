@@ -75,7 +75,6 @@ type GeoMetric struct {
 	CategoryID int32
 	Metric     float64
 	DataVerID  int32
-	//Year       int32
 }
 
 // don't pluralise table name
@@ -102,8 +101,8 @@ func (NomisCategory) TableName() string {
 
 type NomisDesc struct {
 	ID              int32  `gorm:"primaryKey"`
-	LongDesc        string // bad name. what is this?
-	ShortDesc       string // bad name. what is this?
+	LongDesc        string // bad name. what is this? name
+	ShortDesc       string // bad name. what is this? unit
 	ShortNomisCode  string
 	Year            int32
 	NomisCategories []NomisCategory `gorm:"foreignKey:NomisDescID;references:ID"`
