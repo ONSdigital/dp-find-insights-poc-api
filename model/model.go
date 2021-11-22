@@ -16,6 +16,21 @@ func (SchemaVer) TableName() string {
 	return "schema_ver"
 }
 
+type DataVer struct {
+	ID         int32 `gorm:"primaryKey;autoIncrement:false"`
+	CensusYear int32
+	VerString  string
+	Source     string
+	Notes      string
+	Public     bool
+	GoMetrics  []GeoMetric `gorm:"foreignKey:DataVerID;references:ID"` // XXX
+}
+
+// don't pluralise table name
+func (DataVer) TableName() string {
+	return "data_ver"
+}
+
 // THIS TABLE NEEDS RESTRUCTURING & FIELDS RENAMING
 
 type YearMapping struct {
@@ -58,7 +73,8 @@ type GeoMetric struct {
 	GeoID      int32 `gorm:"index"`
 	CategoryID int32
 	Metric     float64
-	Year       int32
+	DataVerID  int32
+	//Year       int32
 }
 
 // don't pluralise table name
