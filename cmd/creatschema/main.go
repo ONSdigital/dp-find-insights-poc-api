@@ -100,8 +100,8 @@ func main() {
 		f.WriteString(ndump)
 
 		if ndump != odump {
-			// XXX diff(1) returns err if diff!
-			bs, _ := exec.Command("diff", tf.Name(), "sql/schema.sql").Output()
+			bs, _ := exec.Command("git", "diff", "sql/schema.sql").Output()
+			//bs, _ := exec.Command("diff", tf.Name(), "sql/schema.sql").Output()
 			fmt.Println(string(bs))
 			fmt.Println("check-in sql/schema.sql")
 		} else {

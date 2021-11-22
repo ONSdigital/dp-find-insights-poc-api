@@ -45,9 +45,9 @@ ALTER TABLE public.data_ver OWNER TO insights;
 
 CREATE TABLE public.geo (
     id integer NOT NULL,
-    geo_type_id integer,
-    geo_code text,
-    geo_name text
+    type_id integer,
+    code text,
+    name text
 );
 
 
@@ -118,7 +118,7 @@ ALTER SEQUENCE public.geo_metric_id_seq OWNED BY public.geo_metric.id;
 
 CREATE TABLE public.geo_type (
     id integer NOT NULL,
-    geo_type_name text
+    name text
 );
 
 
@@ -411,7 +411,7 @@ CREATE INDEX idx_schema_ver_deleted_at ON public.schema_ver USING btree (deleted
 -- Name: unique; Type: INDEX; Schema: public; Owner: insights
 --
 
-CREATE UNIQUE INDEX "unique" ON public.geo USING btree (geo_code);
+CREATE UNIQUE INDEX "unique" ON public.geo USING btree (code);
 
 
 --
@@ -435,7 +435,7 @@ ALTER TABLE ONLY public.geo_metric
 --
 
 ALTER TABLE ONLY public.geo
-    ADD CONSTRAINT fk_geo_type_geos FOREIGN KEY (geo_type_id) REFERENCES public.geo_type(id);
+    ADD CONSTRAINT fk_geo_type_geos FOREIGN KEY (type_id) REFERENCES public.geo_type(id);
 
 
 --
