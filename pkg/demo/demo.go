@@ -119,7 +119,7 @@ AND geo_metric.category_id = nomis_category.id
 
 		var geo string
 		var cat string
-		var value string
+		var value float64
 
 		tscan.Start()
 		err := rows.Scan(&geo, &cat, &value)

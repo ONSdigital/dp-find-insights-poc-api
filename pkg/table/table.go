@@ -20,15 +20,16 @@ package table
 import (
 	"encoding/csv"
 	"errors"
+	"fmt"
 	"io"
 	"sort"
 )
 
 type Table struct {
 	primary string
-	geos    map[string]bool              // geography codes seen
-	cats    map[string]bool              // category code seen
-	rows    map[string]map[string]string // indexed by geography code, each row indexed by category code
+	geos    map[string]bool               // geography codes seen
+	cats    map[string]bool               // category code seen
+	rows    map[string]map[string]float64 // indexed by geography code, each row indexed by category code
 }
 
 // New creates a new table.
@@ -44,14 +45,14 @@ func New(primary string) (*Table, error) {
 		primary: primary,
 		geos:    map[string]bool{},
 		cats:    map[string]bool{},
-		rows:    map[string]map[string]string{},
+		rows:    map[string]map[string]float64{},
 	}, nil
 }
 
 // SetCell sets the value of a cell on the row matching geocode and the column matching colname.
 // New rows and columns are created dynamically.
 //
-func (tbl *Table) SetCell(geocode, catcode, value string) {
+func (tbl *Table) SetCell(geocode, catcode string, value float64) {
 	// Remember the geo and cat codes for when we generate the table
 	tbl.geos[geocode] = true
 	tbl.cats[catcode] = true
@@ -59,7 +60,7 @@ func (tbl *Table) SetCell(geocode, catcode, value string) {
 	// Look up or create row for this geocode
 	r, ok := tbl.rows[geocode]
 	if !ok {
-		r = map[string]string{}
+		r = map[string]float64{}
 		tbl.rows[geocode] = r
 	}
 
@@ -101,7 +102,10 @@ func (tbl *Table) Generate(w io.Writer) error {
 		row = append(row, geo)
 
 		for _, cat := range cats {
-			row = append(row, tbl.rows[geo][cat])
+			// Precision may need to be increased if numbers are printed as exponents,
+			// or if decimals are rounded
+			// See the "specific numeric formatting tests" in table_test.go.
+			row = append(row, fmt.Sprintf("%.13g", tbl.rows[geo][cat]))
 		}
 
 		cw.Write(row)
