@@ -16,6 +16,22 @@ func (SchemaVer) TableName() string {
 	return "schema_ver"
 }
 
+type DataVer struct {
+	gorm.Model       // updated_at etc
+	ID         int32 `gorm:"primaryKey;autoIncrement:false"`
+	CensusYear int32
+	VerString  string
+	Source     string
+	Notes      string
+	Public     bool
+	GoMetrics  []GeoMetric `gorm:"foreignKey:DataVerID;references:ID"`
+}
+
+// don't pluralise table name
+func (DataVer) TableName() string {
+	return "data_ver"
+}
+
 // THIS TABLE NEEDS RESTRUCTURING & FIELDS RENAMING
 
 type YearMapping struct {
@@ -30,9 +46,9 @@ func (YearMapping) TableName() string {
 }
 
 type GeoType struct {
-	ID          int32  `gorm:"primaryKey;autoIncrement:false"`
-	GeoTypeName string // TODO remove GeoType
-	Geos        []Geo  `gorm:"foreignKey:GeoTypeID;references:ID"`
+	ID   int32 `gorm:"primaryKey;autoIncrement:false"`
+	Name string
+	Geos []Geo `gorm:"foreignKey:TypeID;references:ID"`
 }
 
 // don't pluralise table name
@@ -42,9 +58,9 @@ func (GeoType) TableName() string {
 
 type Geo struct {
 	ID        int32  `gorm:"primaryKey"`
-	GeoTypeID int32  // TODO remove Geo prefix
-	GeoCode   string `gorm:"index:unique"`
-	GeoName   string
+	TypeID    int32  // TODO remove Geo prefix
+	Code      string `gorm:"index:unique"`
+	Name      string
 	GoMetrics []GeoMetric `gorm:"foreignKey:GeoID;references:ID"`
 }
 
@@ -58,7 +74,7 @@ type GeoMetric struct {
 	GeoID      int32 `gorm:"index"`
 	CategoryID int32
 	Metric     float64
-	Year       int32
+	DataVerID  int32
 }
 
 // don't pluralise table name
@@ -85,8 +101,8 @@ func (NomisCategory) TableName() string {
 
 type NomisDesc struct {
 	ID              int32  `gorm:"primaryKey"`
-	LongDesc        string // bad name. what is this?
-	ShortDesc       string // bad name. what is this?
+	LongDesc        string // bad name. what is this? name
+	ShortDesc       string // bad name. what is this? unit
 	ShortNomisCode  string
 	Year            int32
 	NomisCategories []NomisCategory `gorm:"foreignKey:NomisDescID;references:ID"`

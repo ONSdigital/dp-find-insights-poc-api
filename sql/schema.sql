@@ -21,25 +21,43 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- Name: data_vers; Type: TABLE; Schema: public; Owner: steve
+-- Name: data_ver; Type: TABLE; Schema: public; Owner: insights
 --
 
-CREATE TABLE public.data_vers (
+CREATE TABLE public.data_ver (
     id integer NOT NULL,
-    year integer,
+    created_at timestamp with time zone,
+    updated_at timestamp with time zone,
+    deleted_at timestamp with time zone,
+    census_year integer,
     ver_string text,
+    source text,
     notes text,
     public boolean
 );
 
 
-ALTER TABLE public.data_vers OWNER TO steve;
+ALTER TABLE public.data_ver OWNER TO insights;
 
 --
--- Name: data_vers_id_seq; Type: SEQUENCE; Schema: public; Owner: steve
+-- Name: geo; Type: TABLE; Schema: public; Owner: insights
 --
 
-CREATE SEQUENCE public.data_vers_id_seq
+CREATE TABLE public.geo (
+    id integer NOT NULL,
+    type_id integer,
+    code text,
+    name text
+);
+
+
+ALTER TABLE public.geo OWNER TO insights;
+
+--
+-- Name: geo_id_seq; Type: SEQUENCE; Schema: public; Owner: insights
+--
+
+CREATE SEQUENCE public.geo_id_seq
     AS integer
     START WITH 1
     INCREMENT BY 1
@@ -48,31 +66,17 @@ CREATE SEQUENCE public.data_vers_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.data_vers_id_seq OWNER TO steve;
+ALTER TABLE public.geo_id_seq OWNER TO insights;
 
 --
--- Name: data_vers_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: steve
+-- Name: geo_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: insights
 --
 
-ALTER SEQUENCE public.data_vers_id_seq OWNED BY public.data_vers.id;
+ALTER SEQUENCE public.geo_id_seq OWNED BY public.geo.id;
 
 
 --
--- Name: geo; Type: TABLE; Schema: public; Owner: steve
---
-
-CREATE TABLE public.geo (
-    id integer NOT NULL,
-    geo_type_id integer,
-    geo_code text,
-    geo_name text
-);
-
-
-ALTER TABLE public.geo OWNER TO steve;
-
---
--- Name: geo_metric; Type: TABLE; Schema: public; Owner: steve
+-- Name: geo_metric; Type: TABLE; Schema: public; Owner: insights
 --
 
 CREATE TABLE public.geo_metric (
@@ -80,15 +84,14 @@ CREATE TABLE public.geo_metric (
     geo_id integer,
     category_id integer,
     metric numeric,
-    data_ver_id integer,
-    year integer
+    data_ver_id integer
 );
 
 
-ALTER TABLE public.geo_metric OWNER TO steve;
+ALTER TABLE public.geo_metric OWNER TO insights;
 
 --
--- Name: geo_metric_id_seq; Type: SEQUENCE; Schema: public; Owner: steve
+-- Name: geo_metric_id_seq; Type: SEQUENCE; Schema: public; Owner: insights
 --
 
 CREATE SEQUENCE public.geo_metric_id_seq
@@ -100,29 +103,29 @@ CREATE SEQUENCE public.geo_metric_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.geo_metric_id_seq OWNER TO steve;
+ALTER TABLE public.geo_metric_id_seq OWNER TO insights;
 
 --
--- Name: geo_metric_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: steve
+-- Name: geo_metric_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: insights
 --
 
 ALTER SEQUENCE public.geo_metric_id_seq OWNED BY public.geo_metric.id;
 
 
 --
--- Name: geo_type; Type: TABLE; Schema: public; Owner: steve
+-- Name: geo_type; Type: TABLE; Schema: public; Owner: insights
 --
 
 CREATE TABLE public.geo_type (
     id integer NOT NULL,
-    geo_type_name text
+    name text
 );
 
 
-ALTER TABLE public.geo_type OWNER TO steve;
+ALTER TABLE public.geo_type OWNER TO insights;
 
 --
--- Name: lsoa2011_lad2020_lookup; Type: TABLE; Schema: public; Owner: steve
+-- Name: lsoa2011_lad2020_lookup; Type: TABLE; Schema: public; Owner: insights
 --
 
 CREATE TABLE public.lsoa2011_lad2020_lookup (
@@ -132,10 +135,10 @@ CREATE TABLE public.lsoa2011_lad2020_lookup (
 );
 
 
-ALTER TABLE public.lsoa2011_lad2020_lookup OWNER TO steve;
+ALTER TABLE public.lsoa2011_lad2020_lookup OWNER TO insights;
 
 --
--- Name: lsoa2011_lad2020_lookup_id_seq; Type: SEQUENCE; Schema: public; Owner: steve
+-- Name: lsoa2011_lad2020_lookup_id_seq; Type: SEQUENCE; Schema: public; Owner: insights
 --
 
 CREATE SEQUENCE public.lsoa2011_lad2020_lookup_id_seq
@@ -147,17 +150,17 @@ CREATE SEQUENCE public.lsoa2011_lad2020_lookup_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.lsoa2011_lad2020_lookup_id_seq OWNER TO steve;
+ALTER TABLE public.lsoa2011_lad2020_lookup_id_seq OWNER TO insights;
 
 --
--- Name: lsoa2011_lad2020_lookup_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: steve
+-- Name: lsoa2011_lad2020_lookup_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: insights
 --
 
 ALTER SEQUENCE public.lsoa2011_lad2020_lookup_id_seq OWNED BY public.lsoa2011_lad2020_lookup.id;
 
 
 --
--- Name: nomis_category; Type: TABLE; Schema: public; Owner: steve
+-- Name: nomis_category; Type: TABLE; Schema: public; Owner: insights
 --
 
 CREATE TABLE public.nomis_category (
@@ -171,10 +174,10 @@ CREATE TABLE public.nomis_category (
 );
 
 
-ALTER TABLE public.nomis_category OWNER TO steve;
+ALTER TABLE public.nomis_category OWNER TO insights;
 
 --
--- Name: nomis_category_id_seq; Type: SEQUENCE; Schema: public; Owner: steve
+-- Name: nomis_category_id_seq; Type: SEQUENCE; Schema: public; Owner: insights
 --
 
 CREATE SEQUENCE public.nomis_category_id_seq
@@ -186,17 +189,17 @@ CREATE SEQUENCE public.nomis_category_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.nomis_category_id_seq OWNER TO steve;
+ALTER TABLE public.nomis_category_id_seq OWNER TO insights;
 
 --
--- Name: nomis_category_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: steve
+-- Name: nomis_category_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: insights
 --
 
 ALTER SEQUENCE public.nomis_category_id_seq OWNED BY public.nomis_category.id;
 
 
 --
--- Name: nomis_desc; Type: TABLE; Schema: public; Owner: steve
+-- Name: nomis_desc; Type: TABLE; Schema: public; Owner: insights
 --
 
 CREATE TABLE public.nomis_desc (
@@ -208,10 +211,10 @@ CREATE TABLE public.nomis_desc (
 );
 
 
-ALTER TABLE public.nomis_desc OWNER TO steve;
+ALTER TABLE public.nomis_desc OWNER TO insights;
 
 --
--- Name: nomis_desc_id_seq; Type: SEQUENCE; Schema: public; Owner: steve
+-- Name: nomis_desc_id_seq; Type: SEQUENCE; Schema: public; Owner: insights
 --
 
 CREATE SEQUENCE public.nomis_desc_id_seq
@@ -223,17 +226,17 @@ CREATE SEQUENCE public.nomis_desc_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.nomis_desc_id_seq OWNER TO steve;
+ALTER TABLE public.nomis_desc_id_seq OWNER TO insights;
 
 --
--- Name: nomis_desc_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: steve
+-- Name: nomis_desc_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: insights
 --
 
 ALTER SEQUENCE public.nomis_desc_id_seq OWNED BY public.nomis_desc.id;
 
 
 --
--- Name: schema_ver; Type: TABLE; Schema: public; Owner: steve
+-- Name: schema_ver; Type: TABLE; Schema: public; Owner: insights
 --
 
 CREATE TABLE public.schema_ver (
@@ -247,10 +250,10 @@ CREATE TABLE public.schema_ver (
 );
 
 
-ALTER TABLE public.schema_ver OWNER TO steve;
+ALTER TABLE public.schema_ver OWNER TO insights;
 
 --
--- Name: schema_ver_id_seq; Type: SEQUENCE; Schema: public; Owner: steve
+-- Name: schema_ver_id_seq; Type: SEQUENCE; Schema: public; Owner: insights
 --
 
 CREATE SEQUENCE public.schema_ver_id_seq
@@ -261,67 +264,67 @@ CREATE SEQUENCE public.schema_ver_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.schema_ver_id_seq OWNER TO steve;
+ALTER TABLE public.schema_ver_id_seq OWNER TO insights;
 
 --
--- Name: schema_ver_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: steve
+-- Name: schema_ver_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: insights
 --
 
 ALTER SEQUENCE public.schema_ver_id_seq OWNED BY public.schema_ver.id;
 
 
 --
--- Name: data_vers id; Type: DEFAULT; Schema: public; Owner: steve
+-- Name: geo id; Type: DEFAULT; Schema: public; Owner: insights
 --
 
-ALTER TABLE ONLY public.data_vers ALTER COLUMN id SET DEFAULT nextval('public.data_vers_id_seq'::regclass);
+ALTER TABLE ONLY public.geo ALTER COLUMN id SET DEFAULT nextval('public.geo_id_seq'::regclass);
 
 
 --
--- Name: geo_metric id; Type: DEFAULT; Schema: public; Owner: steve
+-- Name: geo_metric id; Type: DEFAULT; Schema: public; Owner: insights
 --
 
 ALTER TABLE ONLY public.geo_metric ALTER COLUMN id SET DEFAULT nextval('public.geo_metric_id_seq'::regclass);
 
 
 --
--- Name: lsoa2011_lad2020_lookup id; Type: DEFAULT; Schema: public; Owner: steve
+-- Name: lsoa2011_lad2020_lookup id; Type: DEFAULT; Schema: public; Owner: insights
 --
 
 ALTER TABLE ONLY public.lsoa2011_lad2020_lookup ALTER COLUMN id SET DEFAULT nextval('public.lsoa2011_lad2020_lookup_id_seq'::regclass);
 
 
 --
--- Name: nomis_category id; Type: DEFAULT; Schema: public; Owner: steve
+-- Name: nomis_category id; Type: DEFAULT; Schema: public; Owner: insights
 --
 
 ALTER TABLE ONLY public.nomis_category ALTER COLUMN id SET DEFAULT nextval('public.nomis_category_id_seq'::regclass);
 
 
 --
--- Name: nomis_desc id; Type: DEFAULT; Schema: public; Owner: steve
+-- Name: nomis_desc id; Type: DEFAULT; Schema: public; Owner: insights
 --
 
 ALTER TABLE ONLY public.nomis_desc ALTER COLUMN id SET DEFAULT nextval('public.nomis_desc_id_seq'::regclass);
 
 
 --
--- Name: schema_ver id; Type: DEFAULT; Schema: public; Owner: steve
+-- Name: schema_ver id; Type: DEFAULT; Schema: public; Owner: insights
 --
 
 ALTER TABLE ONLY public.schema_ver ALTER COLUMN id SET DEFAULT nextval('public.schema_ver_id_seq'::regclass);
 
 
 --
--- Name: data_vers data_vers_pkey; Type: CONSTRAINT; Schema: public; Owner: steve
+-- Name: data_ver data_ver_pkey; Type: CONSTRAINT; Schema: public; Owner: insights
 --
 
-ALTER TABLE ONLY public.data_vers
-    ADD CONSTRAINT data_vers_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.data_ver
+    ADD CONSTRAINT data_ver_pkey PRIMARY KEY (id);
 
 
 --
--- Name: geo_metric geo_metric_pkey; Type: CONSTRAINT; Schema: public; Owner: steve
+-- Name: geo_metric geo_metric_pkey; Type: CONSTRAINT; Schema: public; Owner: insights
 --
 
 ALTER TABLE ONLY public.geo_metric
@@ -329,7 +332,7 @@ ALTER TABLE ONLY public.geo_metric
 
 
 --
--- Name: geo geo_pkey; Type: CONSTRAINT; Schema: public; Owner: steve
+-- Name: geo geo_pkey; Type: CONSTRAINT; Schema: public; Owner: insights
 --
 
 ALTER TABLE ONLY public.geo
@@ -337,7 +340,7 @@ ALTER TABLE ONLY public.geo
 
 
 --
--- Name: geo_type geo_type_pkey; Type: CONSTRAINT; Schema: public; Owner: steve
+-- Name: geo_type geo_type_pkey; Type: CONSTRAINT; Schema: public; Owner: insights
 --
 
 ALTER TABLE ONLY public.geo_type
@@ -345,7 +348,7 @@ ALTER TABLE ONLY public.geo_type
 
 
 --
--- Name: lsoa2011_lad2020_lookup lsoa2011_lad2020_lookup_pkey; Type: CONSTRAINT; Schema: public; Owner: steve
+-- Name: lsoa2011_lad2020_lookup lsoa2011_lad2020_lookup_pkey; Type: CONSTRAINT; Schema: public; Owner: insights
 --
 
 ALTER TABLE ONLY public.lsoa2011_lad2020_lookup
@@ -353,7 +356,7 @@ ALTER TABLE ONLY public.lsoa2011_lad2020_lookup
 
 
 --
--- Name: nomis_category nomis_category_pkey; Type: CONSTRAINT; Schema: public; Owner: steve
+-- Name: nomis_category nomis_category_pkey; Type: CONSTRAINT; Schema: public; Owner: insights
 --
 
 ALTER TABLE ONLY public.nomis_category
@@ -361,7 +364,7 @@ ALTER TABLE ONLY public.nomis_category
 
 
 --
--- Name: nomis_desc nomis_desc_pkey; Type: CONSTRAINT; Schema: public; Owner: steve
+-- Name: nomis_desc nomis_desc_pkey; Type: CONSTRAINT; Schema: public; Owner: insights
 --
 
 ALTER TABLE ONLY public.nomis_desc
@@ -369,7 +372,7 @@ ALTER TABLE ONLY public.nomis_desc
 
 
 --
--- Name: schema_ver schema_ver_pkey; Type: CONSTRAINT; Schema: public; Owner: steve
+-- Name: schema_ver schema_ver_pkey; Type: CONSTRAINT; Schema: public; Owner: insights
 --
 
 ALTER TABLE ONLY public.schema_ver
@@ -377,43 +380,50 @@ ALTER TABLE ONLY public.schema_ver
 
 
 --
--- Name: idx_geo_metric_geo_id; Type: INDEX; Schema: public; Owner: steve
+-- Name: idx_data_ver_deleted_at; Type: INDEX; Schema: public; Owner: insights
+--
+
+CREATE INDEX idx_data_ver_deleted_at ON public.data_ver USING btree (deleted_at);
+
+
+--
+-- Name: idx_geo_metric_geo_id; Type: INDEX; Schema: public; Owner: insights
 --
 
 CREATE INDEX idx_geo_metric_geo_id ON public.geo_metric USING btree (geo_id);
 
 
 --
--- Name: idx_nomis_category_id; Type: INDEX; Schema: public; Owner: steve
+-- Name: idx_nomis_category_id; Type: INDEX; Schema: public; Owner: insights
 --
 
 CREATE UNIQUE INDEX idx_nomis_category_id ON public.nomis_category USING btree (id);
 
 
 --
--- Name: idx_schema_ver_deleted_at; Type: INDEX; Schema: public; Owner: steve
+-- Name: idx_schema_ver_deleted_at; Type: INDEX; Schema: public; Owner: insights
 --
 
 CREATE INDEX idx_schema_ver_deleted_at ON public.schema_ver USING btree (deleted_at);
 
 
 --
--- Name: unique; Type: INDEX; Schema: public; Owner: steve
+-- Name: unique; Type: INDEX; Schema: public; Owner: insights
 --
 
-CREATE UNIQUE INDEX "unique" ON public.geo USING btree (geo_code);
+CREATE UNIQUE INDEX "unique" ON public.geo USING btree (code);
 
 
 --
--- Name: geo_metric fk_data_vers_go_metrics; Type: FK CONSTRAINT; Schema: public; Owner: steve
+-- Name: geo_metric fk_data_ver_go_metrics; Type: FK CONSTRAINT; Schema: public; Owner: insights
 --
 
 ALTER TABLE ONLY public.geo_metric
-    ADD CONSTRAINT fk_data_vers_go_metrics FOREIGN KEY (data_ver_id) REFERENCES public.data_vers(id);
+    ADD CONSTRAINT fk_data_ver_go_metrics FOREIGN KEY (data_ver_id) REFERENCES public.data_ver(id);
 
 
 --
--- Name: geo_metric fk_geo_go_metrics; Type: FK CONSTRAINT; Schema: public; Owner: steve
+-- Name: geo_metric fk_geo_go_metrics; Type: FK CONSTRAINT; Schema: public; Owner: insights
 --
 
 ALTER TABLE ONLY public.geo_metric
@@ -421,15 +431,15 @@ ALTER TABLE ONLY public.geo_metric
 
 
 --
--- Name: geo fk_geo_type_geos; Type: FK CONSTRAINT; Schema: public; Owner: steve
+-- Name: geo fk_geo_type_geos; Type: FK CONSTRAINT; Schema: public; Owner: insights
 --
 
 ALTER TABLE ONLY public.geo
-    ADD CONSTRAINT fk_geo_type_geos FOREIGN KEY (geo_type_id) REFERENCES public.geo_type(id);
+    ADD CONSTRAINT fk_geo_type_geos FOREIGN KEY (type_id) REFERENCES public.geo_type(id);
 
 
 --
--- Name: geo_metric fk_nomis_category_go_metrics; Type: FK CONSTRAINT; Schema: public; Owner: steve
+-- Name: geo_metric fk_nomis_category_go_metrics; Type: FK CONSTRAINT; Schema: public; Owner: insights
 --
 
 ALTER TABLE ONLY public.geo_metric
@@ -437,7 +447,7 @@ ALTER TABLE ONLY public.geo_metric
 
 
 --
--- Name: nomis_category fk_nomis_desc_nomis_categories; Type: FK CONSTRAINT; Schema: public; Owner: steve
+-- Name: nomis_category fk_nomis_desc_nomis_categories; Type: FK CONSTRAINT; Schema: public; Owner: insights
 --
 
 ALTER TABLE ONLY public.nomis_category

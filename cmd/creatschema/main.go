@@ -80,6 +80,7 @@ func main() {
 
 	if err := db.AutoMigrate(
 		&model.SchemaVer{},
+		&model.DataVer{},
 		&model.GeoType{},
 		&model.Geo{},
 		&model.NomisDesc{},
@@ -99,17 +100,21 @@ func main() {
 		f.WriteString(ndump)
 
 		if ndump != odump {
-			// XXX diff(1) returns err if diff!
-			bs, _ := exec.Command("diff", tf.Name(), "sql/schema.sql").Output()
+			bs, _ := exec.Command("git", "diff", "sql/schema.sql").Output()
+			//bs, _ := exec.Command("diff", tf.Name(), "sql/schema.sql").Output()
 			fmt.Println(string(bs))
 			fmt.Println("check-in sql/schema.sql")
 		} else {
-			fmt.Println("no changes")
+			fmt.Println("no schema changes")
 			os.Exit(0)
 		}
 	}
 
 	db.Save(&model.SchemaVer{BuildTime: BuildTime, GitCommit: GitCommit, Version: Version})
+
+	// populate data_ver
+	db.Save(&model.DataVer{ID: 1, CensusYear: 2011, VerString: "2.2", Public: true, Source: "Nomis Bulk API", Notes: "Release date 12/02/2013 Revised 17/01/2014"})
+
 }
 
 func pgDump() (string, bool) {
