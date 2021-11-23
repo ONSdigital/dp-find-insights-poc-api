@@ -1,5 +1,6 @@
 name: Nightly Integration Tests
 on:
+  workflow_dispatch: # manual trigger
   schedule:
     - cron: '20 4 * * *'
 jobs:
