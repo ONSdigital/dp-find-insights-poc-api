@@ -100,9 +100,9 @@ func (NomisCategory) TableName() string {
 }
 
 type NomisDesc struct {
-	ID              int32  `gorm:"primaryKey"`
-	LongDesc        string // bad name. what is this? name
-	ShortDesc       string // bad name. what is this? unit
+	ID              int32 `gorm:"primaryKey"`
+	Name            string
+	PopStat         string
 	ShortNomisCode  string
 	Year            int32
 	NomisCategories []NomisCategory `gorm:"foreignKey:NomisDescID;references:ID"`

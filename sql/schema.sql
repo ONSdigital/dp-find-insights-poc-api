@@ -204,8 +204,8 @@ ALTER SEQUENCE public.nomis_category_id_seq OWNED BY public.nomis_category.id;
 
 CREATE TABLE public.nomis_desc (
     id integer NOT NULL,
-    long_desc text,
-    short_desc text,
+    name text,
+    pop_stat text,
     short_nomis_code text,
     year integer
 );
