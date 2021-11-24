@@ -45,18 +45,21 @@ func (app *Demo) skinnyQuery(ctx context.Context, geos, cats []string) (string, 
 	//
 	template := `
 SELECT
-    geo.geo_code AS geography_code,
+    geo.code AS geography_code,
     nomis_category.long_nomis_code AS category_code,
     geo_metric.metric AS value
 FROM
     geo_metric,
     geo,
-    nomis_category
-WHERE (
+    nomis_category,
+    data_ver
+WHERE data_ver.census_year = 2011
+AND data_ver.ver_string = '2.2'
+AND (
 %s
 )
+AND geo_metric.data_ver_id = data_ver.id
 AND geo_metric.geo_id = geo.id
-AND geo_metric.year = %d
 AND (
 %s
 )
@@ -64,7 +67,7 @@ AND nomis_category.year = %d
 AND geo_metric.category_id = nomis_category.id
 `
 
-	geoWhere, err := where.WherePart("geo.geo_code", geos)
+	geoWhere, err := where.WherePart("geo.code", geos)
 	if err != nil {
 		return "", err
 	}
@@ -77,7 +80,6 @@ AND geo_metric.category_id = nomis_category.id
 	sql := fmt.Sprintf(
 		template,
 		geoWhere,
-		2011,
 		catWhere,
 		2011,
 	)
