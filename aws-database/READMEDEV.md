@@ -42,7 +42,7 @@ $ make update-schema
 Answer "y" to questions in last step. "Record not found warning" can be
 ignored.
 
-## Get source data
+## Get source data (dev)
 
 
 ```
@@ -58,7 +58,9 @@ populated by restricting the download to "qs101" but usually
 
 Assumes python venv is setup and "secrets.json" in place as described in [nomis-bulk-to-postgres README](https://github.com/ONSdigital/nomis-bulk-to-postgres/blob/main/README.md)
 
-TODO python should pick up from the env like everything else
+TODO python should pick up from the env like everything else (?) or just rewrite
+TODO migrate this to go code enable to run under AWS (Lambda or Fargate etc.) &
+read from S3
 
 The following imports most data
 ```
@@ -94,4 +96,12 @@ censustiny=> select * from geo where id=1;
 ----+---------+-----------+-------------------
   1 |       1 | K04000001 | England and Wales
 ```
+
+## producing dump of new prod type database
+
+* Previous steps should be followed but "download-data-qs.sh" would be used
+
+* "pg_dump census > census.sql" can be used to create a dump
+
+* "awsloaddata.sh" is then run on that dump
 
