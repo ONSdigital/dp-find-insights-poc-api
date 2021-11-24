@@ -13,10 +13,12 @@ import (
 	"strings"
 )
 
-var Tests = []struct {
+type APITest = struct {
 	desc     string
 	url      string
-}{
+}
+
+var Tests = []APITest{
 	{
 		"no params",
 		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew`,
@@ -96,7 +98,7 @@ var DataPref = "resp/"
 func main() {
 	// populate saved copies to allow test diffs
 	for _, test := range Tests {
-		b, err := HTTPget(test.url)
+		b, _, err := HTTPget(test.url)
 
 		if err != nil {
 			log.Print(err)
@@ -115,28 +117,30 @@ func main() {
 	}
 }
 
-func HTTPget(s string) (b []byte, err error) {
+func HTTPget(s string) (b []byte, h map[string][]string, err error) {
 	resp, err := http.Get(s)
 
 	if err != nil {
-		return b, err
+		return b, h, err
 	}
 
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
 		err := errors.New(fmt.Sprintf("API responded with status code %v", resp.StatusCode))
-		return b, err
+		return b, h, err
 	}
 
 	// or just io. in go 1.16+
 	b, err = ioutil.ReadAll(resp.Body)
 
 	if err != nil {
-		return b, err
+		return b, h, err
 	}
 
-	return b, err
+	h = resp.Header
+
+	return b, h, err
 }
 
 func sha1Hash(b []byte) string {
@@ -172,4 +176,13 @@ func MatchingRespFile(testDesc string) (fns []string, err error) {
 		}
 	}
 	return fns, err
+}
+
+func IsStringInSlice(str string, s []string) (bool) {
+	for _, ele := range(s) {
+		if ele == str {
+			return true
+		}
+	}
+	return false
 }
