@@ -20,76 +20,59 @@ type APITest = struct {
 
 var Tests = []APITest{
 	{
-		"no params",
-		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew`,
+		"rows param single cols param single",
+		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/skinny?rows=E01000001&cols=QS119EW0001`,
+	},
+	// multi rows
+	{
+		"rows param multi single cols param single",
+		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/skinny?rows=E01000001&rows=E01000222&rows=E01000333&cols=QS117EW0001`,
 	},
 	{
-		"cols param single",
-		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew?cols=_1`,
+		"rows param multi array cols param single",
+		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/skinny?rows=E01000100,E01000110,E01000200&cols=QS119EW0003`,
 	},
 	{
-		"cols param multi",
-		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew?cols=geography_code,total,_1`,
+		"rows param multi range cols param single",
+		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/skinny?rows=E01001111...E01001211&cols=QS118EW0011`,
 	},
 	{
-		"rows param single",
-		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew?rows=geography_code:E01000001`,
+		"rows param multi mixed cols param single",
+		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/skinny?rows=E01000001&rows=E01000100,E01000110,E01000200&rows=E01001111...E01001211&cols=QS118EW0011`,
+	},
+	// multi cols
+	{
+		"rows param single cols param multi single",
+		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/skinny?rows=E01000001&cols=QS119EW0001&cols=QS118EW0001&cols=QS117EW0001`,
 	},
 	{
-		"rows param multi single",
-		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew?rows=geography_code:E01000011&rows=geography_code:E01000012&rows=geography_code:E01000013`,
+		"rows param single cols param multi array",
+		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/skinny?rows=E01000001&cols=QS119EW0001,QS119EW0002,QS119EW0003`,
 	},
 	{
-		"rows param multi array",
-		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew?rows=geography_code:E01000001,E01000002,E01000003,E01000005`,
+		"rows param single cols param multi range",
+		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/skinny?rows=E01000001&cols=QS118EW0001...QS118EW0011`,
 	},
 	{
-		"rows param range",
-		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew?rows=geography_code:E01000005...E01000010`,
+		"rows param single cols param multi mixed",
+		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/skinny?rows=E01000001&cols=QS117EW0001&cols=QS119EW0001,QS119EW0002,QS119EW0003&cols=QS118EW0001...QS118EW0011`,
+	},
+	// multi rows + cols
+	{
+		"rows param multi single cols param multi single",
+		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/skinny?rows=E01000001&rows=E01000222&rows=E01000333&cols=QS119EW0001&cols=QS118EW0001&cols=QS117EW0001`,
 	},
 	{
-		"rows param mixed",
-		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew?rows=geography_code:E01000001,E01000005...E01000010&rows=geography_code:E01000079`,
+		"rows param multi array cols param multi array",
+		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/skinny?rows=E01000100,E01000110,E01000200&cols=QS119EW0001,QS119EW0002,QS119EW0003`,
 	},
 	{
-		"rows cols params single col single row",
-		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew?cols=_1&rows=geography_code:E01000081`,
+		"rows param multi range cols param multi range",
+		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/skinny?rows=E01001111...E01001211&cols=QS118EW0001...QS118EW0011`,
 	},
 	{
-		"rows cols params multi col single row",
-		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew?cols=geography_code,total,_1&rows=geography_code:E01000081`,
-	},
-	{
-		"rows cols params multi col multi single row",
-		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew?cols=geography_code,total,_1&rows=geography_code:E01000081&rows=geography_code:E01000073`,
-	},
-	{
-		"rows cols params multi col multi array row",
-		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew?cols=geography_code,total,_1&rows=geography_code:E01000124,E01000130,E01000264`,
-	},
-	{
-		"rows cols params multi col multi range row",
-		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew?cols=geography_code,total,_1&rows=geography_code:E01000296...E01000355`,
-	},
-	{
-		"rows cols params multi col multi mixed row",
-		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew?cols=geography_code,total,_1&rows=geography_code:E01000275,E01000281,E01001146...E01001194&rows=geography_code:E01000027`,
-	},
-	{
-		"rows cols params single col multi single row",
-		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew?cols=_1&rows=geography_code:E01000081&rows=geography_code:E01000073`,
-	},
-	{
-		"rows cols params single col multi array row",
-		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew?cols=_1&rows=geography_code:E01000124,E01000130,E01000264`,
-	},
-	{
-		"rows cols params single col multi range row",
-		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew?cols=_1&rows=geography_code:E01000296...E01000355`,
-	},
-	{
-		"rows cols params single col multi mixed row",
-		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs119ew?cols=_1&rows=geography_code:E01000275,E01000281,E01001146...E01001194&rows=geography_code:E01000027`,
+		"rows param multi mixed cols param multi mixed",
+		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/skinny?rows=E01000001&rows=E01000100,E01000110,E01000200&rows=E01001111...E01001211&cols=QS117EW0001&cols=QS119EW0001,QS119EW0002,QS119EW0003&cols=QS118EW0001...QS118EW0011`,
 	},
 }
 
