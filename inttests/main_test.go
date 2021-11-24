@@ -50,7 +50,7 @@ func assertAPIResponse(b []byte, test APITest, t*testing.T) {
 	switch len(respfiles) {
 	case 0:
 		// if no recorded response is available, main.go needs to be run to capture it
-		t.Errorf("No response file found for test '%s', looks like you need to re-run main.go!", test.desc)
+		t.Errorf("No response file found for test '%s', re-run 'make update' and commit results.", test.desc)
 
 	case 1:
 		// check API response against the one on file
@@ -81,7 +81,7 @@ func assertAPIResponse(b []byte, test APITest, t*testing.T) {
 		// if multiple recorded responses are found, a manual check is needed - possible cause is main.go was ran, and
 		// the response for a previously-recorded API query differed from previous, and so was saved as a new response file.
 		t.Errorf(
-			"Multiple response files found for test '%s', try manually auditing files and re-run main.go",
+			"Multiple response files found for test '%s', try manually auditing files,re-run 'make update' and commit results",
 			test.desc,
 		)
 	}

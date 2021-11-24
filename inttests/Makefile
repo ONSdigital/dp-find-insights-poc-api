@@ -6,7 +6,7 @@ all:
 # Update stored responses under 'resp' directory
 .PHONY: update
 update:
-	@go run .
+	@go run -tags=integration .
 
 # Usual test
 .PHONY: test
