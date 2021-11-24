@@ -12,4 +12,4 @@ if [ "$1" == "-create-user" ]; then
 fi
 
 # connect to db which exists!
-PGPASSWORD="$PGPASSWORD" psql -h "$HOST" -U insights -p "$PORT" -d postgres -f insights.sql
+PGPASSWORD="$PGPASSWORD" psql -h "$HOST" -U insights -p "$PORT" -d postgres -f census.sql
