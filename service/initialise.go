@@ -2,6 +2,7 @@ package service
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/config"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/aws"
@@ -56,6 +57,7 @@ func (e *ExternalServiceList) GetHealthCheck(cfg *config.Config, buildTime, gitC
 func (e *Init) DoGetHTTPServer(bindAddr string, router http.Handler) HTTPServer {
 	s := dphttp.NewServer(bindAddr, router)
 	s.HandleOSSignals = false
+	s.Server.WriteTimeout = 30 * time.Second
 	return s
 }
 
