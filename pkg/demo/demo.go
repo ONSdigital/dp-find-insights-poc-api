@@ -37,8 +37,8 @@ func (app *Demo) Query(ctx context.Context, dataset string, rows, cols []string)
 
 func (app *Demo) skinnyQuery(ctx context.Context, geos, cats []string) (string, error) {
 
-	if len(geos) == 0 || len(cats) == 0 {
-		return "", errors.New("skinny requires rows and cols")
+	if len(geos) == 0 && len(cats) == 0 {
+		return "", errors.New("skinny requires rows or cols")
 	}
 
 	// Construct SQL
@@ -55,24 +55,38 @@ FROM
     data_ver
 WHERE data_ver.census_year = 2011
 AND data_ver.ver_string = '2.2'
-AND (
 %s
-)
 AND geo_metric.data_ver_id = data_ver.id
 AND geo_metric.geo_id = geo.id
-AND (
 %s
-)
 AND nomis_category.year = %d
 AND geo_metric.category_id = nomis_category.id
 `
 
-	geoWhere, err := where.WherePart("geo.code", geos)
+	// condition wraps the output of WherePart inside "AND (...)".
+	// We "know" this fullCondition will not be the first condition in the query.
+	condition := func(col string, args []string) (string, error) {
+		if len(args) == 0 {
+			return "", nil
+		}
+		body, err := where.WherePart(col, args)
+		if err != nil {
+			return "", err
+		}
+
+		template := `
+AND (
+%s
+)`
+		return fmt.Sprintf(template, body), nil
+	}
+
+	geoWhere, err := condition("geo.code", geos)
 	if err != nil {
 		return "", err
 	}
 
-	catWhere, err := where.WherePart("nomis_category.long_nomis_code", cats)
+	catWhere, err := condition("nomis_category.long_nomis_code", cats)
 	if err != nil {
 		return "", err
 	}
