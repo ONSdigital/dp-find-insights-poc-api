@@ -13,6 +13,7 @@ type Config struct {
 	HealthCheckInterval        time.Duration `envconfig:"HEALTHCHECK_INTERVAL"`
 	HealthCheckCriticalTimeout time.Duration `envconfig:"HEALTHCHECK_CRITICAL_TIMEOUT"`
 	EnableDatabase             bool          `envconfig:"ENABLE_DATABASE"`
+	APIToken                   string        `envconfig:"API_TOKEN"`
 }
 
 var cfg *Config
@@ -29,6 +30,7 @@ func Get() (*Config, error) {
 		GracefulShutdownTimeout:    5 * time.Second,
 		HealthCheckInterval:        30 * time.Second,
 		HealthCheckCriticalTimeout: 90 * time.Second,
+		APIToken:                   "",
 	}
 
 	return cfg, envconfig.Process("", cfg)

@@ -2,10 +2,12 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/api"
+	"github.com/ONSdigital/dp-find-insights-poc-api/config"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/demo"
 )
 
@@ -33,6 +35,17 @@ func (svr *Server) GetDevHelloDataset(w http.ResponseWriter, r *http.Request, da
 		sendError(w, http.StatusNotFound, "endpoint not enabled")
 		return
 	}
+
+	// check header
+
+	auth := r.Header.Get("Authorization")
+	c, _ := config.Get()
+	if auth != c.APIToken {
+		sendError(w, http.StatusUnauthorized, "unauthorized")
+		fmt.Printf("failed auth header '%s' from '%s'", auth, r.Header.Get("X-Forwarded-For"))
+		return
+	}
+
 	if svr.queryDemo == nil {
 		sendError(w, http.StatusNotImplemented, "database not enabled")
 		return
