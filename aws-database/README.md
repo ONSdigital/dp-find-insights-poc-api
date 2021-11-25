@@ -26,5 +26,115 @@ to create "create.env"
   * ommitting the flag just imports census.sql"
     * 'dropdb census && createdb census' should be ran first in the latter case
 
-* see READMEDEV.md for details on how to produce a Postgres SQL dump suitable
-  for use by 'awsloaddata.sh'
+# Provision Tiny dev DB locally & create prod DB dump
+
+These instructions are for the "new" or "skinny" database.
+
+TODO automate
+
+Assumes postgres is running on developer desktop natively or via docker with pg
+client tools (eg. psql, pgdump, createdb, dropdb etc.) in the PATH
+
+## Create "insights" Postgres user if needed
+
+This only has to be done once.
+
+```
+$ psql postgres
+postgres=# CREATE USER insights WITH PASSWORD "insights";
+postgres=# ALTER USER insights WITH CREATEDB;
+```
+
+## Environment Setup
+
+Environment should contain similar to:
+
+```
+PGUSER=insights
+PGPASSWORD=insights
+PGHOST=localhost
+PGPORT=5432
+PGDATABASE=censustiny
+```
+
+Confirm with 
+
+```
+$ env |grep PG
+```
+
+## Create database and schema
+
+```
+$ createdb censustiny
+$ cd dp-find-insights-poc-api
+$ make update-schema
+```
+
+Answer "y" to questions in last step. "Record not found warning" can be
+ignored.
+
+## Get source data (dev)
+
+
+```
+$ cd nomis-bulk-to-postgres
+$ ./download-data-qs101.sh
+```
+
+Note the last step downloads CSV under the "data" directory.  A tiny DB can be
+populated by restricting the download to "qs101" but usually
+"download-data-qs.sh" would be used for production (see below).
+
+## populate database
+
+Assumes python venv is setup and "secrets.json" in place as described in [nomis-bulk-to-postgres README](https://github.com/ONSdigital/nomis-bulk-to-postgres/blob/main/README.md)
+
+TODO python should pick up from the env like everything else (?) or just rewrite
+TODO migrate this to go code enable to run under AWS (Lambda or Fargate etc.) &
+read from S3
+
+The following imports most data
+```
+$ . ./bulk/bin/activate
+$ python add_to_db.py
+```
+
+Fix up "geo" table data 
+
+Setup 2 source CSV using [dp-find-insights-poc-api/dataingest/geo/README.md](https://github.com/ONSdigital/dp-find-insights-poc-api/blob/develop/dataingest/geo/README.md)
+
+```
+$ cd dp-find-insights-poc-api/dataingest/geo
+$ go run .
+```
+
+## test SQL queries
+
+* Result from python process
+
+```
+$ psql censustiny
+[..]
+censustiny=> select metric from geo_metric where id=1;
+   metric   
+------------
+ 56075912.0
+```
+
+* Result from geo fixup
+
+```
+censustiny=> select * from geo where id=1;
+ id | type_id |   code    |       name        
+----+---------+-----------+-------------------
+  1 |       1 | K04000001 | England and Wales
+```
+
+## producing dump of new prod type database
+
+* Previous steps should be followed but "download-data-qs.sh" would be used
+
+* "pg_dump census > census.sql" can be used to create a dump
+
+* "awsloaddata.sh" is then run on that dump
