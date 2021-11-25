@@ -63,7 +63,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		}
 
 		// set up our query functionality if we have a db
-		queryDemo, err = demo.New(db)
+		queryDemo, err = demo.New(db, cfg.MaxMetrics)
 		if err != nil {
 			return nil, err
 		}
@@ -90,7 +90,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	rtr := chain.Then(api.Handler(a))
 
 	// bind router handler to http server
-	s := serviceList.GetHTTPServer(cfg.BindAddr, rtr)
+	s := serviceList.GetHTTPServer(cfg.BindAddr, rtr, cfg.WriteTimeout)
 
 	// Run the http server in a new go-routine
 	go func() {

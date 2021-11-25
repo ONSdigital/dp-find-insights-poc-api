@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/config"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/aws"
@@ -16,7 +17,7 @@ import (
 
 // Initialiser defines the methods to initialise external services
 type Initialiser interface {
-	DoGetHTTPServer(bindAddr string, router http.Handler) HTTPServer
+	DoGetHTTPServer(bindAddr string, router http.Handler, writeTimeout time.Duration) HTTPServer
 	DoGetHealthCheck(cfg *config.Config, buildTime, gitCommit, version string) (HealthChecker, error)
 	DoGetAWS() (*aws.Clients, error)
 	DoGetDatabase(driverName, dsn string) (*database.Database, error)

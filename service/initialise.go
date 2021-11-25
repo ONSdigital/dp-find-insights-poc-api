@@ -30,8 +30,8 @@ func NewServiceList(initialiser Initialiser) *ExternalServiceList {
 type Init struct{}
 
 // GetHTTPServer creates an http server
-func (e *ExternalServiceList) GetHTTPServer(bindAddr string, router http.Handler) HTTPServer {
-	s := e.Init.DoGetHTTPServer(bindAddr, router)
+func (e *ExternalServiceList) GetHTTPServer(bindAddr string, router http.Handler, writeTimeout time.Duration) HTTPServer {
+	s := e.Init.DoGetHTTPServer(bindAddr, router, writeTimeout)
 	return s
 }
 
@@ -54,10 +54,10 @@ func (e *ExternalServiceList) GetHealthCheck(cfg *config.Config, buildTime, gitC
 }
 
 // DoGetHTTPServer creates an HTTP Server with the provided bind address and router
-func (e *Init) DoGetHTTPServer(bindAddr string, router http.Handler) HTTPServer {
+func (e *Init) DoGetHTTPServer(bindAddr string, router http.Handler, writeTimeout time.Duration) HTTPServer {
 	s := dphttp.NewServer(bindAddr, router)
 	s.HandleOSSignals = false
-	s.Server.WriteTimeout = 30 * time.Second
+	s.Server.WriteTimeout = writeTimeout
 	return s
 }
 

@@ -13,6 +13,8 @@ type Config struct {
 	HealthCheckInterval        time.Duration `envconfig:"HEALTHCHECK_INTERVAL"`
 	HealthCheckCriticalTimeout time.Duration `envconfig:"HEALTHCHECK_CRITICAL_TIMEOUT"`
 	EnableDatabase             bool          `envconfig:"ENABLE_DATABASE"`
+	MaxMetrics                 int           `envconfig:"MAX_METRICS"`
+	WriteTimeout               time.Duration `envconfig:"WRITE_TIMEOUT"`
 }
 
 var cfg *Config
@@ -29,6 +31,8 @@ func Get() (*Config, error) {
 		GracefulShutdownTimeout:    5 * time.Second,
 		HealthCheckInterval:        30 * time.Second,
 		HealthCheckCriticalTimeout: 90 * time.Second,
+		MaxMetrics:                 200000,           // max number of rows to accept from "geo" table queries
+		WriteTimeout:               30 * time.Second, // http WriteTimeout
 	}
 
 	return cfg, envconfig.Process("", cfg)

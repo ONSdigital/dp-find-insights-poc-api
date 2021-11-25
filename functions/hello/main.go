@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -68,9 +69,23 @@ func NewApp() *App {
 		}
 	}
 
+	// Grab some config from the environment
+	//
+	var maxmetrics int = 200000
+	s := os.Getenv("MAX_METRICS")
+	if s != "" {
+		maxmetrics, err = strconv.Atoi(s)
+		if err != nil {
+			return &App{
+				errmsg: "bad MAX_METRICS value",
+				err:    err,
+			}
+		}
+	}
+
 	// Initialise our function's app
 	//
-	d, err := demo.New(db)
+	d, err := demo.New(db, maxmetrics)
 	if err != nil {
 		return &App{
 			errmsg: "cannot initialise demo app",

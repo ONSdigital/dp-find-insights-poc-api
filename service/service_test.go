@@ -35,7 +35,7 @@ var funcDoGetHealthcheckErr = func(cfg *config.Config, buildTime string, gitComm
 	return nil, errHealthcheck
 }
 
-var funcDoGetHTTPServerNil = func(bindAddr string, router http.Handler) service.HTTPServer {
+var funcDoGetHTTPServerNil = func(bindAddr string, router http.Handler, writeTimeout time.Duration) service.HTTPServer {
 	return nil
 }
 
@@ -70,11 +70,11 @@ func TestRun(t *testing.T) {
 			return hcMock, nil
 		}
 
-		funcDoGetHTTPServer := func(bindAddr string, router http.Handler) service.HTTPServer {
+		funcDoGetHTTPServer := func(bindAddr string, router http.Handler, writeTimeout time.Duration) service.HTTPServer {
 			return serverMock
 		}
 
-		funcDoGetFailingHTTPSerer := func(bindAddr string, router http.Handler) service.HTTPServer {
+		funcDoGetFailingHTTPSerer := func(bindAddr string, router http.Handler, writeTimeout time.Duration) service.HTTPServer {
 			return failingServerMock
 		}
 
@@ -220,7 +220,9 @@ func TestClose(t *testing.T) {
 		Convey("Closing the service results in all the dependencies being closed in the expected order", func() {
 
 			initMock := &serviceMock.InitialiserMock{
-				DoGetHTTPServerFunc: func(bindAddr string, router http.Handler) service.HTTPServer { return serverMock },
+				DoGetHTTPServerFunc: func(bindAddr string, router http.Handler, writeTimeout time.Duration) service.HTTPServer {
+					return serverMock
+				},
 				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 					return hcMock, nil
 				},
@@ -247,7 +249,9 @@ func TestClose(t *testing.T) {
 			}
 
 			initMock := &serviceMock.InitialiserMock{
-				DoGetHTTPServerFunc: func(bindAddr string, router http.Handler) service.HTTPServer { return failingserverMock },
+				DoGetHTTPServerFunc: func(bindAddr string, router http.Handler, writeTimeout time.Duration) service.HTTPServer {
+					return failingserverMock
+				},
 				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 					return hcMock, nil
 				},
