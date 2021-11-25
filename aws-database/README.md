@@ -100,7 +100,7 @@ $ . ./bulk/bin/activate
 $ python add_to_db.py
 ```
 
-Fix up "geo" table data 
+* Fix up "geo" table data 
 
 Setup 2 source CSV using [dp-find-insights-poc-api/dataingest/geo/README.md](https://github.com/ONSdigital/dp-find-insights-poc-api/blob/develop/dataingest/geo/README.md)
 
