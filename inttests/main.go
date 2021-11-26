@@ -19,6 +19,17 @@ type APITest = struct {
 }
 
 var Tests = []APITest{
+	// all rows single col
+	{
+		"all rows single col",
+		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/skinny?cols=QS802EW0009`,
+	},
+	// all cols single row
+	{
+		"all cols single row",
+		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/skinny?rows=E01002111`,
+	},
+	// single row + col
 	{
 		"rows param single cols param single",
 		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/skinny?rows=E01000001&cols=QS119EW0001`,
