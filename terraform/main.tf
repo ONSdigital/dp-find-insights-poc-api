@@ -176,6 +176,7 @@ resource "aws_lambda_function" "fi-hello" {
   filename         = "../build/hello.zip"
   source_code_hash = filebase64sha256("../build/hello.zip")
   memory_size      = 256
+  timeout          = 30
 
   environment {
     variables = {
@@ -231,19 +232,19 @@ resource "aws_api_gateway_method" "fi-get-hello" {
 
 # configure CORS on /hello/{dataset}
 module "cors" {
-  source = "squidfunk/api-gateway-enable-cors/aws"
+  source  = "squidfunk/api-gateway-enable-cors/aws"
   version = "0.3.3"
 
   api_id          = aws_api_gateway_rest_api.fi-hello.id
   api_resource_id = aws_api_gateway_resource.fi-hello-dataset.id
   allow_headers = [
-  "Authorization",
-  "Content-Type",
-  "Content-Encoding",
-  "X-Amz-Date",
-  "X-Amz-Security-Token",
-  "X-Api-Key"
-]
+    "Authorization",
+    "Content-Type",
+    "Content-Encoding",
+    "X-Amz-Date",
+    "X-Amz-Security-Token",
+    "X-Api-Key"
+  ]
 }
 
 
