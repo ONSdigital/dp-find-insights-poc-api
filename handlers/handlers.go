@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 
@@ -53,7 +54,13 @@ func (svr *Server) GetDevHelloDataset(w http.ResponseWriter, r *http.Request, da
 	ctx := r.Context()
 	csv, err := svr.queryDemo.Query(ctx, dataset, rows, cols)
 	if err != nil {
-		sendError(w, http.StatusInternalServerError, err.Error())
+		status := http.StatusInternalServerError
+		if errors.Is(err, demo.ErrTooManyMetrics) {
+			status = http.StatusForbidden
+		} else if errors.Is(err, demo.ErrMissingParams) || errors.Is(err, demo.ErrInvalidTable) {
+			status = http.StatusBadRequest
+		}
+		sendError(w, status, err.Error())
 		return
 	}
 	sendCSV(w, http.StatusOK, csv)

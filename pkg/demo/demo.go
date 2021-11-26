@@ -3,7 +3,6 @@ package demo
 import (
 	"context"
 	"encoding/csv"
-	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -18,12 +17,14 @@ import (
 )
 
 type Demo struct {
-	db *database.Database
+	db         *database.Database
+	maxMetrics int
 }
 
-func New(db *database.Database) (*Demo, error) {
+func New(db *database.Database, maxMetrics int) (*Demo, error) {
 	return &Demo{
-		db: db,
+		db:         db,
+		maxMetrics: maxMetrics,
 	}, nil
 }
 
@@ -38,7 +39,7 @@ func (app *Demo) Query(ctx context.Context, dataset string, rows, cols []string)
 func (app *Demo) skinnyQuery(ctx context.Context, geos, cats []string) (string, error) {
 
 	if len(geos) == 0 && len(cats) == 0 {
-		return "", errors.New("skinny requires rows or cols")
+		return "", ErrMissingParams
 	}
 
 	// Construct SQL
@@ -125,12 +126,20 @@ AND (
 
 	tnext := timer.New("next")
 	tscan := timer.New("scan")
+	var nmetrics int
 	for {
 		tnext.Start()
 		ok := rows.Next()
 		tnext.Stop()
 		if !ok {
 			break
+		}
+
+		if app.maxMetrics > 0 {
+			nmetrics++
+			if nmetrics > app.maxMetrics {
+				return "", ErrTooManyMetrics
+			}
 		}
 
 		var geo string
@@ -176,7 +185,7 @@ func (app *Demo) tableQuery(ctx context.Context, dataset string, rowspec, colspe
 
 	if !validTable(dataset) {
 		log.Println("invalid table: " + dataset)
-		return "", errors.New("invalid table")
+		return "", ErrInvalidTable
 	}
 
 	// parse all the row= variables

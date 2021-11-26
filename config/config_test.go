@@ -27,6 +27,8 @@ func TestConfig(t *testing.T) {
 					HealthCheckInterval:        30 * time.Second,
 					HealthCheckCriticalTimeout: 90 * time.Second,
 					EnableDatabase:             false,
+					MaxMetrics:                 200000,
+					WriteTimeout:               30 * time.Second,
 				})
 			})
 

@@ -10,6 +10,7 @@ import (
 	"github.com/ONSdigital/dp-find-insights-poc-api/service"
 	"net/http"
 	"sync"
+	"time"
 )
 
 // Ensure, that InitialiserMock does implement service.Initialiser.
@@ -28,7 +29,7 @@ var _ service.Initialiser = &InitialiserMock{}
 // 			DoGetDatabaseFunc: func(driverName string, dsn string) (*database.Database, error) {
 // 				panic("mock out the DoGetDatabase method")
 // 			},
-// 			DoGetHTTPServerFunc: func(bindAddr string, router http.Handler) service.HTTPServer {
+// 			DoGetHTTPServerFunc: func(bindAddr string, router http.Handler, writeTimeout time.Duration) service.HTTPServer {
 // 				panic("mock out the DoGetHTTPServer method")
 // 			},
 // 			DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
@@ -48,7 +49,7 @@ type InitialiserMock struct {
 	DoGetDatabaseFunc func(driverName string, dsn string) (*database.Database, error)
 
 	// DoGetHTTPServerFunc mocks the DoGetHTTPServer method.
-	DoGetHTTPServerFunc func(bindAddr string, router http.Handler) service.HTTPServer
+	DoGetHTTPServerFunc func(bindAddr string, router http.Handler, writeTimeout time.Duration) service.HTTPServer
 
 	// DoGetHealthCheckFunc mocks the DoGetHealthCheck method.
 	DoGetHealthCheckFunc func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error)
@@ -71,6 +72,8 @@ type InitialiserMock struct {
 			BindAddr string
 			// Router is the router argument value.
 			Router http.Handler
+			// WriteTimeout is the writeTimeout argument value.
+			WriteTimeout time.Duration
 		}
 		// DoGetHealthCheck holds details about calls to the DoGetHealthCheck method.
 		DoGetHealthCheck []struct {
@@ -152,33 +155,37 @@ func (mock *InitialiserMock) DoGetDatabaseCalls() []struct {
 }
 
 // DoGetHTTPServer calls DoGetHTTPServerFunc.
-func (mock *InitialiserMock) DoGetHTTPServer(bindAddr string, router http.Handler) service.HTTPServer {
+func (mock *InitialiserMock) DoGetHTTPServer(bindAddr string, router http.Handler, writeTimeout time.Duration) service.HTTPServer {
 	if mock.DoGetHTTPServerFunc == nil {
 		panic("InitialiserMock.DoGetHTTPServerFunc: method is nil but Initialiser.DoGetHTTPServer was just called")
 	}
 	callInfo := struct {
-		BindAddr string
-		Router   http.Handler
+		BindAddr     string
+		Router       http.Handler
+		WriteTimeout time.Duration
 	}{
-		BindAddr: bindAddr,
-		Router:   router,
+		BindAddr:     bindAddr,
+		Router:       router,
+		WriteTimeout: writeTimeout,
 	}
 	mock.lockDoGetHTTPServer.Lock()
 	mock.calls.DoGetHTTPServer = append(mock.calls.DoGetHTTPServer, callInfo)
 	mock.lockDoGetHTTPServer.Unlock()
-	return mock.DoGetHTTPServerFunc(bindAddr, router)
+	return mock.DoGetHTTPServerFunc(bindAddr, router, writeTimeout)
 }
 
 // DoGetHTTPServerCalls gets all the calls that were made to DoGetHTTPServer.
 // Check the length with:
 //     len(mockedInitialiser.DoGetHTTPServerCalls())
 func (mock *InitialiserMock) DoGetHTTPServerCalls() []struct {
-	BindAddr string
-	Router   http.Handler
+	BindAddr     string
+	Router       http.Handler
+	WriteTimeout time.Duration
 } {
 	var calls []struct {
-		BindAddr string
-		Router   http.Handler
+		BindAddr     string
+		Router       http.Handler
+		WriteTimeout time.Duration
 	}
 	mock.lockDoGetHTTPServer.RLock()
 	calls = mock.calls.DoGetHTTPServer

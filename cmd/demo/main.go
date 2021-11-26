@@ -17,6 +17,7 @@ func main() {
 	dataset := flag.String("dataset", "", "name of dataset to query")
 	flag.Var(&rows, "rows", "row or row range")
 	flag.Var(&cols, "cols", "column name(s) to return")
+	maxmetrics := flag.Int("maxmetrics", 0, "max skinny rows to accept (default 0 means no limit)")
 	flag.Parse()
 
 	if *dataset == "" {
@@ -48,7 +49,7 @@ func main() {
 	}
 
 	// Set up our demo app
-	app, err := demo.New(db)
+	app, err := demo.New(db, *maxmetrics)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -63,6 +64,6 @@ func main() {
 }
 
 func usage() {
-	fmt.Fprintf(os.Stderr, "usage: %s --dataset <dataset> --rows rowspec[,...] --cols col[,...]\n", os.Args[0])
+	fmt.Fprintf(os.Stderr, "usage: %s --dataset <dataset> [--rows rowspec[,...]] [--cols col[,...]] [--maxmetrics n]\n", os.Args[0])
 	os.Exit(2)
 }
