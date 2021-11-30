@@ -18,5 +18,3 @@ for TABLE in "${!tables[@]}"; do
     docker run $EXTRA -v $PWD:$PWD $DOCKER ogr2ogr -f "PostgreSQL" PG:"host=$PGHOST user=$PGUSER dbname=$PGDATABASE password=$PGPASSWORD port=$PGPORT" "$PWD/$GEOJSON" -nln "$TABLE" --config PG_USE_COPY YES -lco GEOM_TYPE=geography
     psql -c "VACUUM ANALYZE $TABLE"
 done
-
-
