@@ -41,7 +41,7 @@ This only has to be done once.
 
 ```
 $ psql postgres
-postgres=# CREATE USER insights WITH PASSWORD "insights";
+postgres=# CREATE USER insights WITH PASSWORD 'insights';
 postgres=# ALTER USER insights WITH CREATEDB;
 ```
 
