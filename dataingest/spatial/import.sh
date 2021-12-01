@@ -40,3 +40,10 @@ EOT2
 
 psql -c "DROP TABLE lsoa_gis"
 psql -c "DROP TABLE lad_gis"
+
+# These were valid in 2011 (where our data comes from) but aren't anymore
+# XXX probably incomplete list
+psql <<EOT3
+\x
+UPDATE geo SET valid=false WHERE code IN ('E06000048','E07000097','E07000100','E07000101','E07000104','E08000020')
+EOT3
