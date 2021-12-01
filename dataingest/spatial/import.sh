@@ -15,6 +15,6 @@ tables["lad_gis"]="Local_Authority_Districts_(December_2017)_Boundaries_in_the_U
 for TABLE in "${!tables[@]}"; do
     GEOJSON="${tables[$TABLE]}"
     echo "creating '$TABLE' in '$PGDATABASE' on '$PGHOST'"
-    docker run $EXTRA -v $PWD:$PWD $DOCKER ogr2ogr -f "PostgreSQL" PG:"host=$PGHOST user=$PGUSER dbname=$PGDATABASE password=$PGPASSWORD port=$PGPORT" "$PWD/$GEOJSON" -nln "$TABLE" --config PG_USE_COPY YES -lco GEOM_TYPE=geography
+    docker run $EXTRA -v $PWD:$PWD $DOCKER ogr2ogr -f "PostgreSQL" PG:"host=$PGHOST user=$PGUSER dbname=$PGDATABASE password=$PGPASSWORD port=$PGPORT" "$PWD/$GEOJSON" -nln "$TABLE" --config PG_USE_COPY YES -lco GEOM_TYPE=geometry
     psql -c "VACUUM ANALYZE $TABLE"
 done
