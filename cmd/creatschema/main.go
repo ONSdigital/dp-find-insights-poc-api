@@ -92,14 +92,12 @@ func main() {
 	}
 
 	if err := db.Exec(`ALTER TABLE geo ADD COLUMN wkb_geometry geometry(Geometry,4326)`); err != nil {
-		if !strings.Contains(err.Error.Error(), "SQLSTATE 42701") {
-			log.Print(err.Error.Error())
-		}
+		log.Print(err.Error.Error())
 	}
 
 	if haveDump {
 		ndump, _ := pgDump()
-		f, err := os.Create("sql/schema.sql") // XXX
+		f, err := os.Create("sql/schema.sql")
 		if err != nil {
 			log.Print(err)
 		}
@@ -107,7 +105,6 @@ func main() {
 
 		if ndump != odump {
 			bs, _ := exec.Command("git", "diff", "sql/schema.sql").Output()
-			//bs, _ := exec.Command("diff", tf.Name(), "sql/schema.sql").Output()
 			fmt.Println(string(bs))
 			fmt.Println("check-in sql/schema.sql")
 		} else {
