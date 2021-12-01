@@ -14,6 +14,6 @@ do
     # print autodocs for any go code
     outContent=$(go doc -all "$dir" 2>/dev/null) && printf "### public Go code:\n\`\`\` ${outContent} \n\`\`\`\n" >> "${outfile}"
     # link any readmes
-    cat "${dir}/README.md" &>/dev/null && printf "[LINK TO README](${dir}/README.md)\n" >> "${outfile}"
+    cat "${dir}/README.md" &>/dev/null && printf "See [README](${dir}/README.md) for more details.\n" >> "${outfile}"
 
 done
