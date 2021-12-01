@@ -57,10 +57,14 @@ func (GeoType) TableName() string {
 }
 
 type Geo struct {
-	ID        int32  `gorm:"primaryKey"`
-	TypeID    int32  // TODO remove Geo prefix
-	Code      string `gorm:"index:unique"`
-	Name      string
+	ID     int32 `gorm:"primaryKey"`
+	TypeID int32
+	Code   string `gorm:"index:unique"`
+	Name   string
+	Lat    float64
+	Long   float64
+	Valid  bool `gorm:"DEFAULT:true"`
+	// wkb_geometry - added via ALTER
 	GoMetrics []GeoMetric `gorm:"foreignKey:GeoID;references:ID"`
 }
 
