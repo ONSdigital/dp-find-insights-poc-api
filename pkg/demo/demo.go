@@ -28,15 +28,20 @@ func New(db *database.Database, maxMetrics int) (*Demo, error) {
 	}, nil
 }
 
-func (app *Demo) Query(ctx context.Context, dataset string, rows, cols []string) (string, error) {
-	if dataset == "skinny" {
-		return app.skinnyQuery(ctx, rows, cols)
+func (app *Demo) Query(ctx context.Context, dataset, bbox string, rows, cols []string) (string, error) {
+	if dataset != "skinny" {
+		cols = gatherTokens(cols)
+		return app.tableQuery(ctx, dataset, rows, cols)
 	}
-	cols = gatherTokens(cols)
-	return app.tableQuery(ctx, dataset, rows, cols)
+	if len(bbox) > 0 {
+		return app.bboxQuery(ctx, bbox, cols)
+	}
+	return app.rowQuery(ctx, rows, cols)
 }
 
-func (app *Demo) skinnyQuery(ctx context.Context, geos, cats []string) (string, error) {
+// rowQuery returns the csv table for the given geometry and category codes.
+//
+func (app *Demo) rowQuery(ctx context.Context, geos, cats []string) (string, error) {
 
 	if len(geos) == 0 && len(cats) == 0 {
 		return "", ErrMissingParams
@@ -64,24 +69,6 @@ AND nomis_category.year = %d
 AND geo_metric.category_id = nomis_category.id
 `
 
-	// condition wraps the output of WherePart inside "AND (...)".
-	// We "know" this fullCondition will not be the first condition in the query.
-	condition := func(col string, args []string) (string, error) {
-		if len(args) == 0 {
-			return "", nil
-		}
-		body, err := where.WherePart(col, args)
-		if err != nil {
-			return "", err
-		}
-
-		template := `
-AND (
-%s
-)`
-		return fmt.Sprintf(template, body), nil
-	}
-
 	geoWhere, err := condition("geo.code", geos)
 	if err != nil {
 		return "", err
@@ -100,6 +87,75 @@ AND (
 	)
 	fmt.Printf("sql: %s\n", sql)
 
+	return app.collectCells(ctx, sql)
+}
+
+// bboxQuery returns the csv table for LSOAs intersecting with the given bbox
+//
+func (app *Demo) bboxQuery(ctx context.Context, bbox string, cats []string) (string, error) {
+	var p1lat, p1lon, p2lat, p2lon float64
+	fields, err := fmt.Sscanf(bbox, "%f,%f,%f,%f", &p1lat, &p1lon, &p2lat, &p2lon)
+	if err != nil {
+		return "", fmt.Errorf("scanning bbox %q: %w", bbox, err)
+	}
+	if fields != 4 {
+		return "", ErrMissingParams
+	}
+
+	// Construct SQL
+	//
+	template := `
+SELECT
+	geo.code AS geography_code,
+	nomis_category.long_nomis_code AS category_code,
+	geo_metric.metric AS value
+FROM
+	viv_test_lsoa_geojson,
+	geo,
+	geo_metric,
+	data_ver,
+	nomis_category
+WHERE viv_test_lsoa_geojson.wkb_geometry && ST_GeomFromText(
+		'MULTIPOINT(%f %f, %f %f)',
+		4326
+	)
+AND geo.code = viv_test_lsoa_geojson.lsoa11cd
+AND geo.type_id = 6
+AND geo_metric.geo_id = geo.id
+AND data_ver.id = geo_metric.data_ver_id
+AND data_ver.census_year = %d
+AND data_ver.ver_string = '2.2'
+AND nomis_category.id = geo_metric.category_id
+AND nomis_category.year = %d
+%s
+`
+
+	catWhere, err := condition("nomis_category.long_nomis_code", cats)
+	if err != nil {
+		return "", err
+	}
+
+	sql := fmt.Sprintf(
+		template,
+		p1lon,
+		p1lat,
+		p2lon,
+		p2lat,
+		2011,
+		2011,
+		catWhere,
+	)
+
+	fmt.Printf("sql: %s\n", sql)
+
+	return app.collectCells(ctx, sql)
+}
+
+// collectCells runs the query in sql and returns the results as a csv.
+// sql must be a query against the geo_metric table selecting exactly
+// code, category and metric.
+//
+func (app *Demo) collectCells(ctx context.Context, sql string) (string, error) {
 	// Allocate output table
 	//
 	tbl, err := table.New("geography_code")
@@ -172,6 +228,24 @@ AND (
 	}
 
 	return body.String(), nil
+}
+
+// condition wraps the output of WherePart inside "AND (...)".
+// We "know" this condition will not be the first condition in the query.
+func condition(col string, args []string) (string, error) {
+	if len(args) == 0 {
+		return "", nil
+	}
+	body, err := where.WherePart(col, args)
+	if err != nil {
+		return "", err
+	}
+
+	template := `
+AND (
+%s
+)`
+	return fmt.Sprintf(template, body), nil
 }
 
 // query runs a SQL query against the db and returns the resulting CSV as a string.

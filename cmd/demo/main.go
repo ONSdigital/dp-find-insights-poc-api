@@ -15,6 +15,7 @@ func main() {
 	var rows, cols multiFlag
 
 	dataset := flag.String("dataset", "", "name of dataset to query")
+	bbox := flag.String("bbox", "", "bounding box lat1,lon1,lat2,lon2")
 	flag.Var(&rows, "rows", "row or row range")
 	flag.Var(&cols, "cols", "column name(s) to return")
 	maxmetrics := flag.Int("maxmetrics", 0, "max skinny rows to accept (default 0 means no limit)")
@@ -23,6 +24,7 @@ func main() {
 	if *dataset == "" {
 		usage()
 	}
+	fmt.Printf("bbox: %s\n", *bbox)
 	fmt.Printf("rows:\n")
 	for _, r := range rows {
 		fmt.Printf("\t%s\n", r)
@@ -55,7 +57,7 @@ func main() {
 	}
 
 	ctx := context.Background()
-	body, err := app.Query(ctx, *dataset, rows, cols)
+	body, err := app.Query(ctx, *dataset, *bbox, rows, cols)
 	if err != nil {
 		log.Fatalln(err)
 	}

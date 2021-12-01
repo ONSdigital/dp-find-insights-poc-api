@@ -27,6 +27,7 @@ type HelloResponse struct {
 type GetDevHelloDatasetParams struct {
 	Rows *[]string `json:"rows,omitempty"`
 	Cols *[]string `json:"cols,omitempty"`
+	Bbox *string   `json:"bbox,omitempty"`
 }
 
 // ServerInterface represents all server handlers.
@@ -84,6 +85,17 @@ func (siw *ServerInterfaceWrapper) GetDevHelloDataset(w http.ResponseWriter, r *
 	err = runtime.BindQueryParameter("form", true, false, "cols", r.URL.Query(), &params.Cols)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Invalid format for parameter cols: %s", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "bbox" -------------
+	if paramValue := r.URL.Query().Get("bbox"); paramValue != "" {
+
+	}
+
+	err = runtime.BindQueryParameter("form", true, false, "bbox", r.URL.Query(), &params.Bbox)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid format for parameter bbox: %s", err), http.StatusBadRequest)
 		return
 	}
 

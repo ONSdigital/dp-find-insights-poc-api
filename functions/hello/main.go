@@ -114,11 +114,12 @@ func (app *App) Handler(ctx context.Context, req *events.APIGatewayProxyRequest)
 	if dataset == "" {
 		return clientResponse("missing dataset path parameter"), nil
 	}
+	bbox := req.QueryStringParameters["bbox"]
 	// empty list means ALL
 	rows := req.MultiValueQueryStringParameters["rows"]
 	cols := req.MultiValueQueryStringParameters["cols"]
 
-	body, err := app.d.Query(ctx, dataset, rows, cols)
+	body, err := app.d.Query(ctx, dataset, bbox, rows, cols)
 	if err != nil {
 		return errorResponse(http.StatusInternalServerError, "problem with query", err), nil
 	}

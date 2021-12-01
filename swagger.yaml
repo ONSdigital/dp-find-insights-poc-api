@@ -78,6 +78,10 @@ paths:
             type: array
             items:
               type: string
+        - in: query
+          name: bbox
+          schema:
+            type: string
       responses:
         200:
           content:
