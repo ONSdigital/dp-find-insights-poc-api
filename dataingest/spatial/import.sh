@@ -27,7 +27,7 @@ psql <<EOT
 \x
 UPDATE geo SET wkb_geometry=lad_gis.wkb_geometry, long=lad_gis.long, lat=lad_gis.lat, name=lad_gis.lad17nm 
 FROM lad_gis  
-WHERE geo.code=lad_gis.lad17cd
+WHERE geo.code=lad_gis.lad17cd AND geo.type_id=4
 EOT
 
 # copy LSOA data into geo
@@ -35,7 +35,7 @@ psql <<EOT2
 \x
 UPDATE geo SET wkb_geometry=lsoa_gis.wkb_geometry, long=lsoa_gis.long, lat=lsoa_gis.lat, name=lsoa_gis.lsoa11nm 
 FROM lsoa_gis  
-WHERE geo.code=lsoa_gis.lsoa11cd
+WHERE geo.code=lsoa_gis.lsoa11cd AND geo.type_id=6
 EOT2
 
 psql -c "DROP TABLE lsoa_gis"
