@@ -91,6 +91,12 @@ func main() {
 		log.Print(err)
 	}
 
+	if err := db.Exec(`ALTER TABLE geo ADD COLUMN wkb_geometry geometry(Geometry,4326)`); err != nil {
+		if !strings.Contains(err.Error.Error(), "SQLSTATE 42701") {
+			log.Print(err.Error.Error())
+		}
+	}
+
 	if haveDump {
 		ndump, _ := pgDump()
 		f, err := os.Create("sql/schema.sql") // XXX
