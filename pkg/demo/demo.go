@@ -69,12 +69,12 @@ AND nomis_category.year = %d
 AND geo_metric.category_id = nomis_category.id
 `
 
-	geoWhere, err := condition("geo.code", geos)
+	geoWhere, err := additionalCondition("geo.code", geos)
 	if err != nil {
 		return "", err
 	}
 
-	catWhere, err := condition("nomis_category.long_nomis_code", cats)
+	catWhere, err := additionalCondition("nomis_category.long_nomis_code", cats)
 	if err != nil {
 		return "", err
 	}
@@ -130,7 +130,7 @@ AND nomis_category.year = %d
 %s
 `
 
-	catWhere, err := condition("nomis_category.long_nomis_code", cats)
+	catWhere, err := additionalCondition("nomis_category.long_nomis_code", cats)
 	if err != nil {
 		return "", err
 	}
@@ -230,9 +230,9 @@ func (app *Demo) collectCells(ctx context.Context, sql string) (string, error) {
 	return body.String(), nil
 }
 
-// condition wraps the output of WherePart inside "AND (...)".
-// We "know" this condition will not be the first condition in the query.
-func condition(col string, args []string) (string, error) {
+// additionalCondition wraps the output of WherePart inside "AND (...)".
+// We "know" this additionalCondition will not be the first additionalCondition in the query.
+func additionalCondition(col string, args []string) (string, error) {
 	if len(args) == 0 {
 		return "", nil
 	}
