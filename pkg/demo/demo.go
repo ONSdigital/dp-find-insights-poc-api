@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/database"
+	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/dedent"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/table"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/timer"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/where"
@@ -50,24 +51,24 @@ func (app *Demo) rowQuery(ctx context.Context, geos, cats []string) (string, err
 	// Construct SQL
 	//
 	template := `
-SELECT
-    geo.code AS geography_code,
-    nomis_category.long_nomis_code AS category_code,
-    geo_metric.metric AS value
-FROM
-    geo_metric,
-    geo,
-    nomis_category,
-    data_ver
-WHERE data_ver.census_year = 2011
-AND data_ver.ver_string = '2.2'
-%s
-AND geo_metric.data_ver_id = data_ver.id
-AND geo_metric.geo_id = geo.id
-%s
-AND nomis_category.year = %d
-AND geo_metric.category_id = nomis_category.id
-`
+		SELECT
+			geo.code AS geography_code,
+			nomis_category.long_nomis_code AS category_code,
+			geo_metric.metric AS value
+		FROM
+			geo_metric,
+			geo,
+			nomis_category,
+			data_ver
+		WHERE data_ver.census_year = 2011
+		AND data_ver.ver_string = '2.2'
+		%s
+		AND geo_metric.data_ver_id = data_ver.id
+		AND geo_metric.geo_id = geo.id
+		%s
+		AND nomis_category.year = %d
+		AND geo_metric.category_id = nomis_category.id
+		`
 
 	geoWhere, err := additionalCondition("geo.code", geos)
 	if err != nil {
@@ -81,10 +82,11 @@ AND geo_metric.category_id = nomis_category.id
 
 	sql := fmt.Sprintf(
 		template,
-		geoWhere,
-		catWhere,
+		dedent.Indent(geoWhere, "\t\t"),
+		dedent.Indent(catWhere, "\t\t"),
 		2011,
 	)
+	sql = dedent.Dedent(sql)
 	fmt.Printf("sql: %s\n", sql)
 
 	return app.collectCells(ctx, sql)
@@ -105,30 +107,30 @@ func (app *Demo) bboxQuery(ctx context.Context, bbox string, cats []string) (str
 	// Construct SQL
 	//
 	template := `
-SELECT
-	geo.code AS geography_code,
-	nomis_category.long_nomis_code AS category_code,
-	geo_metric.metric AS value
-FROM
-	viv_test_lsoa_geojson,
-	geo,
-	geo_metric,
-	data_ver,
-	nomis_category
-WHERE viv_test_lsoa_geojson.wkb_geometry && ST_GeomFromText(
-		'MULTIPOINT(%f %f, %f %f)',
-		4326
-	)
-AND geo.code = viv_test_lsoa_geojson.lsoa11cd
-AND geo.type_id = 6
-AND geo_metric.geo_id = geo.id
-AND data_ver.id = geo_metric.data_ver_id
-AND data_ver.census_year = %d
-AND data_ver.ver_string = '2.2'
-AND nomis_category.id = geo_metric.category_id
-AND nomis_category.year = %d
-%s
-`
+		SELECT
+			geo.code AS geography_code,
+			nomis_category.long_nomis_code AS category_code,
+			geo_metric.metric AS value
+		FROM
+			viv_test_lsoa_geojson,
+			geo,
+			geo_metric,
+			data_ver,
+			nomis_category
+		WHERE viv_test_lsoa_geojson.wkb_geometry && ST_GeomFromText(
+			'MULTIPOINT(%f %f, %f %f)',
+			4326
+		)
+		AND geo.code = viv_test_lsoa_geojson.lsoa11cd
+		AND geo.type_id = 6
+		AND geo_metric.geo_id = geo.id
+		AND data_ver.id = geo_metric.data_ver_id
+		AND data_ver.census_year = %d
+		AND data_ver.ver_string = '2.2'
+		AND nomis_category.id = geo_metric.category_id
+		AND nomis_category.year = %d
+		%s
+		`
 
 	catWhere, err := additionalCondition("nomis_category.long_nomis_code", cats)
 	if err != nil {
@@ -143,9 +145,9 @@ AND nomis_category.year = %d
 		p2lat,
 		2011,
 		2011,
-		catWhere,
+		dedent.Indent(catWhere, "\t\t"),
 	)
-
+	sql = dedent.Dedent(sql)
 	fmt.Printf("sql: %s\n", sql)
 
 	return app.collectCells(ctx, sql)
