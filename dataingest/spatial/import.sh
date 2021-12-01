@@ -18,3 +18,25 @@ for TABLE in "${!tables[@]}"; do
     docker run $EXTRA -v $PWD:$PWD $DOCKER ogr2ogr -f "PostgreSQL" PG:"host=$PGHOST user=$PGUSER dbname=$PGDATABASE password=$PGPASSWORD port=$PGPORT" "$PWD/$GEOJSON" -nln "$TABLE" --config PG_USE_COPY YES -lco GEOM_TYPE=geometry
     psql -c "VACUUM ANALYZE $TABLE"
 done
+
+psql -c "ALTER TABLE lad_gis ADD CONSTRAINT uq_lad17cd UNIQUE(lad17cd)"
+psql -c "ALTER TABLE lsoa_gis ADD CONSTRAINT uq_lsoa11cd UNIQUE(lsoa11cd)"
+
+# copy LAD data into geo
+psql <<EOT
+\x
+UPDATE geo SET wkb_geometry=lad_gis.wkb_geometry, long=lad_gis.long, lat=lad_gis.lat, name=lad_gis.lad17nm 
+FROM lad_gis  
+WHERE geo.code=lad_gis.lad17cd
+EOT
+
+# copy LSOA data into geo
+psql <<EOT2
+\x
+UPDATE geo SET wkb_geometry=lsoa_gis.wkb_geometry, long=lsoa_gis.long, lat=lsoa_gis.lat, name=lsoa_gis.lsoa11nm 
+FROM lsoa_gis  
+WHERE geo.code=lsoa_gis.lsoa11cd
+EOT2
+
+psql -c "DROP TABLE lsoa_gis"
+psql -c "DROP TABLE lad_gis"
