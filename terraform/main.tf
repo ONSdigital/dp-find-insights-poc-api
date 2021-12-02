@@ -180,7 +180,7 @@ resource "aws_lambda_function" "fi-hello" {
 
   environment {
     variables = {
-      PGHOST          = "fi-database-1.cbhpmcuqy9vo.eu-central-1.rds.amazonaws.com"
+      PGHOST          = "fi-database-2.cbhpmcuqy9vo.eu-central-1.rds.amazonaws.com"
       PGPORT          = "54322"
       PGUSER          = "insights"
       PGDATABASE      = "census"

@@ -13,7 +13,7 @@ import (
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/where"
 
 	_ "github.com/jackc/pgx/v4/stdlib"
-	_ "github.com/lib/pq"
+	"github.com/lib/pq"
 )
 
 type Demo struct {
@@ -28,13 +28,13 @@ func New(db *database.Database, maxMetrics int) (*Demo, error) {
 	}, nil
 }
 
-func (app *Demo) Query(ctx context.Context, dataset, bbox string, rows, cols []string) (string, error) {
+func (app *Demo) Query(ctx context.Context, dataset, bbox, geotype string, rows, cols []string) (string, error) {
 	if dataset != "skinny" {
 		cols = gatherTokens(cols)
 		return app.tableQuery(ctx, dataset, rows, cols)
 	}
 	if len(bbox) > 0 {
-		return app.bboxQuery(ctx, bbox, cols)
+		return app.bboxQuery(ctx, bbox, geotype, cols)
 	}
 	return app.rowQuery(ctx, rows, cols)
 }
@@ -92,14 +92,17 @@ AND geo_metric.category_id = nomis_category.id
 
 // bboxQuery returns the csv table for LSOAs intersecting with the given bbox
 //
-func (app *Demo) bboxQuery(ctx context.Context, bbox string, cats []string) (string, error) {
+func (app *Demo) bboxQuery(ctx context.Context, bbox, geotype string, cats []string) (string, error) {
 	var p1lat, p1lon, p2lat, p2lon float64
 	fields, err := fmt.Sscanf(bbox, "%f,%f,%f,%f", &p1lat, &p1lon, &p2lat, &p2lon)
 	if err != nil {
 		return "", fmt.Errorf("scanning bbox %q: %w", bbox, err)
 	}
 	if fields != 4 {
-		return "", ErrMissingParams
+		return "", fmt.Errorf("bbox missing a number: %w", ErrMissingParams)
+	}
+	if geotype == "" {
+		return "", fmt.Errorf("geotype required: %w", ErrMissingParams)
 	}
 
 	// Construct SQL
@@ -110,17 +113,18 @@ SELECT
 	nomis_category.long_nomis_code AS category_code,
 	geo_metric.metric AS value
 FROM
-	viv_test_lsoa_geojson,
 	geo,
+	geo_type,
 	geo_metric,
 	data_ver,
 	nomis_category
-WHERE viv_test_lsoa_geojson.wkb_geometry && ST_GeomFromText(
+WHERE geo.wkb_geometry && ST_GeomFromText(
 		'MULTIPOINT(%f %f, %f %f)',
 		4326
 	)
-AND geo.code = viv_test_lsoa_geojson.lsoa11cd
-AND geo.type_id = 6
+AND geo.valid
+AND geo.type_id = geo_type.id
+AND geo_type.name = %s
 AND geo_metric.geo_id = geo.id
 AND data_ver.id = geo_metric.data_ver_id
 AND data_ver.census_year = %d
@@ -141,6 +145,7 @@ AND nomis_category.year = %d
 		p1lat,
 		p2lon,
 		p2lat,
+		pq.QuoteLiteral(geotype),
 		2011,
 		2011,
 		catWhere,

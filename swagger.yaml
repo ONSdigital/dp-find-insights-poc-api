@@ -82,6 +82,10 @@ paths:
           name: bbox
           schema:
             type: string
+        - in: query
+          name: geotype
+          schema:
+            type: string
       responses:
         200:
           content:
