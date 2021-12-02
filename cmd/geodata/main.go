@@ -8,7 +8,7 @@ import (
 	"os"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/database"
-	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/demo"
+	geodata "github.com/ONSdigital/dp-find-insights-poc-api/pkg/geodata"
 )
 
 func main() {
@@ -52,8 +52,8 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	// Set up our demo app
-	app, err := demo.New(db, *maxmetrics)
+	// Set up our geodata app
+	app, err := geodata.New(db, *maxmetrics)
 	if err != nil {
 		log.Fatalln(err)
 	}

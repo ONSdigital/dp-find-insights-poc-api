@@ -18,16 +18,16 @@ To build the cli:
 $ make build-cli
 ```
 
-And it ends up as `build/demo`
+And it ends up as `build/geodata`
 
 So you can do this:
 
 ```
-$ build/demo --dataset atlas2011.qs119ew
+$ build/geodata --dataset atlas2011.qs119ew
 ```
 
 Or:
 
 ```
-$ build/demo --dataset atlas2011.qs119ew --rows geography_code:E01000001 --cols geography_code
+$ build/geodata --dataset atlas2011.qs119ew --rows geography_code:E01000001 --cols geography_code
 ```

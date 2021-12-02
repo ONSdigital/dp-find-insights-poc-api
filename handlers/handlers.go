@@ -7,18 +7,18 @@ import (
 	"net/http"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/api"
-	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/demo"
+	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/geodata"
 )
 
 type Server struct {
-	private   bool          // true if private endpoint feature flag is enabled
-	queryDemo *demo.Geodata // if nil, database not available
+	private      bool             // true if private endpoint feature flag is enabled
+	querygeodata *geodata.Geodata // if nil, database not available
 }
 
-func New(private bool, queryDemo *demo.Geodata) *Server {
+func New(private bool, querygeodata *geodata.Geodata) *Server {
 	return &Server{
-		private:   private,
-		queryDemo: queryDemo,
+		private:      private,
+		querygeodata: querygeodata,
 	}
 }
 
@@ -34,7 +34,7 @@ func (svr *Server) GetDevHelloDataset(w http.ResponseWriter, r *http.Request, da
 		sendError(w, http.StatusNotFound, "endpoint not enabled")
 		return
 	}
-	if svr.queryDemo == nil {
+	if svr.querygeodata == nil {
 		sendError(w, http.StatusNotImplemented, "database not enabled")
 		return
 	}
@@ -60,12 +60,12 @@ func (svr *Server) GetDevHelloDataset(w http.ResponseWriter, r *http.Request, da
 	}
 
 	ctx := r.Context()
-	csv, err := svr.queryDemo.Query(ctx, dataset, bbox, geotype, rows, cols)
+	csv, err := svr.querygeodata.Query(ctx, dataset, bbox, geotype, rows, cols)
 	if err != nil {
 		status := http.StatusInternalServerError
-		if errors.Is(err, demo.ErrTooManyMetrics) {
+		if errors.Is(err, geodata.ErrTooManyMetrics) {
 			status = http.StatusForbidden
-		} else if errors.Is(err, demo.ErrMissingParams) || errors.Is(err, demo.ErrInvalidTable) {
+		} else if errors.Is(err, geodata.ErrMissingParams) || errors.Is(err, geodata.ErrInvalidTable) {
 			status = http.StatusBadRequest
 		}
 		sendError(w, status, err.Error())

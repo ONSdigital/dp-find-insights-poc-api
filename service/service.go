@@ -10,7 +10,7 @@ import (
 	"github.com/ONSdigital/dp-find-insights-poc-api/config"
 	"github.com/ONSdigital/dp-find-insights-poc-api/handlers"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/database"
-	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/demo"
+	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/geodata"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/justinas/alice"
 	"github.com/pkg/errors"
@@ -32,7 +32,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	log.Info(ctx, "using service configuration", log.Data{"config": cfg})
 
 	var db *database.Database
-	var queryDemo *demo.Geodata
+	var queryGeodata *geodata.Geodata
 	var err error
 	if cfg.EnableDatabase {
 		// figure out postgres password
@@ -63,14 +63,14 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		}
 
 		// set up our query functionality if we have a db
-		queryDemo, err = demo.New(db, cfg.MaxMetrics)
+		queryGeodata, err = geodata.New(db, cfg.MaxMetrics)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	// Setup the API
-	a := handlers.New(true, queryDemo) // always include private handlers for now
+	a := handlers.New(true, queryGeodata) // always include private handlers for now
 
 	// Setup health checks
 	hc, err := serviceList.GetHealthCheck(cfg, buildTime, gitCommit, version)

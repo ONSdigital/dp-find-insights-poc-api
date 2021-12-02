@@ -14,11 +14,11 @@ import (
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/aws"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/database"
-	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/demo"
+	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/geodata"
 )
 
 type App struct {
-	d *demo.Geodata
+	d *geodata.Geodata
 
 	// It's hard to return usable errors from a lambda main function.
 	// So any errors in main set err here and Handler checks it first.
@@ -85,10 +85,10 @@ func NewApp() *App {
 
 	// Initialise our function's app
 	//
-	d, err := demo.New(db, maxmetrics)
+	d, err := geodata.New(db, maxmetrics)
 	if err != nil {
 		return &App{
-			errmsg: "cannot initialise demo app",
+			errmsg: "cannot initialise geodata app",
 			err:    err,
 		}
 	}

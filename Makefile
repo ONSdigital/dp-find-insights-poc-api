@@ -92,11 +92,11 @@ invoke-curl:	## invoke lambda via curl
 
 .PHONY: build-cli
 build-cli:	## build the hello cli (build/hello-cli)
-	go build -o build/demo ./cmd/demo/...
+	go build -o build/geodata ./cmd/geodata/...
 
 .PHONY: run-cli
 run-cli:	## quick sanity test on cli (must set env vars)
-	build/demo --dataset atlas2011.qs119ew
+	build/geodata --dataset atlas2011.qs119ew
 
 #
 # creatschema

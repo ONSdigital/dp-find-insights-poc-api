@@ -1,4 +1,4 @@
-package demo
+package geodata
 
 type Sentinel string
 
