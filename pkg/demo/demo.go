@@ -16,19 +16,19 @@ import (
 	"github.com/lib/pq"
 )
 
-type Demo struct {
+type Geodata struct {
 	db         *database.Database
 	maxMetrics int
 }
 
-func New(db *database.Database, maxMetrics int) (*Demo, error) {
-	return &Demo{
+func New(db *database.Database, maxMetrics int) (*Geodata, error) {
+	return &Geodata{
 		db:         db,
 		maxMetrics: maxMetrics,
 	}, nil
 }
 
-func (app *Demo) Query(ctx context.Context, dataset, bbox, geotype string, rows, cols []string) (string, error) {
+func (app *Geodata) Query(ctx context.Context, dataset, bbox, geotype string, rows, cols []string) (string, error) {
 	if dataset != "skinny" {
 		cols = gatherTokens(cols)
 		return app.tableQuery(ctx, dataset, rows, cols)
@@ -41,7 +41,7 @@ func (app *Demo) Query(ctx context.Context, dataset, bbox, geotype string, rows,
 
 // rowQuery returns the csv table for the given geometry and category codes.
 //
-func (app *Demo) rowQuery(ctx context.Context, geos, cats []string) (string, error) {
+func (app *Geodata) rowQuery(ctx context.Context, geos, cats []string) (string, error) {
 
 	if len(geos) == 0 && len(cats) == 0 {
 		return "", ErrMissingParams
@@ -92,7 +92,7 @@ AND geo_metric.category_id = nomis_category.id
 
 // bboxQuery returns the csv table for LSOAs intersecting with the given bbox
 //
-func (app *Demo) bboxQuery(ctx context.Context, bbox, geotype string, cats []string) (string, error) {
+func (app *Geodata) bboxQuery(ctx context.Context, bbox, geotype string, cats []string) (string, error) {
 	var p1lat, p1lon, p2lat, p2lon float64
 	fields, err := fmt.Sscanf(bbox, "%f,%f,%f,%f", &p1lat, &p1lon, &p2lat, &p2lon)
 	if err != nil {
@@ -160,7 +160,7 @@ AND nomis_category.year = %d
 // sql must be a query against the geo_metric table selecting exactly
 // code, category and metric.
 //
-func (app *Demo) collectCells(ctx context.Context, sql string) (string, error) {
+func (app *Geodata) collectCells(ctx context.Context, sql string) (string, error) {
 	// Allocate output table
 	//
 	tbl, err := table.New("geography_code")
@@ -258,7 +258,7 @@ AND (
 // rowspec is not used at present.
 // colspec is a list of columns to include in the result. Empty means all columns.
 //
-func (app *Demo) tableQuery(ctx context.Context, dataset string, rowspec, colspec []string) (string, error) {
+func (app *Geodata) tableQuery(ctx context.Context, dataset string, rowspec, colspec []string) (string, error) {
 
 	// check allow-list for valid table
 

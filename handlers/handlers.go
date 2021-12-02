@@ -11,11 +11,11 @@ import (
 )
 
 type Server struct {
-	private   bool       // true if private endpoint feature flag is enabled
-	queryDemo *demo.Demo // if nil, database not available
+	private   bool          // true if private endpoint feature flag is enabled
+	queryDemo *demo.Geodata // if nil, database not available
 }
 
-func New(private bool, queryDemo *demo.Demo) *Server {
+func New(private bool, queryDemo *demo.Geodata) *Server {
 	return &Server{
 		private:   private,
 		queryDemo: queryDemo,

@@ -18,7 +18,7 @@ import (
 )
 
 type App struct {
-	d *demo.Demo
+	d *demo.Geodata
 
 	// It's hard to return usable errors from a lambda main function.
 	// So any errors in main set err here and Handler checks it first.

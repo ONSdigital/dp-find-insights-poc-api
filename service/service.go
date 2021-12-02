@@ -32,7 +32,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	log.Info(ctx, "using service configuration", log.Data{"config": cfg})
 
 	var db *database.Database
-	var queryDemo *demo.Demo
+	var queryDemo *demo.Geodata
 	var err error
 	if cfg.EnableDatabase {
 		// figure out postgres password
