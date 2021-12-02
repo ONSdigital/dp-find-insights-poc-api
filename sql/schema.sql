@@ -398,6 +398,13 @@ ALTER TABLE ONLY public.schema_ver
 
 
 --
+-- Name: geo_wkb_geometry_geom_idx; Type: INDEX; Schema: public; Owner: insights
+--
+
+CREATE INDEX geo_wkb_geometry_geom_idx ON public.geo USING gist (wkb_geometry);
+
+
+--
 -- Name: idx_data_ver_deleted_at; Type: INDEX; Schema: public; Owner: insights
 --
 

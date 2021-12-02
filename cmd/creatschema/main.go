@@ -91,7 +91,12 @@ func main() {
 		log.Print(err)
 	}
 
+	// refactor
 	if err := db.Exec(`ALTER TABLE geo ADD COLUMN wkb_geometry geometry(Geometry,4326)`).Error; err != nil {
+		log.Print(err)
+	}
+
+	if err := db.Exec(`CREATE INDEX geo_wkb_geometry_geom_idx ON public.geo USING gist (wkb_geometry);`).Error; err != nil {
 		log.Print(err)
 	}
 
