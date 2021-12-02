@@ -67,6 +67,7 @@ $ env |grep PG
 
 ```
 $ createdb censustiny
+$ psql -U postgres -d censustiny -c "CREATE EXTENSION postgis"
 $ cd dp-find-insights-poc-api
 $ make update-schema
 ```
