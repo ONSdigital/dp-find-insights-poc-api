@@ -25,9 +25,10 @@ type HelloResponse struct {
 
 // GetDevHelloDatasetParams defines parameters for GetDevHelloDataset.
 type GetDevHelloDatasetParams struct {
-	Rows *[]string `json:"rows,omitempty"`
-	Cols *[]string `json:"cols,omitempty"`
-	Bbox *string   `json:"bbox,omitempty"`
+	Rows    *[]string `json:"rows,omitempty"`
+	Cols    *[]string `json:"cols,omitempty"`
+	Bbox    *string   `json:"bbox,omitempty"`
+	Geotype *string   `json:"geotype,omitempty"`
 }
 
 // ServerInterface represents all server handlers.
@@ -96,6 +97,17 @@ func (siw *ServerInterfaceWrapper) GetDevHelloDataset(w http.ResponseWriter, r *
 	err = runtime.BindQueryParameter("form", true, false, "bbox", r.URL.Query(), &params.Bbox)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Invalid format for parameter bbox: %s", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "geotype" -------------
+	if paramValue := r.URL.Query().Get("geotype"); paramValue != "" {
+
+	}
+
+	err = runtime.BindQueryParameter("form", true, false, "geotype", r.URL.Query(), &params.Geotype)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid format for parameter geotype: %s", err), http.StatusBadRequest)
 		return
 	}
 

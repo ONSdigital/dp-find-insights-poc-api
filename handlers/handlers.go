@@ -41,6 +41,7 @@ func (svr *Server) GetDevHelloDataset(w http.ResponseWriter, r *http.Request, da
 	var rows []string
 	var cols []string
 	var bbox string
+	var geotype string
 	if dataset == "" {
 		sendError(w, http.StatusBadRequest, "dataset missing")
 		return
@@ -54,9 +55,12 @@ func (svr *Server) GetDevHelloDataset(w http.ResponseWriter, r *http.Request, da
 	if params.Bbox != nil {
 		bbox = *params.Bbox
 	}
+	if params.Geotype != nil {
+		geotype = *params.Geotype
+	}
 
 	ctx := r.Context()
-	csv, err := svr.queryDemo.Query(ctx, dataset, bbox, rows, cols)
+	csv, err := svr.queryDemo.Query(ctx, dataset, bbox, geotype, rows, cols)
 	if err != nil {
 		status := http.StatusInternalServerError
 		if errors.Is(err, demo.ErrTooManyMetrics) {

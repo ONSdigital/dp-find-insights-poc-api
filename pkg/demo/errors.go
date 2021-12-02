@@ -3,7 +3,7 @@ package demo
 type Sentinel string
 
 const (
-	ErrMissingParams  = Sentinel("rows or cols is missing")
+	ErrMissingParams  = Sentinel("missing parameter")
 	ErrTooManyMetrics = Sentinel("too many metrics")
 	ErrInvalidTable   = Sentinel("invalid table")
 )
