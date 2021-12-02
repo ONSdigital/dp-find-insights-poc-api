@@ -91,8 +91,8 @@ func main() {
 		log.Print(err)
 	}
 
-	if err := db.Exec(`ALTER TABLE geo ADD COLUMN wkb_geometry geometry(Geometry,4326)`); err != nil {
-		log.Print(err.Error.Error())
+	if err := db.Exec(`ALTER TABLE geo ADD COLUMN wkb_geometry geometry(Geometry,4326)`).Error; err != nil {
+		log.Print(err)
 	}
 
 	if haveDump {
