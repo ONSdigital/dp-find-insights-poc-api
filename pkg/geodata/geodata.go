@@ -28,13 +28,16 @@ func New(db *database.Database, maxMetrics int) (*Geodata, error) {
 	}, nil
 }
 
-func (app *Geodata) Query(ctx context.Context, dataset, bbox, geotype string, rows, cols []string) (string, error) {
+func (app *Geodata) Query(ctx context.Context, dataset, bbox, location string, radius int, geotype string, rows, cols []string) (string, error) {
 	if dataset != "skinny" {
 		cols = gatherTokens(cols)
 		return app.tableQuery(ctx, dataset, rows, cols)
 	}
 	if len(bbox) > 0 {
 		return app.bboxQuery(ctx, bbox, geotype, cols)
+	}
+	if len(location) > 0 {
+		return app.radiusQuery(ctx, location, radius, geotype, cols)
 	}
 	return app.rowQuery(ctx, rows, cols)
 }
@@ -90,7 +93,7 @@ AND geo_metric.category_id = nomis_category.id
 	return app.collectCells(ctx, sql)
 }
 
-// bboxQuery returns the csv table for LSOAs intersecting with the given bbox
+// bboxQuery returns the csv table for areas intersecting with the given bbox
 //
 func (app *Geodata) bboxQuery(ctx context.Context, bbox, geotype string, cats []string) (string, error) {
 	var p1lat, p1lon, p2lat, p2lon float64
@@ -145,6 +148,77 @@ AND nomis_category.year = %d
 		p1lat,
 		p2lon,
 		p2lat,
+		pq.QuoteLiteral(geotype),
+		2011,
+		2011,
+		catWhere,
+	)
+
+	fmt.Printf("sql: %s\n", sql)
+
+	return app.collectCells(ctx, sql)
+}
+
+// radiusQuery returns the csv table for areas within radius meters from location
+//
+func (app *Geodata) radiusQuery(ctx context.Context, location string, radius int, geotype string, cats []string) (string, error) {
+	var lat, lon float64
+	fields, err := fmt.Sscanf(location, "%f,%f", &lat, &lon)
+	if err != nil {
+		return "", fmt.Errorf("scanning location %q: %w", location, err)
+	}
+	if fields != 2 {
+		return "", fmt.Errorf("location missing a number: %w", ErrMissingParams)
+	}
+
+	if radius < 1 {
+		return "", fmt.Errorf("radius must be >0: %q: %w", radius, err)
+	}
+
+	if geotype == "" {
+		return "", fmt.Errorf("geotype required: %w", ErrMissingParams)
+	}
+
+	template := `
+SELECT
+    geo.code AS geography_code,
+    nomis_category.long_nomis_code AS category_code,
+    geo_metric.metric AS value
+FROM
+    geo,
+    geo_type,
+    geo_metric,
+    data_ver,
+    nomis_category
+WHERE ST_DWithin(
+    geo.wkb_geometry::geography,
+    ST_SetSRID(
+        ST_Point(%f, %f),
+        4326
+    )::geography,
+    %d
+)
+AND geo_type.id = geo.type_id
+AND geo_type.name = %s
+AND geo_metric.geo_id = geo.id
+AND data_ver.id = geo_metric.data_ver_id
+AND data_ver.census_year = %d
+ANd data_ver.ver_string = '2.2'
+AND nomis_category.id = geo_metric.category_id
+AND nomis_category.year = %d
+%s
+`
+
+	catWhere, err := additionalCondition("nomis_category.long_nomis_code", cats)
+	if err != nil {
+		return "", err
+	}
+
+	sql := fmt.Sprintf(
+		template,
+		lon,
+		lat,
+		radius,
 		pq.QuoteLiteral(geotype),
 		2011,
 		2011,

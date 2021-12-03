@@ -16,6 +16,8 @@ func main() {
 
 	dataset := flag.String("dataset", "", "name of dataset to query")
 	bbox := flag.String("bbox", "", "bounding box lat1,lon1,lat2,lon2")
+	location := flag.String("location", "", "central point for radius queries")
+	radius := flag.Int("radius", 0, "radius in meters")
 	geotype := flag.String("geotype", "", "geography type (LSOA or LAD)")
 	flag.Var(&rows, "rows", "row or row range")
 	flag.Var(&cols, "cols", "column name(s) to return")
@@ -26,6 +28,8 @@ func main() {
 		usage()
 	}
 	fmt.Printf("bbox: %s\n", *bbox)
+	fmt.Printf("location: %s\n", *location)
+	fmt.Printf("radius: %d meters\n", *radius)
 	fmt.Printf("geotype: %s\n", *geotype)
 	fmt.Printf("rows:\n")
 	for _, r := range rows {
@@ -59,7 +63,7 @@ func main() {
 	}
 
 	ctx := context.Background()
-	body, err := app.Query(ctx, *dataset, *bbox, *geotype, rows, cols)
+	body, err := app.Query(ctx, *dataset, *bbox, *location, *radius, *geotype, rows, cols)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -68,6 +72,6 @@ func main() {
 }
 
 func usage() {
-	fmt.Fprintf(os.Stderr, "usage: %s --dataset <dataset> [--rows rowspec[,...]|--bbox p1lat,p1lon,p2lat,pl2lon] [--geotype LSOA|LAD] [--cols col[,...]] [--maxmetrics n]\n", os.Args[0])
+	fmt.Fprintf(os.Stderr, "usage: %s --dataset <dataset> [--rows rowspec[,...]|--bbox p1lat,p1lon,p2lat,pl2lon|--location lat,lon --radius meters] [--geotype LSOA|LAD] [--cols col[,...]] [--maxmetrics n]\n", os.Args[0])
 	os.Exit(2)
 }

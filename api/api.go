@@ -25,10 +25,12 @@ type HelloResponse struct {
 
 // GetDevHelloDatasetParams defines parameters for GetDevHelloDataset.
 type GetDevHelloDatasetParams struct {
-	Rows    *[]string `json:"rows,omitempty"`
-	Cols    *[]string `json:"cols,omitempty"`
-	Bbox    *string   `json:"bbox,omitempty"`
-	Geotype *string   `json:"geotype,omitempty"`
+	Rows     *[]string `json:"rows,omitempty"`
+	Cols     *[]string `json:"cols,omitempty"`
+	Bbox     *string   `json:"bbox,omitempty"`
+	Geotype  *string   `json:"geotype,omitempty"`
+	Location *string   `json:"location,omitempty"`
+	Radius   *int      `json:"radius,omitempty"`
 }
 
 // ServerInterface represents all server handlers.
@@ -108,6 +110,28 @@ func (siw *ServerInterfaceWrapper) GetDevHelloDataset(w http.ResponseWriter, r *
 	err = runtime.BindQueryParameter("form", true, false, "geotype", r.URL.Query(), &params.Geotype)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Invalid format for parameter geotype: %s", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "location" -------------
+	if paramValue := r.URL.Query().Get("location"); paramValue != "" {
+
+	}
+
+	err = runtime.BindQueryParameter("form", true, false, "location", r.URL.Query(), &params.Location)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid format for parameter location: %s", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "radius" -------------
+	if paramValue := r.URL.Query().Get("radius"); paramValue != "" {
+
+	}
+
+	err = runtime.BindQueryParameter("form", true, false, "radius", r.URL.Query(), &params.Radius)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid format for parameter radius: %s", err), http.StatusBadRequest)
 		return
 	}
 

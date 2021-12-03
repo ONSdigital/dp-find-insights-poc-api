@@ -86,6 +86,14 @@ paths:
           name: geotype
           schema:
             type: string
+        - in: query
+          name: location
+          schema:
+            type: string
+        - in: query
+          name: radius
+          schema:
+            type: integer
       responses:
         200:
           content:
