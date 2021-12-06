@@ -90,8 +90,8 @@ AND geo_metric.category_id = nomis_category.id
 // bboxQuery returns the csv table for areas intersecting with the given bbox
 //
 func (app *Geodata) bboxQuery(ctx context.Context, bbox, geotype string, cats []string) (string, error) {
-	var p1lat, p1lon, p2lat, p2lon float64
-	fields, err := fmt.Sscanf(bbox, "%f,%f,%f,%f", &p1lat, &p1lon, &p2lat, &p2lon)
+	var p1lon, p1lat, p2lon, p2lat float64
+	fields, err := fmt.Sscanf(bbox, "%f,%f,%f,%f", &p1lon, &p1lat, &p2lon, &p2lat)
 	if err != nil {
 		return "", fmt.Errorf("scanning bbox %q: %w", bbox, err)
 	}
@@ -156,8 +156,8 @@ AND nomis_category.year = %d
 // radiusQuery returns the csv table for areas within radius meters from location
 //
 func (app *Geodata) radiusQuery(ctx context.Context, location string, radius int, geotype string, cats []string) (string, error) {
-	var lat, lon float64
-	fields, err := fmt.Sscanf(location, "%f,%f", &lat, &lon)
+	var lon, lat float64
+	fields, err := fmt.Sscanf(location, "%f,%f", &lon, &lat)
 	if err != nil {
 		return "", fmt.Errorf("scanning location %q: %w", location, err)
 	}
