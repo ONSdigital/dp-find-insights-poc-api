@@ -65,6 +65,7 @@ type Geo struct {
 	Long   float64
 	Valid  bool `gorm:"DEFAULT:true"`
 	// wkb_geometry - added via ALTER
+	// wkb_long_lat_geom - added via ALTER
 	GoMetrics []GeoMetric `gorm:"foreignKey:GeoID;references:ID"`
 }
 

@@ -100,6 +100,16 @@ func main() {
 		log.Print(err)
 	}
 
+	// refactor XXX
+
+	if err := db.Exec(`ALTER TABLE geo ADD COLUMN wkb_long_lat_geom geometry(Geometry,4326)`).Error; err != nil {
+		log.Print(err)
+	}
+
+	if err := db.Exec(`CREATE INDEX geo_long_lat_geom_idx ON public.geo USING gist ( wkb_long_lat_geom);`).Error; err != nil {
+		log.Print(err)
+	}
+
 	if haveDump {
 		ndump, _ := pgDump()
 		f, err := os.Create("sql/schema.sql")

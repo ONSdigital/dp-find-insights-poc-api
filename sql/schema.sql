@@ -65,7 +65,8 @@ CREATE TABLE public.geo (
     lat numeric,
     long numeric,
     valid boolean DEFAULT true,
-    wkb_geometry public.geometry(Geometry,4326)
+    wkb_geometry public.geometry(Geometry,4326),
+    wkb_long_lat_geom public.geometry(Geometry,4326)
 );
 
 
@@ -395,6 +396,29 @@ ALTER TABLE ONLY public.nomis_desc
 
 ALTER TABLE ONLY public.schema_ver
     ADD CONSTRAINT schema_ver_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: nomis_category uq_long_nomis_code; Type: CONSTRAINT; Schema: public; Owner: insights
+--
+
+ALTER TABLE ONLY public.nomis_category
+    ADD CONSTRAINT uq_long_nomis_code UNIQUE (long_nomis_code);
+
+
+--
+-- Name: nomis_desc uq_short_nomis_code; Type: CONSTRAINT; Schema: public; Owner: insights
+--
+
+ALTER TABLE ONLY public.nomis_desc
+    ADD CONSTRAINT uq_short_nomis_code UNIQUE (short_nomis_code);
+
+
+--
+-- Name: geo_long_lat_geom_idx; Type: INDEX; Schema: public; Owner: insights
+--
+
+CREATE INDEX geo_long_lat_geom_idx ON public.geo USING gist (wkb_long_lat_geom);
 
 
 --
