@@ -397,23 +397,6 @@ ALTER TABLE ONLY public.nomis_desc
 ALTER TABLE ONLY public.schema_ver
     ADD CONSTRAINT schema_ver_pkey PRIMARY KEY (id);
 
-
---
--- Name: nomis_category uq_long_nomis_code; Type: CONSTRAINT; Schema: public; Owner: insights
---
-
-ALTER TABLE ONLY public.nomis_category
-    ADD CONSTRAINT uq_long_nomis_code UNIQUE (long_nomis_code);
-
-
---
--- Name: nomis_desc uq_short_nomis_code; Type: CONSTRAINT; Schema: public; Owner: insights
---
-
-ALTER TABLE ONLY public.nomis_desc
-    ADD CONSTRAINT uq_short_nomis_code UNIQUE (short_nomis_code);
-
-
 --
 -- Name: geo_long_lat_geom_idx; Type: INDEX; Schema: public; Owner: insights
 --
