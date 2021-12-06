@@ -24,7 +24,6 @@ func init() {
 }
 
 func TestSpacialLatLog(t *testing.T) {
-
 	testCases := []struct {
 		lat          float64
 		long         float64
@@ -54,7 +53,11 @@ func TestSpacialLatLog(t *testing.T) {
 		t.Run(tC.desc, func(t *testing.T) {
 
 			results := []model.Geo{}
-			if err := db.Raw("SELECT code FROM geo WHERE ST_Within(ST_GeomFromText('SRID=4326;POINT('|| ? || ' ' || ? ||')'),wkb_geometry::GEOMETRY) AND type_id=6", cast.ToString(tC.long), cast.ToString(tC.lat)).Scan(&results).Error; err != nil {
+			if err := db.Raw(`
+			SELECT code FROM geo 
+			WHERE ST_Within(ST_GeomFromText('SRID=4326;POINT('|| ? || ' ' || ? ||')'),wkb_geometry::GEOMETRY) 
+			AND type_id=6
+			`, cast.ToString(tC.long), cast.ToString(tC.lat)).Scan(&results).Error; err != nil {
 				t.Error(err)
 			}
 
@@ -77,7 +80,6 @@ func TestSpacialLatLog(t *testing.T) {
 }
 
 func TestWelshAbsent(t *testing.T) {
-
 	results := []model.NomisCategory{}
 	if err := db.Raw(`
 	SELECT FROM nomis_category 
@@ -92,5 +94,40 @@ func TestWelshAbsent(t *testing.T) {
 	if len(results) != 0 {
 		t.Errorf("got unexpected row(s)")
 	}
+}
 
+func TestMsoaDataAbsent(t *testing.T) {
+	var count int
+	if err := db.Raw(`
+	SELECT count(*) 
+	FROM geo_metric, geo
+	WHERE geo_metric.geo_id=geo.id 
+	AND geo.type_id=5
+	`).Scan(&count).Error; err != nil {
+		t.Error(err)
+	}
+
+	fmt.Printf("%#v\n", count)
+
+	if count != 0 {
+		t.Errorf("got unexpected row(s)")
+	}
+}
+
+func TestMsoaCodesAbsent(t *testing.T) {
+
+	var count int
+	if err := db.Raw(`
+	SELECT count(*) 
+	FROM geo
+	WHERE type_id=5
+	`).Scan(&count).Error; err != nil {
+		t.Error(err)
+	}
+
+	fmt.Printf("%#v\n", count)
+
+	if count != 0 {
+		t.Errorf("got unexpected row(s)")
+	}
 }
