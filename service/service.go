@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
 	"os"
 
 	"github.com/ONSdigital/dp-api-clients-go/middleware"
@@ -49,15 +48,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		}
 
 		// open postgres connection
-		dsn := fmt.Sprintf(
-			"postgres://%s:%s@%s:%s/%s",
-			os.Getenv("PGUSER"),
-			pgpwd,
-			os.Getenv("PGHOST"),
-			os.Getenv("PGPORT"),
-			os.Getenv("PGDATABASE"),
-		)
-		db, err = database.Open("pgx", dsn)
+		db, err = database.Open("pgx", database.GetDSN())
 		if err != nil {
 			return nil, err
 		}
