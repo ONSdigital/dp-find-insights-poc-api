@@ -5,6 +5,8 @@ package database
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"os"
 
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 )
@@ -42,4 +44,15 @@ func (db *Database) Checker(ctx context.Context, state *healthcheck.CheckState) 
 
 func (db *Database) Close() error {
 	return db.db.Close()
+}
+
+func GetDSN() string {
+	return fmt.Sprintf(
+		"postgres://%s:%s@%s:%s/%s",
+		os.Getenv("PGUSER"),
+		os.Getenv("PGPASSWORD"),
+		os.Getenv("PGHOST"),
+		os.Getenv("PGPORT"),
+		os.Getenv("PGDATABASE"),
+	)
 }
