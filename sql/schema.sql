@@ -65,7 +65,8 @@ CREATE TABLE public.geo (
     lat numeric,
     long numeric,
     valid boolean DEFAULT true,
-    wkb_geometry public.geometry(Geometry,4326)
+    wkb_geometry public.geometry(Geometry,4326),
+    wkb_long_lat_geom public.geometry(Geometry,4326)
 );
 
 
@@ -395,6 +396,12 @@ ALTER TABLE ONLY public.nomis_desc
 
 ALTER TABLE ONLY public.schema_ver
     ADD CONSTRAINT schema_ver_pkey PRIMARY KEY (id);
+
+--
+-- Name: geo_long_lat_geom_idx; Type: INDEX; Schema: public; Owner: insights
+--
+
+CREATE INDEX geo_long_lat_geom_idx ON public.geo USING gist (wkb_long_lat_geom);
 
 
 --
