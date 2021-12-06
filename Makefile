@@ -41,6 +41,10 @@ test:	## run poc tests
 test-integration:	## run poc tests AND integration tests in inttests
 	go test -race -cover ./... -tags=integration
 
+.PHONY: test-datasanity
+test-datasanity:	## this needs a DB and postgres env vars set
+	go test -count=1 ./dataingest/datasanity 
+
 .PHONY: convey
 convey:	## run goconvey
 	goconvey ./...
