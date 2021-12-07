@@ -57,7 +57,7 @@ func TestSpacialLatLog(t *testing.T) {
 			results := []model.Geo{}
 			if err := db.Raw(`
 			SELECT code FROM geo 
-			WHERE ST_Within(ST_GeomFromText('SRID=4326;POINT('|| ? || ' ' || ? ||')'),wkb_geometry::GEOMETRY) 
+			WHERE ST_Within(ST_GeomFromText('POINT('|| ? || ' ' || ? ||')',4326),wkb_geometry::GEOMETRY) 
 			AND type_id=6
 			`, cast.ToString(tC.long), cast.ToString(tC.lat)).Scan(&results).Error; err != nil {
 				t.Error(err)
@@ -117,7 +117,6 @@ func TestMsoaDataAbsent(t *testing.T) {
 }
 
 func TestMsoaCodesAbsent(t *testing.T) {
-
 	var count int
 	if err := db.Raw(`
 	SELECT count(*) 
