@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/model"
+	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/database"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -33,15 +34,7 @@ func readCsvFile(filePath string) (records [][]string) {
 }
 
 func main() {
-
-	dsn := fmt.Sprintf(
-		"postgres://%s:%s@%s:%s/%s",
-		os.Getenv("PGUSER"),
-		os.Getenv("PGPASSWORD"),
-		os.Getenv("PGHOST"),
-		os.Getenv("PGPORT"),
-		os.Getenv("PGDATABASE"),
-	)
+	dsn := database.GetDSN()
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {

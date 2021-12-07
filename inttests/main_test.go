@@ -3,12 +3,12 @@
 package main
 
 import (
-	"io"
+	"log"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/sergi/go-diff/diffmatchpatch"
+	"github.com/pkg/diff"
 )
 
 func TestAPI(t *testing.T) {
@@ -21,9 +21,9 @@ func TestAPI(t *testing.T) {
 
 			if err != nil {
 				t.Errorf("Error getting %s: %v", test.url, err)
-				} else {
-					assertCORSHeader(header, test, t)
-					assertAPIResponse(b, test, t)
+			} else {
+				assertCORSHeader(header, test, t)
+				assertAPIResponse(b, test, t)
 			}
 		})
 	}
@@ -42,7 +42,7 @@ func assertCORSHeader(h map[string][]string, test APITest, t *testing.T) {
 }
 
 // Assert API responses are consistent with recorded ones
-func assertAPIResponse(b []byte, test APITest, t*testing.T) {
+func assertAPIResponse(b []byte, test APITest, t *testing.T) {
 	respfiles, err := MatchingRespFile(test.desc)
 	if err != nil {
 		t.Fail()
@@ -64,16 +64,9 @@ func assertAPIResponse(b []byte, test APITest, t*testing.T) {
 			// for diff
 
 			if os.Args[len(os.Args)-1] == "extra" {
-
-				dmp := diffmatchpatch.New()
-
-				f, _ := os.Open(DataPref + wantsha1)
-
-				wanted, _ := io.ReadAll(f)
-
-				diffs := dmp.DiffMain(string(b), string(wanted), true)
-
-				t.Log(dmp.DiffPrettyText(diffs))
+				if err := diff.Text(DataPref+respfile, "", nil, string(b), os.Stdout); err != nil {
+					log.Print(err)
+				}
 			}
 		}
 
