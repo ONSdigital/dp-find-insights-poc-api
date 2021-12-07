@@ -46,11 +46,14 @@ func (db *Database) Close() error {
 	return db.db.Close()
 }
 
-func GetDSN() string {
+func GetDSN(pw ...string) string {
+	if pw[0] == "" {
+		pw[0] = os.Getenv("PGPASSWORD")
+	}
 	return fmt.Sprintf(
 		"postgres://%s:%s@%s:%s/%s",
 		os.Getenv("PGUSER"),
-		os.Getenv("PGPASSWORD"),
+		pw[0],
 		os.Getenv("PGHOST"),
 		os.Getenv("PGPORT"),
 		os.Getenv("PGDATABASE"),

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/model"
+	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/database"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -37,14 +38,7 @@ func main() {
 		}
 	}
 
-	dsn := fmt.Sprintf(
-		"postgres://%s:%s@%s:%s/%s",
-		os.Getenv("PGUSER"),
-		os.Getenv("PGPASSWORD"),
-		os.Getenv("PGHOST"),
-		os.Getenv("PGPORT"),
-		os.Getenv("PGDATABASE"),
-	)
+	dsn := database.GetDSN()
 
 	fmt.Printf("using dsn: '%s' continue (y/n)? ", dsn)
 
