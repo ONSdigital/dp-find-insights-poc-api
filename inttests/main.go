@@ -85,6 +85,11 @@ var Tests = []APITest{
 		"rows param multi mixed cols param multi mixed",
 		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/skinny?rows=E01000001&rows=E01000100,E01000110,E01000200&rows=E01001111...E01001211&cols=QS117EW0001&cols=QS119EW0001,QS119EW0002,QS119EW0003&cols=QS118EW0001...QS118EW0011`,
 	},
+	// bbox
+	{
+		"bbox param cols param multi mixed",
+		`https://5laefo1cxd.execute-api.eu-central-1.amazonaws.com/dev/hello/skinny?bbox=51.4635,0.1338,51.4647,0.1017&cols=QS117EW0001&cols=QS119EW0001,QS119EW0002,QS119EW0003&cols=QS118EW0001...QS118EW0011&geotype=LSOA`,
+	},
 }
 
 var DataPref = "resp/"
