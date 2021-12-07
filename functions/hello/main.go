@@ -126,12 +126,12 @@ func (app *App) Handler(ctx context.Context, req *events.APIGatewayProxyRequest)
 			return errorResponse(http.StatusBadRequest, "malformed radius", err), nil
 		}
 	}
-	geotype := req.QueryStringParameters["geotype"]
+	geotypes := req.MultiValueQueryStringParameters["geotype"]
 	// empty list means ALL
 	rows := req.MultiValueQueryStringParameters["rows"]
 	cols := req.MultiValueQueryStringParameters["cols"]
 
-	body, err := app.d.Query(ctx, dataset, bbox, location, radius, geotype, rows, cols)
+	body, err := app.d.Query(ctx, dataset, bbox, location, radius, geotypes, rows, cols)
 	if err != nil {
 		return errorResponse(http.StatusInternalServerError, "problem with query", err), nil
 	}

@@ -11,7 +11,6 @@ import (
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/where"
 
 	_ "github.com/jackc/pgx/v4/stdlib"
-	"github.com/lib/pq"
 )
 
 type Geodata struct {
@@ -26,12 +25,12 @@ func New(db *database.Database, maxMetrics int) (*Geodata, error) {
 	}, nil
 }
 
-func (app *Geodata) Query(ctx context.Context, dataset, bbox, location string, radius int, geotype string, rows, cols []string) (string, error) {
+func (app *Geodata) Query(ctx context.Context, dataset, bbox, location string, radius int, geotypes, rows, cols []string) (string, error) {
 	if len(bbox) > 0 {
-		return app.bboxQuery(ctx, bbox, geotype, cols)
+		return app.bboxQuery(ctx, bbox, geotypes, cols)
 	}
 	if len(location) > 0 {
-		return app.radiusQuery(ctx, location, radius, geotype, cols)
+		return app.radiusQuery(ctx, location, radius, geotypes, cols)
 	}
 	return app.rowQuery(ctx, rows, cols)
 }
@@ -89,7 +88,7 @@ AND geo_metric.category_id = nomis_category.id
 
 // bboxQuery returns the csv table for areas intersecting with the given bbox
 //
-func (app *Geodata) bboxQuery(ctx context.Context, bbox, geotype string, cats []string) (string, error) {
+func (app *Geodata) bboxQuery(ctx context.Context, bbox string, geotypes, cats []string) (string, error) {
 	var p1lon, p1lat, p2lon, p2lat float64
 	fields, err := fmt.Sscanf(bbox, "%f,%f,%f,%f", &p1lon, &p1lat, &p2lon, &p2lat)
 	if err != nil {
@@ -97,9 +96,6 @@ func (app *Geodata) bboxQuery(ctx context.Context, bbox, geotype string, cats []
 	}
 	if fields != 4 {
 		return "", fmt.Errorf("bbox missing a number: %w", ErrMissingParams)
-	}
-	if geotype == "" {
-		return "", fmt.Errorf("geotype required: %w", ErrMissingParams)
 	}
 
 	// Construct SQL
@@ -121,7 +117,7 @@ WHERE geo.wkb_geometry && ST_GeomFromText(
 	)
 AND geo.valid
 AND geo.type_id = geo_type.id
-AND geo_type.name = %s
+%s
 AND geo_metric.geo_id = geo.id
 AND data_ver.id = geo_metric.data_ver_id
 AND data_ver.census_year = %d
@@ -136,13 +132,18 @@ AND nomis_category.year = %d
 		return "", err
 	}
 
+	geotypeWhere, err := additionalCondition("geo_type.name", geotypes)
+	if err != nil {
+		return "", err
+	}
+
 	sql := fmt.Sprintf(
 		template,
 		p1lon,
 		p1lat,
 		p2lon,
 		p2lat,
-		pq.QuoteLiteral(geotype),
+		geotypeWhere,
 		2011,
 		2011,
 		catWhere,
@@ -155,7 +156,7 @@ AND nomis_category.year = %d
 
 // radiusQuery returns the csv table for areas within radius meters from location
 //
-func (app *Geodata) radiusQuery(ctx context.Context, location string, radius int, geotype string, cats []string) (string, error) {
+func (app *Geodata) radiusQuery(ctx context.Context, location string, radius int, geotypes, cats []string) (string, error) {
 	var lon, lat float64
 	fields, err := fmt.Sscanf(location, "%f,%f", &lon, &lat)
 	if err != nil {
@@ -167,10 +168,6 @@ func (app *Geodata) radiusQuery(ctx context.Context, location string, radius int
 
 	if radius < 1 {
 		return "", fmt.Errorf("radius must be >0: %q: %w", radius, err)
-	}
-
-	if geotype == "" {
-		return "", fmt.Errorf("geotype required: %w", ErrMissingParams)
 	}
 
 	template := `
@@ -194,7 +191,7 @@ WHERE ST_DWithin(
 )
 AND geo.valid
 AND geo_type.id = geo.type_id
-AND geo_type.name = %s
+%s
 AND geo_metric.geo_id = geo.id
 AND data_ver.id = geo_metric.data_ver_id
 AND data_ver.census_year = %d
@@ -209,12 +206,17 @@ AND nomis_category.year = %d
 		return "", err
 	}
 
+	geotypeWhere, err := additionalCondition("geo_type.name", geotypes)
+	if err != nil {
+		return "", err
+	}
+
 	sql := fmt.Sprintf(
 		template,
 		lon,
 		lat,
 		radius,
-		pq.QuoteLiteral(geotype),
+		geotypeWhere,
 		2011,
 		2011,
 		catWhere,

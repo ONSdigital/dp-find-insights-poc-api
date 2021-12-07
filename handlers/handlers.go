@@ -41,7 +41,7 @@ func (svr *Server) GetDevHelloDataset(w http.ResponseWriter, r *http.Request, da
 	var rows []string
 	var cols []string
 	var bbox string
-	var geotype string
+	var geotype []string
 	var location string
 	var radius int
 	if dataset == "" {

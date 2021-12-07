@@ -12,13 +12,13 @@ import (
 )
 
 func main() {
-	var rows, cols multiFlag
+	var rows, cols, geotypes multiFlag
 
 	dataset := flag.String("dataset", "", "name of dataset to query")
 	bbox := flag.String("bbox", "", "bounding box lon1,lat1,lon2,lat2 (any two opposite corners)")
 	location := flag.String("location", "", "central point for radius queries")
 	radius := flag.Int("radius", 0, "radius in meters")
-	geotype := flag.String("geotype", "", "geography type (LSOA or LAD)")
+	flag.Var(&geotypes, "geotype", "geography types (LSOA, LAD, etc)")
 	flag.Var(&rows, "rows", "row or row range")
 	flag.Var(&cols, "cols", "column name(s) to return")
 	maxmetrics := flag.Int("maxmetrics", 0, "max skinny rows to accept (default 0 means no limit)")
@@ -30,7 +30,6 @@ func main() {
 	fmt.Printf("bbox: %s\n", *bbox)
 	fmt.Printf("location: %s\n", *location)
 	fmt.Printf("radius: %d meters\n", *radius)
-	fmt.Printf("geotype: %s\n", *geotype)
 	fmt.Printf("rows:\n")
 	for _, r := range rows {
 		fmt.Printf("\t%s\n", r)
@@ -39,6 +38,11 @@ func main() {
 	fmt.Printf("cols:\n")
 	for _, c := range cols {
 		fmt.Printf("\t%s\n", c)
+	}
+
+	fmt.Printf("geotypes:\n")
+	for _, t := range geotypes {
+		fmt.Printf("\t%s\n", t)
 	}
 
 	// Open postgres connection
@@ -63,7 +67,7 @@ func main() {
 	}
 
 	ctx := context.Background()
-	body, err := app.Query(ctx, *dataset, *bbox, *location, *radius, *geotype, rows, cols)
+	body, err := app.Query(ctx, *dataset, *bbox, *location, *radius, geotypes, rows, cols)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -72,6 +76,6 @@ func main() {
 }
 
 func usage() {
-	fmt.Fprintf(os.Stderr, "usage: %s --dataset <dataset> [--rows rowspec[,...]|--bbox p1lon,p1lat,p2lon,pl2lat|--location lon,lat --radius meters] [--geotype LSOA|LAD] [--cols col[,...]] [--maxmetrics n]\n", os.Args[0])
+	fmt.Fprintf(os.Stderr, "usage: %s --dataset <dataset> [--rows rowspec[,...]|--bbox p1lon,p1lat,p2lon,pl2lat|--location lon,lat --radius meters] [--geotype LSOA|LAD,...] [--cols col[,...]] [--maxmetrics n]\n", os.Args[0])
 	os.Exit(2)
 }

@@ -28,7 +28,7 @@ type GetDevHelloDatasetParams struct {
 	Rows     *[]string `json:"rows,omitempty"`
 	Cols     *[]string `json:"cols,omitempty"`
 	Bbox     *string   `json:"bbox,omitempty"`
-	Geotype  *string   `json:"geotype,omitempty"`
+	Geotype  *[]string `json:"geotype,omitempty"`
 	Location *string   `json:"location,omitempty"`
 	Radius   *int      `json:"radius,omitempty"`
 }
