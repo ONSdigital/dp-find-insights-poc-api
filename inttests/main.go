@@ -14,8 +14,8 @@ import (
 )
 
 type APITest = struct {
-	desc     string
-	url      string
+	desc string
+	url  string
 }
 
 var Tests = []APITest{
@@ -153,7 +153,7 @@ func RespFilePrefix(testDesc string) string {
 
 // parse sha1 from resp file name
 func RespFileSha1(fn string) string {
-	return fn[strings.LastIndex(fn, "-") + 1:]
+	return fn[strings.LastIndex(fn, "-")+1:]
 }
 
 // find file(s) in DataPref directory that matches testDesc
@@ -172,8 +172,8 @@ func MatchingRespFile(testDesc string) (fns []string, err error) {
 	return fns, err
 }
 
-func IsStringInSlice(str string, s []string) (bool) {
-	for _, ele := range(s) {
+func IsStringInSlice(str string, s []string) bool {
+	for _, ele := range s {
 		if ele == str {
 			return true
 		}
