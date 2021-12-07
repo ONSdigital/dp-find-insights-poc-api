@@ -185,13 +185,14 @@ FROM
     data_ver,
     nomis_category
 WHERE ST_DWithin(
-    geo.wkb_geometry::geography,
+    geo.wkb_long_lat_geom::geography,
     ST_SetSRID(
         ST_Point(%f, %f),
         4326
     )::geography,
     %d
 )
+AND geo.valid
 AND geo_type.id = geo.type_id
 AND geo_type.name = %s
 AND geo_metric.geo_id = geo.id
