@@ -47,8 +47,8 @@ func (db *Database) Close() error {
 }
 
 func GetDSN(pw ...string) string {
-	if pw[0] == "" {
-		pw[0] = os.Getenv("PGPASSWORD")
+	if len(pw) == 0 {
+		pw = append(pw, os.Getenv("PGPASSWORD"))
 	}
 	return fmt.Sprintf(
 		"postgres://%s:%s@%s:%s/%s",
