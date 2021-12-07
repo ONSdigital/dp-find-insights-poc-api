@@ -38,12 +38,14 @@ func (svr *Server) GetDevHelloDataset(w http.ResponseWriter, r *http.Request, da
 	}
 
 	// check Auth header
-	auth := r.Header.Get("Authorization")
 	c, _ := config.Get()
-	if auth != c.APIToken {
-		sendError(w, http.StatusUnauthorized, "unauthorized")
-		fmt.Printf("failed auth header '%s' from '%s'", auth, r.Header.Get("X-Forwarded-For"))
-		return
+	if c.EnableHeaderAuth {
+		auth := r.Header.Get("Authorization")
+		if auth != c.APIToken {
+			sendError(w, http.StatusUnauthorized, "unauthorized")
+			fmt.Printf("failed auth header '%s' from '%s'", auth, r.Header.Get("X-Forwarded-For"))
+			return
+		}
 	}
 
 	if svr.querygeodata == nil {

@@ -16,6 +16,7 @@ type Config struct {
 	MaxMetrics                 int           `envconfig:"MAX_METRICS"`
 	WriteTimeout               time.Duration `envconfig:"WRITE_TIMEOUT"`
 	APIToken                   string        `envconfig:"API_TOKEN"`
+	EnableHeaderAuth           bool          `envconfig:"ENABLE_HEADER_AUTH"`
 }
 
 var cfg *Config
@@ -35,6 +36,7 @@ func Get() (*Config, error) {
 		MaxMetrics:                 200000,           // max number of rows to accept from "geo" table queries
 		WriteTimeout:               30 * time.Second, // http WriteTimeout
 		APIToken:                   "",
+		EnableHeaderAuth:           false,
 	}
 
 	return cfg, envconfig.Process("", cfg)
