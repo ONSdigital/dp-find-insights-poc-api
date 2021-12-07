@@ -54,7 +54,7 @@ func NewApp() *App {
 	// Open postgres connection
 	//
 
-	db, err := database.Open("pgx", database.GetDSN())
+	db, err := database.Open("pgx", database.GetDSN(pgpwd))
 	if err != nil {
 		return &App{
 			errmsg: "cannot open connection to postgres",

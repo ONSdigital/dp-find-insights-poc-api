@@ -48,7 +48,8 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		}
 
 		// open postgres connection
-		db, err = database.Open("pgx", database.GetDSN())
+
+		db, err := database.Open("pgx", database.GetDSN(pgpwd))
 		if err != nil {
 			return nil, err
 		}
