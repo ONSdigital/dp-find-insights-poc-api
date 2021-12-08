@@ -1,5 +1,3 @@
-// +build datasanity
-
 package main
 
 import (
@@ -112,7 +110,7 @@ func TestMsoaDataAbsent(t *testing.T) {
 	fmt.Printf("%#v\n", count)
 
 	if count != 0 {
-		t.Errorf("got unexpected row(s)")
+		t.Error("got unexpected row(s)")
 	}
 }
 
@@ -129,6 +127,18 @@ func TestMsoaCodesAbsent(t *testing.T) {
 	fmt.Printf("%#v\n", count)
 
 	if count != 0 {
-		t.Errorf("got unexpected row(s)")
+		t.Error("got unexpected row(s)")
+	}
+}
+
+func TestGeomUKBbox(t *testing.T) {
+	var codes []string
+	// UK like bbox
+	if err := db.Raw(`SELECT code from geo WHERE not geo.wkb_geometry && ST_GeomFromText( 'MULTIPOINT( -7.57 49.96, 1.76 58.64)', 4326)`).Scan(&codes).Error; err != nil {
+		t.Error(err)
+	}
+
+	if len(codes) > 0 {
+		t.Errorf("got unexpected row(s) %v", codes)
 	}
 }
