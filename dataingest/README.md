@@ -2,6 +2,13 @@
 
 WARNING these processes are in rapid flux as of Dec 2021 and subject to change.
 
+Various scripts to provision & load data into a AWS RDS (Postgres 13.4)
+instance used by the Find Insights back-end team.
+
+Most are dependent on the existance of Postgres client utilities being
+installed and also a configured aws command line client
+
+
 ## Environment Setup
 
 Environment should contain similar to:
@@ -21,12 +28,6 @@ $ env |grep PG
 ```
 
 ## dbsetup
-
-Various scripts to provision & load data into a AWS RDS (Postgres 13.4)
-instance used by the Find Insights back-end team.
-
-Most are dependent on the existance of Postgres client utilities being
-installed and also a configured aws command line client
 
 * create.env.asc
   * Encrypted version of postgres password - currently same for "postgres" (admin
@@ -73,7 +74,6 @@ Answer "y" to questions in last step. "Record not found warning" can be
 ignored.
 
 ## Get source data (dev)
-
 
 ```
 $ cd nomis-bulk-to-postgres
@@ -123,7 +123,6 @@ $ go run .
 ## Sanity checks
 
 Various database sanity checks to ensure steps aren't missed.
-
 
 ```
 $ make test
