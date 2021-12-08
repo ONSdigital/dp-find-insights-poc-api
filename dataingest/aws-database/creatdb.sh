@@ -17,4 +17,4 @@ SET synchronous_commit TO off;
 \i $1
 EOT
 
-cd .. && make update-schema
+cd ../.. && make update-schema
