@@ -1,6 +1,5 @@
 #!/bin/bash
-# We don't actually need these env vars but it's more explicit to use them
-# directly
+# Depends on the presence of PG_ env in the env
 
 set -e
 
