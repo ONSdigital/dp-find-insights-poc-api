@@ -159,3 +159,19 @@ func TestLatLongGeom(t *testing.T) {
 		t.Errorf("got unexpected row(s) %v", codes)
 	}
 }
+
+// some value queries - will break with different data than 2011
+func TestSomeValues(t *testing.T) {
+	metric := model.GeoMetric{}
+	db.First(&metric)
+	if metric.Metric != 23366044.0 {
+		t.Errorf("got %f", metric.Metric)
+	}
+
+	geo := model.Geo{}
+	db.First(&geo)
+	if geo.Name != "England and Wales" {
+		t.Errorf("got %s", geo.Name)
+	}
+
+}
