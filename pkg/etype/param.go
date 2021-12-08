@@ -1,6 +1,8 @@
 package etype
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // Param errors are those that result from missing or malformed parameters.
 type ParamError struct {

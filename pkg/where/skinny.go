@@ -1,10 +1,10 @@
 package where
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
+	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/etype"
 	"github.com/lib/pq"
 )
 
@@ -66,17 +66,17 @@ func GetValues(args []string) (*ValueSet, error) {
 			// each token may be a single value or a range
 			if !strings.Contains(token, "...") {
 				if token == "" {
-					return nil, errors.New("value must not be empty")
+					return nil, etype.Param("value must not be empty")
 				}
 				set.Singles = append(set.Singles, token)
 
 			} else {
 				r := strings.Split(token, "...")
 				if len(r) != 2 {
-					return nil, errors.New("range must be low...high")
+					return nil, etype.Param("range must be low...high")
 				}
 				if r[0] == "" || r[1] == "" {
-					return nil, errors.New("range values must not be empty")
+					return nil, etype.Param("range values must not be empty")
 				}
 				vr := &ValueRange{
 					Low:  r[0],
