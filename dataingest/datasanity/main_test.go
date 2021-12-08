@@ -175,3 +175,19 @@ func TestSomeValues(t *testing.T) {
 	}
 
 }
+
+// bulk data long nomis codes have different length to API ones!
+func TestLongNomisCode(t *testing.T) {
+	var length []int
+	// UK like bbox
+	if err := db.Raw(`
+    SELECT DISTINCT(LENGTH(long_nomis_code)) 
+	FROM nomis_category
+	`).Scan(&length).Error; err != nil {
+		t.Error(err)
+	}
+
+	if len(length) > 1 {
+		t.Errorf("got unexpected row(s) %v", length)
+	}
+}
