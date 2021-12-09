@@ -1,5 +1,3 @@
-// +build datasanity
-
 package main
 
 import (
@@ -57,7 +55,7 @@ func TestSpacialLatLog(t *testing.T) {
 			results := []model.Geo{}
 			if err := db.Raw(`
 			SELECT code FROM geo 
-			WHERE ST_Within(ST_GeomFromText('SRID=4326;POINT('|| ? || ' ' || ? ||')'),wkb_geometry::GEOMETRY) 
+			WHERE ST_Within(ST_GeomFromText('POINT('|| ? || ' ' || ? ||')',4326),wkb_geometry::GEOMETRY) 
 			AND type_id=6
 			`, cast.ToString(tC.long), cast.ToString(tC.lat)).Scan(&results).Error; err != nil {
 				t.Error(err)
@@ -112,12 +110,11 @@ func TestMsoaDataAbsent(t *testing.T) {
 	fmt.Printf("%#v\n", count)
 
 	if count != 0 {
-		t.Errorf("got unexpected row(s)")
+		t.Error("got unexpected row(s)")
 	}
 }
 
 func TestMsoaCodesAbsent(t *testing.T) {
-
 	var count int
 	if err := db.Raw(`
 	SELECT count(*) 
@@ -130,6 +127,67 @@ func TestMsoaCodesAbsent(t *testing.T) {
 	fmt.Printf("%#v\n", count)
 
 	if count != 0 {
-		t.Errorf("got unexpected row(s)")
+		t.Error("got unexpected row(s)")
+	}
+}
+
+func TestGeomUKBbox(t *testing.T) {
+	var codes []string
+	// UK like bbox
+	if err := db.Raw(`
+	SELECT code FROM geo 
+	WHERE NOT geo.wkb_geometry && ST_GeomFromText( 'MULTIPOINT( -7.57 49.92, 1.76 58.64)', 4326)
+	`).Scan(&codes).Error; err != nil {
+		t.Error(err)
+	}
+
+	if len(codes) > 0 {
+		t.Errorf("got unexpected row(s) %v", codes)
+	}
+}
+
+func TestLatLongGeom(t *testing.T) {
+	var codes []string
+	// UK like bbox
+	if err := db.Raw(`
+	SELECT code FROM geo 
+	WHERE NOT geo.wkb_long_lat_geom && ST_GeomFromText( 'MULTIPOINT( -7.57 49.92, 1.76 58.64)', 4326)`).Scan(&codes).Error; err != nil {
+		t.Error(err)
+	}
+
+	if len(codes) > 0 {
+		t.Errorf("got unexpected row(s) %v", codes)
+	}
+}
+
+// some value queries - will break with different data than 2011
+func TestSomeValues(t *testing.T) {
+	metric := model.GeoMetric{}
+	db.First(&metric)
+	if metric.Metric != 23366044.0 {
+		t.Errorf("got %f", metric.Metric)
+	}
+
+	geo := model.Geo{}
+	db.First(&geo)
+	if geo.Name != "England and Wales" {
+		t.Errorf("got %s", geo.Name)
+	}
+
+}
+
+// bulk data long nomis codes have different length to API ones!
+func TestLongNomisCode(t *testing.T) {
+	var length []int
+	// UK like bbox
+	if err := db.Raw(`
+    SELECT DISTINCT(LENGTH(long_nomis_code)) 
+	FROM nomis_category
+	`).Scan(&length).Error; err != nil {
+		t.Error(err)
+	}
+
+	if len(length) > 1 {
+		t.Errorf("got unexpected row(s) %v", length)
 	}
 }
