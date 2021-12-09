@@ -318,10 +318,7 @@ AND nomis_category.year = %d
 func (app *Geodata) collectCells(ctx context.Context, sql string) (string, error) {
 	// Allocate output table
 	//
-	tbl, err := table.New("geography_code")
-	if err != nil {
-		return "", err
-	}
+	tbl := table.New()
 
 	// Set up output buffer
 	//
@@ -369,7 +366,7 @@ func (app *Geodata) collectCells(ctx context.Context, sql string) (string, error
 			return "", err
 		}
 
-		tbl.SetCell(geo, cat, value)
+		tbl.SetCell(geo, "", cat, value)
 	}
 	tnext.Print()
 	tscan.Print()
@@ -380,7 +377,7 @@ func (app *Geodata) collectCells(ctx context.Context, sql string) (string, error
 
 	tgen := timer.New("generate")
 	tgen.Start()
-	err = tbl.Generate(&body)
+	err = tbl.Generate(&body, []string{table.ColGeographyCode})
 	tgen.Stop()
 	tgen.Print()
 	if err != nil {
