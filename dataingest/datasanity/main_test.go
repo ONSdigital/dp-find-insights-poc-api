@@ -1,3 +1,5 @@
+// +build datasanity
+
 package main
 
 import (
