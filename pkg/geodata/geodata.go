@@ -35,12 +35,12 @@ func (app *Geodata) Query(ctx context.Context, dataset, bbox, location string, r
 	if len(polygon) > 0 {
 		return app.polygonQuery(ctx, polygon, geotypes, cols)
 	}
-	return app.rowQuery(ctx, rows, cols)
+	return app.rowQuery(ctx, rows, geotypes, cols)
 }
 
 // rowQuery returns the csv table for the given geometry and category codes.
 //
-func (app *Geodata) rowQuery(ctx context.Context, geos, cats []string) (string, error) {
+func (app *Geodata) rowQuery(ctx context.Context, geos, geotypes, cats []string) (string, error) {
 
 	if len(geos) == 0 && len(cats) == 0 {
 		return "", ErrMissingParams
@@ -55,6 +55,7 @@ SELECT
     geo_metric.metric AS value
 FROM
     geo_metric,
+    geo_type,
     geo,
     nomis_category,
     data_ver
@@ -63,6 +64,9 @@ AND data_ver.ver_string = '2.2'
 %s
 AND geo_metric.data_ver_id = data_ver.id
 AND geo_metric.geo_id = geo.id
+%s
+AND geo.valid
+AND geo.type_id = geo_type.id
 %s
 AND nomis_category.year = %d
 AND geo_metric.category_id = nomis_category.id
@@ -78,10 +82,16 @@ AND geo_metric.category_id = nomis_category.id
 		return "", err
 	}
 
+	geotypeWhere, err := additionalCondition("geo_type.name", geotypes)
+	if err != nil {
+		return "", err
+	}
+
 	sql := fmt.Sprintf(
 		template,
 		geoWhere,
 		catWhere,
+		geotypeWhere,
 		2011,
 	)
 	fmt.Printf("sql: %s\n", sql)
@@ -198,7 +208,7 @@ AND geo_type.id = geo.type_id
 AND geo_metric.geo_id = geo.id
 AND data_ver.id = geo_metric.data_ver_id
 AND data_ver.census_year = %d
-ANd data_ver.ver_string = '2.2'
+AND data_ver.ver_string = '2.2'
 AND nomis_category.id = geo_metric.category_id
 AND nomis_category.year = %d
 %s
@@ -262,7 +272,7 @@ AND geo_type.id = geo.type_id
 AND geo_metric.geo_id = geo.id
 AND data_ver.id = geo_metric.data_ver_id
 AND data_ver.census_year = %d
-ANd data_ver.ver_string = '2.2'
+AND data_ver.ver_string = '2.2'
 AND nomis_category.id = geo_metric.category_id
 AND nomis_category.year = %d
 %s
