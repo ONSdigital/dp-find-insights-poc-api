@@ -1,6 +1,5 @@
 #!/bin/bash
-# We don't actually need these env vars but it's more explicit to use them
-# directly
+# Depends on the presence of PG_ env in the env
 
 set -e
 
@@ -18,4 +17,4 @@ SET synchronous_commit TO off;
 \i $1
 EOT
 
-cd .. && make update-schema
+cd ../.. && make update-schema

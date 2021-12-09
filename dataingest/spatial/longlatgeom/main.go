@@ -32,6 +32,7 @@ func main() {
 }
 
 func update(db *gorm.DB, id int32, long, lat float64) {
+	// different SRID syntax?
 	if err := db.Exec("UPDATE geo SET wkb_long_lat_geom=( SELECT ST_GeomFromText('SRID=4326;POINT('|| ? || ' ' || ? || ')') ) WHERE id=?", cast.ToString(long), cast.ToString(lat), id).Error; err != nil {
 		log.Print(err)
 	}
