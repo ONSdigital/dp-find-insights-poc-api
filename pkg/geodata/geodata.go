@@ -25,12 +25,15 @@ func New(db *database.Database, maxMetrics int) (*Geodata, error) {
 	}, nil
 }
 
-func (app *Geodata) Query(ctx context.Context, dataset, bbox, location string, radius int, geotypes, rows, cols []string) (string, error) {
+func (app *Geodata) Query(ctx context.Context, dataset, bbox, location string, radius int, polygon string, geotypes, rows, cols []string) (string, error) {
 	if len(bbox) > 0 {
 		return app.bboxQuery(ctx, bbox, geotypes, cols)
 	}
 	if len(location) > 0 {
 		return app.radiusQuery(ctx, location, radius, geotypes, cols)
+	}
+	if len(polygon) > 0 {
+		return app.polygonQuery(ctx, polygon, geotypes, cols)
 	}
 	return app.rowQuery(ctx, rows, cols)
 }
@@ -216,6 +219,77 @@ AND nomis_category.year = %d
 		lon,
 		lat,
 		radius,
+		geotypeWhere,
+		2011,
+		2011,
+		catWhere,
+	)
+
+	fmt.Printf("sql: %s\n", sql)
+
+	return app.collectCells(ctx, sql)
+}
+
+// polygonQuery returns the csv table for areas within radius meters from location
+//
+func (app *Geodata) polygonQuery(ctx context.Context, polygon string, geotypes, cats []string) (string, error) {
+	points, err := ParsePolygon(polygon)
+	if err != nil {
+		return "", fmt.Errorf("parsing polygon: %q: %w", polygon, err)
+	}
+
+	template := `
+SELECT
+    geo.code AS geography_code,
+    nomis_category.long_nomis_code AS category_code,
+    geo_metric.metric AS value
+FROM
+    geo,
+    geo_type,
+    geo_metric,
+    data_ver,
+    nomis_category
+WHERE ST_Covers(
+    ST_Polygon(
+        'LINESTRING (%s)'::geometry,
+        4326
+    ),
+    geo.wkb_geometry
+)
+AND geo.valid
+AND geo_type.id = geo.type_id
+%s
+AND geo_metric.geo_id = geo.id
+AND data_ver.id = geo_metric.data_ver_id
+AND data_ver.census_year = %d
+ANd data_ver.ver_string = '2.2'
+AND nomis_category.id = geo_metric.category_id
+AND nomis_category.year = %d
+%s
+`
+
+	// convert the slice of Points to a slice of strings holding coordinates like "lon lat"
+	var coords []string
+	for _, point := range points {
+		coords = append(coords, point.String())
+	}
+
+	// join the coordinate strings into a form usable in LINESTRING(...)
+	linestring := strings.Join(coords, ",")
+
+	catWhere, err := additionalCondition("nomis_category.long_nomis_code", cats)
+	if err != nil {
+		return "", err
+	}
+
+	geotypeWhere, err := additionalCondition("geo_type.name", geotypes)
+	if err != nil {
+		return "", err
+	}
+
+	sql := fmt.Sprintf(
+		template,
+		linestring,
 		geotypeWhere,
 		2011,
 		2011,

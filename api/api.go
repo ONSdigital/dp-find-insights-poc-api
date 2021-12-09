@@ -31,6 +31,7 @@ type GetDevHelloDatasetParams struct {
 	Geotype  *[]string `json:"geotype,omitempty"`
 	Location *string   `json:"location,omitempty"`
 	Radius   *int      `json:"radius,omitempty"`
+	Polygon  *string   `json:"polygon,omitempty"`
 }
 
 // ServerInterface represents all server handlers.
@@ -132,6 +133,17 @@ func (siw *ServerInterfaceWrapper) GetDevHelloDataset(w http.ResponseWriter, r *
 	err = runtime.BindQueryParameter("form", true, false, "radius", r.URL.Query(), &params.Radius)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Invalid format for parameter radius: %s", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "polygon" -------------
+	if paramValue := r.URL.Query().Get("polygon"); paramValue != "" {
+
+	}
+
+	err = runtime.BindQueryParameter("form", true, false, "polygon", r.URL.Query(), &params.Polygon)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid format for parameter polygon: %s", err), http.StatusBadRequest)
 		return
 	}
 

@@ -58,6 +58,7 @@ func (svr *Server) GetDevHelloDataset(w http.ResponseWriter, r *http.Request, da
 	var geotype []string
 	var location string
 	var radius int
+	var polygon string
 	if dataset == "" {
 		sendError(w, http.StatusBadRequest, "dataset missing")
 		return
@@ -80,9 +81,12 @@ func (svr *Server) GetDevHelloDataset(w http.ResponseWriter, r *http.Request, da
 	if params.Radius != nil {
 		radius = *params.Radius
 	}
+	if params.Polygon != nil {
+		polygon = *params.Polygon
+	}
 
 	ctx := r.Context()
-	csv, err := svr.querygeodata.Query(ctx, dataset, bbox, location, radius, geotype, rows, cols)
+	csv, err := svr.querygeodata.Query(ctx, dataset, bbox, location, radius, polygon, geotype, rows, cols)
 	if err != nil {
 		status := http.StatusInternalServerError
 		if errors.Is(err, geodata.ErrTooManyMetrics) {
