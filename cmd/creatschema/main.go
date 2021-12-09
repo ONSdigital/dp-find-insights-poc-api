@@ -68,41 +68,7 @@ func main() {
 		log.Print(err)
 	}
 
-	// XXX create/alter tables - doesn't delete cols or tables!
-	// neither does it always change types correctly
-	// More useful in dev than prod
-
-	if err := db.AutoMigrate(
-		&model.SchemaVer{},
-		&model.DataVer{},
-		&model.GeoType{},
-		&model.Geo{},
-		&model.NomisDesc{},
-		&model.NomisCategory{},
-		&model.GeoMetric{},
-		&model.YearMapping{},
-	); err != nil {
-		log.Print(err)
-	}
-
-	// refactor
-	if err := db.Exec(`ALTER TABLE geo ADD COLUMN wkb_geometry geometry(Geometry,4326)`).Error; err != nil {
-		log.Print(err)
-	}
-
-	if err := db.Exec(`CREATE INDEX geo_wkb_geometry_geom_idx ON public.geo USING gist (wkb_geometry);`).Error; err != nil {
-		log.Print(err)
-	}
-
-	// refactor XXX
-
-	if err := db.Exec(`ALTER TABLE geo ADD COLUMN wkb_long_lat_geom geometry(Geometry,4326)`).Error; err != nil {
-		log.Print(err)
-	}
-
-	if err := db.Exec(`CREATE INDEX geo_long_lat_geom_idx ON public.geo USING gist ( wkb_long_lat_geom);`).Error; err != nil {
-		log.Print(err)
-	}
+	model.Migrate(db)
 
 	if haveDump {
 		ndump, _ := pgDump()
