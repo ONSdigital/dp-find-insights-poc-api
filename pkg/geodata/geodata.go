@@ -2,6 +2,7 @@ package geodata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -26,21 +27,27 @@ func New(db *database.Database, maxMetrics int) (*Geodata, error) {
 }
 
 func (app *Geodata) Query(ctx context.Context, dataset, bbox, location string, radius int, polygon string, geotypes, rows, cols []string) (string, error) {
+	if dataset == "census" {
+		return app.censusQuery(ctx, rows, bbox, location, radius, polygon, geotypes, cols)
+	}
+
+	// geography_code is hardcoded for compatibility with previous skinny queries
+	compatInclude := []string{"geography_code"}
 	if len(bbox) > 0 {
-		return app.bboxQuery(ctx, bbox, geotypes, cols)
+		return app.bboxQuery(ctx, bbox, geotypes, cols, compatInclude)
 	}
 	if len(location) > 0 {
-		return app.radiusQuery(ctx, location, radius, geotypes, cols)
+		return app.radiusQuery(ctx, location, radius, geotypes, cols, compatInclude)
 	}
 	if len(polygon) > 0 {
-		return app.polygonQuery(ctx, polygon, geotypes, cols)
+		return app.polygonQuery(ctx, polygon, geotypes, cols, compatInclude)
 	}
-	return app.rowQuery(ctx, rows, geotypes, cols)
+	return app.rowQuery(ctx, rows, geotypes, cols, compatInclude)
 }
 
 // rowQuery returns the csv table for the given geometry and category codes.
 //
-func (app *Geodata) rowQuery(ctx context.Context, geos, geotypes, cats []string) (string, error) {
+func (app *Geodata) rowQuery(ctx context.Context, geos, geotypes, cats, include []string) (string, error) {
 
 	if len(geos) == 0 && len(cats) == 0 {
 		return "", ErrMissingParams
@@ -51,6 +58,7 @@ func (app *Geodata) rowQuery(ctx context.Context, geos, geotypes, cats []string)
 	template := `
 SELECT
     geo.code AS geography_code,
+    geo_type.name AS geotype,
     nomis_category.long_nomis_code AS category_code,
     geo_metric.metric AS value
 FROM
@@ -96,12 +104,12 @@ AND geo_metric.category_id = nomis_category.id
 	)
 	fmt.Printf("sql: %s\n", sql)
 
-	return app.collectCells(ctx, sql)
+	return app.collectCells(ctx, sql, include)
 }
 
 // bboxQuery returns the csv table for areas intersecting with the given bbox
 //
-func (app *Geodata) bboxQuery(ctx context.Context, bbox string, geotypes, cats []string) (string, error) {
+func (app *Geodata) bboxQuery(ctx context.Context, bbox string, geotypes, cats, include []string) (string, error) {
 	var p1lon, p1lat, p2lon, p2lat float64
 	fields, err := fmt.Sscanf(bbox, "%f,%f,%f,%f", &p1lon, &p1lat, &p2lon, &p2lat)
 	if err != nil {
@@ -116,6 +124,7 @@ func (app *Geodata) bboxQuery(ctx context.Context, bbox string, geotypes, cats [
 	template := `
 SELECT
 	geo.code AS geography_code,
+    geo_type.name AS geotype,
 	nomis_category.long_nomis_code AS category_code,
 	geo_metric.metric AS value
 FROM
@@ -164,12 +173,12 @@ AND nomis_category.year = %d
 
 	fmt.Printf("sql: %s\n", sql)
 
-	return app.collectCells(ctx, sql)
+	return app.collectCells(ctx, sql, include)
 }
 
 // radiusQuery returns the csv table for areas within radius meters from location
 //
-func (app *Geodata) radiusQuery(ctx context.Context, location string, radius int, geotypes, cats []string) (string, error) {
+func (app *Geodata) radiusQuery(ctx context.Context, location string, radius int, geotypes, cats, include []string) (string, error) {
 	var lon, lat float64
 	fields, err := fmt.Sscanf(location, "%f,%f", &lon, &lat)
 	if err != nil {
@@ -186,6 +195,7 @@ func (app *Geodata) radiusQuery(ctx context.Context, location string, radius int
 	template := `
 SELECT
     geo.code AS geography_code,
+    geo_type.name AS geotype,
     nomis_category.long_nomis_code AS category_code,
     geo_metric.metric AS value
 FROM
@@ -237,12 +247,12 @@ AND nomis_category.year = %d
 
 	fmt.Printf("sql: %s\n", sql)
 
-	return app.collectCells(ctx, sql)
+	return app.collectCells(ctx, sql, include)
 }
 
 // polygonQuery returns the csv table for areas within radius meters from location
 //
-func (app *Geodata) polygonQuery(ctx context.Context, polygon string, geotypes, cats []string) (string, error) {
+func (app *Geodata) polygonQuery(ctx context.Context, polygon string, geotypes, cats, include []string) (string, error) {
 	points, err := ParsePolygon(polygon)
 	if err != nil {
 		return "", fmt.Errorf("parsing polygon: %q: %w", polygon, err)
@@ -251,6 +261,7 @@ func (app *Geodata) polygonQuery(ctx context.Context, polygon string, geotypes, 
 	template := `
 SELECT
     geo.code AS geography_code,
+    geo_type.name AS geotype,
     nomis_category.long_nomis_code AS category_code,
     geo_metric.metric AS value
 FROM
@@ -308,14 +319,14 @@ AND nomis_category.year = %d
 
 	fmt.Printf("sql: %s\n", sql)
 
-	return app.collectCells(ctx, sql)
+	return app.collectCells(ctx, sql, include)
 }
 
 // collectCells runs the query in sql and returns the results as a csv.
 // sql must be a query against the geo_metric table selecting exactly
 // code, category and metric.
 //
-func (app *Geodata) collectCells(ctx context.Context, sql string) (string, error) {
+func (app *Geodata) collectCells(ctx context.Context, sql string, include []string) (string, error) {
 	// Allocate output table
 	//
 	tbl := table.New()
@@ -356,17 +367,18 @@ func (app *Geodata) collectCells(ctx context.Context, sql string) (string, error
 		}
 
 		var geo string
+		var geotype string
 		var cat string
 		var value float64
 
 		tscan.Start()
-		err := rows.Scan(&geo, &cat, &value)
+		err := rows.Scan(&geo, &geotype, &cat, &value)
 		tscan.Stop()
 		if err != nil {
 			return "", err
 		}
 
-		tbl.SetCell(geo, "", cat, value)
+		tbl.SetCell(geo, geotype, cat, value)
 	}
 	tnext.Print()
 	tscan.Print()
@@ -377,7 +389,7 @@ func (app *Geodata) collectCells(ctx context.Context, sql string) (string, error
 
 	tgen := timer.New("generate")
 	tgen.Start()
-	err = tbl.Generate(&body, []string{table.ColGeographyCode})
+	err = tbl.Generate(&body, include)
 	tgen.Stop()
 	tgen.Print()
 	if err != nil {
@@ -385,6 +397,189 @@ func (app *Geodata) collectCells(ctx context.Context, sql string) (string, error
 	}
 
 	return body.String(), nil
+}
+
+// censusQuery is the merged query which is the logical OR of the other specific queries.
+// The specific "skinny" queries can probably go away soon.
+//
+// Any combination of rows, bbox, radius and polygon queries can be given, and geotype can be exposed in the csv output.
+//
+// Although this query method is not complicated, it is too long.
+// Break it up in the fullness of time.
+//
+func (app *Geodata) censusQuery(ctx context.Context, geos []string, bbox, location string, radius int, polygon string, geotypes, cols []string) (string, error) {
+	var conditions []string
+
+	// construct conditions for explicitly named rows=
+	if len(geos) > 0 {
+		condition, err := where.WherePart("geo.code", geos)
+		if err != nil {
+			return "", err
+		}
+		conditions = append(conditions, condition)
+	}
+
+	// construct condition for bbox=
+	if bbox != "" {
+		var p1lon, p1lat, p2lon, p2lat float64
+		fields, err := fmt.Sscanf(bbox, "%f,%f,%f,%f", &p1lon, &p1lat, &p2lon, &p2lat)
+		if err != nil {
+			return "", fmt.Errorf("scanning bbox %q: %w", bbox, err)
+		}
+		if fields != 4 {
+			return "", fmt.Errorf("bbox missing a number: %w", ErrMissingParams)
+		}
+		condition := fmt.Sprintf(`
+    geo.wkb_geometry && ST_GeomFromText(
+        'MULTIPOINT(%f %f, %f %f)',
+        4326
+    )
+`,
+			p1lon,
+			p1lat,
+			p2lon,
+			p2lat,
+		)
+		conditions = append(conditions, condition)
+	}
+
+	// construct condition for location= and radius=
+	if location != "" || radius > 0 {
+		if location == "" || radius == 0 {
+			return "", fmt.Errorf("radius queries require both location (%s) and radius (%d)", location, radius)
+		}
+		var lon, lat float64
+		fields, err := fmt.Sscanf(location, "%f,%f", &lon, &lat)
+		if err != nil {
+			return "", fmt.Errorf("scanning location %q: %w", location, err)
+		}
+		if fields != 2 {
+			return "", fmt.Errorf("location missing a number: %w", ErrMissingParams)
+		}
+		if radius < 1 {
+			return "", fmt.Errorf("radius must be >0: %q: %w", radius, err)
+		}
+		condition := fmt.Sprintf(`
+    ST_DWithin(
+        geo.wkb_long_lat_geom::geography,
+        ST_SetSRID(
+            ST_Point(%f, %f),
+            4326
+        )::geography,
+        %d
+    )`,
+			lon,
+			lat,
+			radius,
+		)
+		conditions = append(conditions, condition)
+	}
+
+	// construct condition for polygon=
+	if polygon != "" {
+		points, err := ParsePolygon(polygon)
+		if err != nil {
+			return "", fmt.Errorf("parsing polygon: %q: %w", polygon, err)
+		}
+		// convert the slice of Points to a slice of strings holding coordinates like "lon lat"
+		var coords []string
+		for _, point := range points {
+			coords = append(coords, point.String())
+		}
+		// join the coordinate strings into a form usable in LINESTRING(...)
+		linestring := strings.Join(coords, ",")
+		condition := fmt.Sprintf(`
+    ST_COVERS(
+        ST_Polygon(
+            'LINESTRING (%s)'::geometry,
+            4326
+        ),
+        geo.wkb_geometry
+    )`,
+			linestring,
+		)
+		conditions = append(conditions, condition)
+	}
+
+	if len(conditions) == 0 {
+		return "", errors.New("must specify a condition (rows,bbox,location/radius, or polygon)")
+	}
+
+	// join conditions with sql OR
+	geoConditions := strings.Join(conditions, "    OR\n")
+
+	// construct WHERE condition for geotypes
+	geotypeConditions, err := additionalCondition("geo_type.name", geotypes)
+	if err != nil {
+		return "", err
+	}
+
+	// split column list into includes and categories
+	include, cats := splitCols(cols)
+
+	// construct WHERE condition for categories
+	catConditions, err := additionalCondition("nomis_category.long_nomis_code", cats)
+	if err != nil {
+		return "", err
+	}
+
+	// construct final SQL
+	template := `
+SELECT
+    geo.code AS geography_code,
+    geo_type.name AS geotype,
+    nomis_category.long_nomis_code AS category_code,
+    geo_metric.metric AS value
+FROM
+    geo,
+    geo_type,
+    geo_metric,
+    data_ver,
+    nomis_category
+WHERE (
+    -- geo conditions:
+%s
+)
+AND geo.valid
+AND geo_type.id = geo.type_id
+    -- geotype conditions:
+%s
+AND geo_metric.geo_id = geo.id
+AND data_ver.id = geo_metric.data_ver_id
+AND data_ver.census_year = 2011
+AND data_ver.ver_string = '2.2'
+AND nomis_category.id = geo_metric.category_id
+AND nomis_category.year = 2011
+    -- category conditions:
+%s
+`
+	sql := fmt.Sprintf(
+		template,
+		geoConditions,
+		geotypeConditions,
+		catConditions,
+	)
+
+	fmt.Printf("sql: %s\n", sql)
+
+	return app.collectCells(ctx, sql, include)
+}
+
+// splitCols separates special column names from geography names
+// (XXXX This duplicates some of the work in where.GetValues().
+// Think of a better way.)
+func splitCols(cols []string) (include []string, cats []string) {
+	for _, instance := range cols {
+		tokens := strings.Split(instance, ",")
+		for _, token := range tokens {
+			if token == table.ColGeographyCode || token == table.ColGeotype {
+				include = append(include, token)
+			} else {
+				cats = append(cats, token)
+			}
+		}
+	}
+	return
 }
 
 // additionalCondition wraps the output of WherePart inside "AND (...)".
