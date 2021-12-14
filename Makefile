@@ -45,6 +45,10 @@ test-integration:	## integration tests needs web server
 test-datasanity:	## this needs a DB and postgres env vars set
 	go test -count=1 ./dataingest/datasanity  -tags=datasanity
 
+.PHONY: test-comptest
+test-comptest:	## this provisions a docker DB automatically
+	go test -count=1 ./...  -tags=comptest
+
 .PHONY: convey
 convey:	## run goconvey
 	goconvey ./...

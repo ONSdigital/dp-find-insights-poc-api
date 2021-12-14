@@ -1,3 +1,5 @@
+// +build comptest
+
 package geodata
 
 import (
