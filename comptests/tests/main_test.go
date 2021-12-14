@@ -15,9 +15,11 @@ import (
 )
 
 /*
-example code for comptest with INSERT and ROLLBACK
 
-Also see pkg/geodata/rowquery_test.go which uses
+This is more suggested example code for comptest with INSERT and ROLLBACK
+rather than actually testing anything useful.
+
+Also see a real test  pkg/geodata/rowquery_test.go which uses
 
 		db.DB().Exec("BEGIN")
 		defer db.DB().Exec("ROLLBACK")
@@ -39,7 +41,7 @@ func init() {
 
 }
 
-func TestGorm(t *testing.T) {
+func TestGormExample(t *testing.T) {
 	// inside transaction rolled back
 	func() {
 		tx := db.Begin()
@@ -67,7 +69,7 @@ func TestGorm(t *testing.T) {
 	}
 }
 
-func TestPgx(t *testing.T) {
+func TestPgxExample(t *testing.T) {
 	ctx := context.Background()
 	con, err := pgx.Connect(ctx, dsn)
 	if err != nil {
