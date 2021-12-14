@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
+	"unicode"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/database"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/table"
@@ -408,13 +410,24 @@ func (app *Geodata) collectCells(ctx context.Context, sql string, include []stri
 // Break it up in the fullness of time.
 //
 func (app *Geodata) censusQuery(ctx context.Context, geos []string, bbox, location string, radius int, polygon string, geotypes, cols []string) (string, error) {
-	var conditions []string
 
+	sql, include, err := GetCensusQuerySQL(ctx, geos, bbox, location, radius, polygon, geotypes, cols)
+	if err != nil {
+		return "", err
+	}
+
+	fmt.Printf("sql: %s\n", sql)
+
+	return app.collectCells(ctx, sql, include)
+}
+
+func GetCensusQuerySQL(ctx context.Context, geos []string, bbox, location string, radius int, polygon string, geotypes, cols []string) (sql string, include []string, err error) {
+	var conditions []string
 	// construct conditions for explicitly named rows=
 	if len(geos) > 0 {
 		condition, err := where.WherePart("geo.code", geos)
 		if err != nil {
-			return "", err
+			return sql, include, err
 		}
 		conditions = append(conditions, condition)
 	}
@@ -424,10 +437,10 @@ func (app *Geodata) censusQuery(ctx context.Context, geos []string, bbox, locati
 		var p1lon, p1lat, p2lon, p2lat float64
 		fields, err := fmt.Sscanf(bbox, "%f,%f,%f,%f", &p1lon, &p1lat, &p2lon, &p2lat)
 		if err != nil {
-			return "", fmt.Errorf("scanning bbox %q: %w", bbox, err)
+			return sql, include, fmt.Errorf("scanning bbox %q: %w", bbox, err)
 		}
 		if fields != 4 {
-			return "", fmt.Errorf("bbox missing a number: %w", ErrMissingParams)
+			return sql, include, fmt.Errorf("bbox missing a number: %w", ErrMissingParams)
 		}
 		condition := fmt.Sprintf(`
     geo.wkb_geometry && ST_GeomFromText(
@@ -446,18 +459,18 @@ func (app *Geodata) censusQuery(ctx context.Context, geos []string, bbox, locati
 	// construct condition for location= and radius=
 	if location != "" || radius > 0 {
 		if location == "" || radius == 0 {
-			return "", fmt.Errorf("radius queries require both location (%s) and radius (%d)", location, radius)
+			return sql, include, fmt.Errorf("radius queries require both location (%s) and radius (%d)", location, radius)
 		}
 		var lon, lat float64
 		fields, err := fmt.Sscanf(location, "%f,%f", &lon, &lat)
 		if err != nil {
-			return "", fmt.Errorf("scanning location %q: %w", location, err)
+			return sql, include, fmt.Errorf("scanning location %q: %w", location, err)
 		}
 		if fields != 2 {
-			return "", fmt.Errorf("location missing a number: %w", ErrMissingParams)
+			return sql, include, fmt.Errorf("location missing a number: %w", ErrMissingParams)
 		}
 		if radius < 1 {
-			return "", fmt.Errorf("radius must be >0: %q: %w", radius, err)
+			return sql, include, fmt.Errorf("radius must be >0: %q: %w", radius, err)
 		}
 		condition := fmt.Sprintf(`
     ST_DWithin(
@@ -479,7 +492,7 @@ func (app *Geodata) censusQuery(ctx context.Context, geos []string, bbox, locati
 	if polygon != "" {
 		points, err := ParsePolygon(polygon)
 		if err != nil {
-			return "", fmt.Errorf("parsing polygon: %q: %w", polygon, err)
+			return sql, include, fmt.Errorf("parsing polygon: %q: %w", polygon, err)
 		}
 		// convert the slice of Points to a slice of strings holding coordinates like "lon lat"
 		var coords []string
@@ -502,7 +515,7 @@ func (app *Geodata) censusQuery(ctx context.Context, geos []string, bbox, locati
 	}
 
 	if len(conditions) == 0 {
-		return "", errors.New("must specify a condition (rows,bbox,location/radius, or polygon)")
+		return sql, include, errors.New("must specify a condition (rows,bbox,location/radius, or polygon)")
 	}
 
 	// join conditions with sql OR
@@ -511,7 +524,7 @@ func (app *Geodata) censusQuery(ctx context.Context, geos []string, bbox, locati
 	// construct WHERE condition for geotypes
 	geotypeConditions, err := additionalCondition("geo_type.name", geotypes)
 	if err != nil {
-		return "", err
+		return sql, include, err
 	}
 
 	// split column list into includes and categories
@@ -520,7 +533,7 @@ func (app *Geodata) censusQuery(ctx context.Context, geos []string, bbox, locati
 	// construct WHERE condition for categories
 	catConditions, err := additionalCondition("nomis_category.long_nomis_code", cats)
 	if err != nil {
-		return "", err
+		return sql, include, err
 	}
 
 	// construct final SQL
@@ -553,16 +566,15 @@ AND nomis_category.year = 2011
     -- category conditions:
 %s
 `
-	sql := fmt.Sprintf(
-		template,
-		geoConditions,
-		geotypeConditions,
-		catConditions,
+	sql = NormSQL(
+		fmt.Sprintf(
+			template,
+			geoConditions,
+			geotypeConditions,
+			catConditions,
+		),
 	)
-
-	fmt.Printf("sql: %s\n", sql)
-
-	return app.collectCells(ctx, sql, include)
+	return sql, include, nil
 }
 
 // splitCols separates special column names from geography names
@@ -598,4 +610,16 @@ AND (
 %s
 )`
 	return fmt.Sprintf(template, body), nil
+}
+
+// normalise sql to single spaces and newlines only, with no blank lines
+func NormSQL(sql string) string {
+	// replace all whitespace except newlines with single space
+	fieldDetector := func(c rune) bool {
+		return unicode.IsSpace(c) && string(c) != "\n"
+	}
+	wsNormed := strings.Join(strings.FieldsFunc(sql, fieldDetector), " ")
+	// strip blank lines and return
+	multiNewlinePattern := regexp.MustCompile(`\n\s*\n+`)
+	return multiNewlinePattern.ReplaceAllString(wsNormed, "\n")
 }
