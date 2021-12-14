@@ -15,7 +15,7 @@ import (
 
 const dsn = "postgres://insights:insights@localhost:54323/censustest"
 
-// passing -args -kill=false to the test will kill docker postgres
+// passing -args -kill=true to the test will kill docker postgres
 var kill = flag.Bool("kill", false, "docker kill postgres")
 
 // TODO Check empty
