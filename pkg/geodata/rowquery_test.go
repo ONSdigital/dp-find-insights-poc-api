@@ -51,6 +51,7 @@ func TestRowQuery(t *testing.T) {
 			[]string{"E01000001"},   // geos
 			[]string{"LSOA"},        // geotypes
 			[]string{"QS102EW0001"}, // cats
+			[]string{"geography_code"},
 		)
 
 		if result != "geography_code,QS102EW0001\nE01000001,1465\n" {
