@@ -10,6 +10,7 @@ import (
 	"github.com/ONSdigital/dp-find-insights-poc-api/api"
 	"github.com/ONSdigital/dp-find-insights-poc-api/config"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/geodata"
+	Swagger "github.com/ONSdigital/dp-find-insights-poc-api/swagger"
 )
 
 type Server struct {
@@ -22,6 +23,27 @@ func New(private bool, querygeodata *geodata.Geodata) *Server {
 		private:      private,
 		querygeodata: querygeodata,
 	}
+}
+
+func (svr *Server) GetSwagger(w http.ResponseWriter, r *http.Request) {
+	spec, _ := Swagger.GetOpenAPISpec()
+	b, err := spec.MarshalJSON()
+	if err != nil {
+		log.Print(err)
+	}
+
+	w.Write(b)
+}
+
+func (svr *Server) GetSwaggerui(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Content-Type", "html")
+	w.WriteHeader(http.StatusOK)
+	b, err := Swagger.GetSwaggerUIPage("http://localhost:25252/swagger", "")
+	if err != nil {
+		log.Print(err)
+	}
+
+	w.Write(b)
 }
 
 func (svr *Server) GetHello(w http.ResponseWriter, r *http.Request) {

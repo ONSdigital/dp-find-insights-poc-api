@@ -28,6 +28,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /swagger:
+    get:
+      tags:
+        - spec
+      summary: spec
+      description: spec
+      responses:
+        200:
+          description: "Successfully returns OK status with checks of dependent services"
+          content:
+            application/json:
+
+  /swaggerui:
+    get:
+      tags:
+        - spec
+      summary: spec
+      description: spec
+      responses:
+        200:
+          description: "Successfully returns OK status with checks of dependent services"
+          content:
+            text/html:
+
   /health:
     get:
       tags:
