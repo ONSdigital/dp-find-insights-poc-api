@@ -38,7 +38,8 @@ func (svr *Server) GetSwagger(w http.ResponseWriter, r *http.Request) {
 func (svr *Server) GetSwaggerui(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "html")
 	w.WriteHeader(http.StatusOK)
-	b, err := Swagger.GetSwaggerUIPage("http://localhost:25252/swagger", "")
+	c, _ := config.Get()
+	b, err := Swagger.GetSwaggerUIPage("http://"+c.BindAddr+"/swagger", "")
 	if err != nil {
 		log.Print(err)
 	}
