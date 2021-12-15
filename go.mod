@@ -2,7 +2,12 @@ module github.com/ONSdigital/dp-find-insights-poc-api
 
 go 1.16
 
-replace github.com/coreos/etcd => github.com/coreos/etcd v3.3.24+incompatible
+replace (
+	github.com/coreos/etcd => github.com/coreos/etcd v3.3.24+incompatible
+
+	github.com/pseudo-su/oapi-ui-codegen => github.com/stmuk/oapi-ui-codegen v0.0.2-0.20211215143848-ce3425d0a737
+
+)
 
 require (
 	github.com/ONSdigital/dp-api-clients-go v1.41.1
@@ -14,7 +19,7 @@ require (
 	github.com/aws/aws-sdk-go v1.41.15
 	github.com/cucumber/godog v0.12.1
 	github.com/deepmap/oapi-codegen v1.9.0
-	github.com/getkin/kin-openapi v0.80.0
+	github.com/getkin/kin-openapi v0.86.0
 	github.com/go-chi/chi/v5 v5.0.4
 	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/jackc/pgx/v4 v4.13.0
@@ -24,6 +29,7 @@ require (
 	github.com/lib/pq v1.10.3
 	github.com/pkg/diff v0.0.0-20210226163009-20ebb0f2a09e
 	github.com/pkg/errors v0.9.1
+	github.com/pseudo-su/oapi-ui-codegen v0.0.1 // indirect
 	github.com/smartystreets/goconvey v1.6.6
 	github.com/spf13/cast v1.4.1
 	github.com/stretchr/testify v1.7.0
