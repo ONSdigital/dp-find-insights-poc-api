@@ -4,9 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"regexp"
 	"strings"
-	"unicode"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/database"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/table"
@@ -401,6 +399,18 @@ func (app *Geodata) collectCells(ctx context.Context, sql string, include []stri
 	return body.String(), nil
 }
 
+type CensusQuerySQLArgs struct {
+	Ctx         context.Context
+	Geos        []string
+	BBox        string
+	Location    string
+	Radius      int
+	Polygon     string
+	Geotypes    []string
+	Cols        []string
+	Censustable string
+}
+
 // censusQuery is the merged query which is the logical OR of the other specific queries.
 // The specific "skinny" queries can probably go away soon.
 //
@@ -411,7 +421,18 @@ func (app *Geodata) collectCells(ctx context.Context, sql string, include []stri
 //
 func (app *Geodata) censusQuery(ctx context.Context, geos []string, bbox, location string, radius int, polygon string, geotypes, cols []string) (string, error) {
 
-	sql, include, err := GetCensusQuerySQL(ctx, geos, bbox, location, radius, polygon, geotypes, cols)
+	sql, include, err := CensusQuerySQL(
+		CensusQuerySQLArgs{
+			Ctx:      ctx,
+			Geos:     geos,
+			BBox:     bbox,
+			Location: location,
+			Radius:   radius,
+			Polygon:  polygon,
+			Geotypes: geotypes,
+			Cols:     cols,
+		},
+	)
 	if err != nil {
 		return "", err
 	}
@@ -421,120 +442,61 @@ func (app *Geodata) censusQuery(ctx context.Context, geos []string, bbox, locati
 	return app.collectCells(ctx, sql, include)
 }
 
-func GetCensusQuerySQL(ctx context.Context, geos []string, bbox, location string, radius int, polygon string, geotypes, cols []string) (sql string, include []string, err error) {
-	var conditions []string
-	// construct conditions for explicitly named rows=
-	if len(geos) > 0 {
-		condition, err := where.WherePart("geo.code", geos)
+func CensusQuerySQL(args CensusQuerySQLArgs) (sql string, include []string, err error) {
+	// validate args
+	if err := validateCensusQuery(args); err != nil {
+		return sql, include, err
+	}
+
+	// fetch conditions SQL
+	geoCondition, geoErr := geoSQL(args.Geos)
+	bboxCondition, bboxErr := bboxSQL(args.BBox)
+	radiusCondition, radiusErr := radiusSQL(args.Location, args.Radius)
+	polygonCondition, polygonErr := polygonSQL(args.Polygon)
+
+	// check errs, return on first found
+	for _, err := range []error{
+		geoErr,
+		bboxErr,
+		radiusErr,
+		polygonErr,
+	} {
 		if err != nil {
 			return sql, include, err
 		}
-		conditions = append(conditions, condition)
 	}
 
-	// construct condition for bbox=
-	if bbox != "" {
-		var p1lon, p1lat, p2lon, p2lat float64
-		fields, err := fmt.Sscanf(bbox, "%f,%f,%f,%f", &p1lon, &p1lat, &p2lon, &p2lat)
-		if err != nil {
-			return sql, include, fmt.Errorf("scanning bbox %q: %w", bbox, err)
+	// collate join conditions with sql OR
+	var conditions []string
+	for _, condition := range []string{
+		geoCondition,
+		bboxCondition,
+		radiusCondition,
+		polygonCondition,
+	} {
+		if condition != "" {
+			conditions = append(conditions, condition)
 		}
-		if fields != 4 {
-			return sql, include, fmt.Errorf("bbox missing a number: %w", ErrMissingParams)
-		}
-		condition := fmt.Sprintf(`
-    geo.wkb_geometry && ST_GeomFromText(
-        'MULTIPOINT(%f %f, %f %f)',
-        4326
-    )
-`,
-			p1lon,
-			p1lat,
-			p2lon,
-			p2lat,
-		)
-		conditions = append(conditions, condition)
 	}
-
-	// construct condition for location= and radius=
-	if location != "" || radius > 0 {
-		if location == "" || radius == 0 {
-			return sql, include, fmt.Errorf("radius queries require both location (%s) and radius (%d)", location, radius)
-		}
-		var lon, lat float64
-		fields, err := fmt.Sscanf(location, "%f,%f", &lon, &lat)
-		if err != nil {
-			return sql, include, fmt.Errorf("scanning location %q: %w", location, err)
-		}
-		if fields != 2 {
-			return sql, include, fmt.Errorf("location missing a number: %w", ErrMissingParams)
-		}
-		if radius < 1 {
-			return sql, include, fmt.Errorf("radius must be >0: %q: %w", radius, err)
-		}
-		condition := fmt.Sprintf(`
-    ST_DWithin(
-        geo.wkb_long_lat_geom::geography,
-        ST_SetSRID(
-            ST_Point(%f, %f),
-            4326
-        )::geography,
-        %d
-    )`,
-			lon,
-			lat,
-			radius,
-		)
-		conditions = append(conditions, condition)
-	}
-
-	// construct condition for polygon=
-	if polygon != "" {
-		points, err := ParsePolygon(polygon)
-		if err != nil {
-			return sql, include, fmt.Errorf("parsing polygon: %q: %w", polygon, err)
-		}
-		// convert the slice of Points to a slice of strings holding coordinates like "lon lat"
-		var coords []string
-		for _, point := range points {
-			coords = append(coords, point.String())
-		}
-		// join the coordinate strings into a form usable in LINESTRING(...)
-		linestring := strings.Join(coords, ",")
-		condition := fmt.Sprintf(`
-    ST_COVERS(
-        ST_Polygon(
-            'LINESTRING (%s)'::geometry,
-            4326
-        ),
-        geo.wkb_geometry
-    )`,
-			linestring,
-		)
-		conditions = append(conditions, condition)
-	}
-
-	if len(conditions) == 0 {
-		return sql, include, errors.New("must specify a condition (rows,bbox,location/radius, or polygon)")
-	}
-
-	// join conditions with sql OR
 	geoConditions := strings.Join(conditions, "    OR\n")
 
 	// construct WHERE condition for geotypes
-	geotypeConditions, err := additionalCondition("geo_type.name", geotypes)
+	geotypeConditions, err := additionalCondition("geo_type.name", args.Geotypes)
 	if err != nil {
 		return sql, include, err
 	}
 
 	// split column list into includes and categories
-	include, cats := splitCols(cols)
+	include, cats := splitCols(args.Cols)
 
 	// construct WHERE condition for categories
 	catConditions, err := additionalCondition("nomis_category.long_nomis_code", cats)
 	if err != nil {
 		return sql, include, err
 	}
+
+	// construct additional conditions for censustable / short_nomis_code
+	nomisDescTable, nomisDescConditions := censusTableSQL(args.Censustable)
 
 	// construct final SQL
 	template := `
@@ -549,13 +511,16 @@ FROM
     geo_metric,
     data_ver,
     nomis_category
+	%s
 WHERE (
     -- geo conditions:
-%s
+	%s
 )
 AND geo.valid
 AND geo_type.id = geo.type_id
     -- geotype conditions:
+%s
+	-- nomis_desc conditions:
 %s
 AND geo_metric.geo_id = geo.id
 AND data_ver.id = geo_metric.data_ver_id
@@ -566,15 +531,137 @@ AND nomis_category.year = 2011
     -- category conditions:
 %s
 `
-	sql = NormSQL(
-		fmt.Sprintf(
-			template,
-			geoConditions,
-			geotypeConditions,
-			catConditions,
-		),
+	sql = fmt.Sprintf(
+		template,
+		nomisDescTable,
+		geoConditions,
+		geotypeConditions,
+		nomisDescConditions,
+		catConditions,
 	)
 	return sql, include, nil
+}
+
+func validateCensusQuery(args CensusQuerySQLArgs) error {
+	// 'conditions' cant all be null / default
+	if len(args.Geos) == 0 &&
+		args.BBox == "" &&
+		args.Location == "" &&
+		args.Radius == 0 &&
+		args.Polygon == "" {
+		return errors.New("must specify a condition (rows, bbox, location/radius, and/or polygon)")
+	}
+	return nil
+}
+
+func geoSQL(geos []string) (sql string, err error) {
+	if len(geos) > 0 {
+		sql, err = where.WherePart("geo.code", geos)
+		if err != nil {
+			return sql, err
+		}
+	}
+	return sql, err
+}
+
+func bboxSQL(bbox string) (sql string, err error) {
+	if bbox != "" {
+		var p1lon, p1lat, p2lon, p2lat float64
+		fields, err := fmt.Sscanf(bbox, "%f,%f,%f,%f", &p1lon, &p1lat, &p2lon, &p2lat)
+		if err != nil {
+			return sql, fmt.Errorf("scanning bbox %q: %w", bbox, err)
+		}
+		if fields != 4 {
+			return sql, fmt.Errorf("bbox missing a number: %w", ErrMissingParams)
+		}
+		sql = fmt.Sprintf(`
+geo.wkb_geometry && ST_GeomFromText(
+	'MULTIPOINT(%f %f, %f %f)',
+	4326
+)
+`,
+			p1lon,
+			p1lat,
+			p2lon,
+			p2lat,
+		)
+	}
+	return sql, err
+}
+
+func radiusSQL(location string, radius int) (sql string, err error) {
+	if location != "" || radius > 0 {
+		if location == "" || radius == 0 {
+			return sql, fmt.Errorf("radius queries require both location (%s) and radius (%d)", location, radius)
+		}
+		var lon, lat float64
+		fields, err := fmt.Sscanf(location, "%f,%f", &lon, &lat)
+		if err != nil {
+			return sql, fmt.Errorf("scanning location %q: %w", location, err)
+		}
+		if fields != 2 {
+			return sql, fmt.Errorf("location missing a number: %w", ErrMissingParams)
+		}
+		if radius < 1 {
+			return sql, fmt.Errorf("radius must be >0: %q: %w", radius, err)
+		}
+		sql = fmt.Sprintf(`
+ST_DWithin(
+	geo.wkb_long_lat_geom::geography,
+	ST_SetSRID(
+		ST_Point(%f, %f),
+		4326
+	)::geography,
+	%d
+)
+`,
+			lon,
+			lat,
+			radius,
+		)
+	}
+	return sql, err
+}
+
+func polygonSQL(polygon string) (sql string, err error) {
+	if polygon != "" {
+		points, err := ParsePolygon(polygon)
+		if err != nil {
+			return sql, fmt.Errorf("parsing polygon: %q: %w", polygon, err)
+		}
+		// convert the slice of Points to a slice of strings holding coordinates like "lon lat"
+		var coords []string
+		for _, point := range points {
+			coords = append(coords, point.String())
+		}
+		// join the coordinate strings into a form usable in LINESTRING(...)
+		linestring := strings.Join(coords, ",")
+		sql = fmt.Sprintf(`
+ST_COVERS(
+	ST_Polygon(
+		'LINESTRING (%s)'::geometry,
+		4326
+	),
+	geo.wkb_geometry
+)
+`,
+			linestring,
+		)
+	}
+	return sql, err
+}
+
+func censusTableSQL(censustable string) (fromSQL string, andSQL string) {
+	if censustable != "" {
+		fromSQL = ", nomis_desc"
+		andSQL = fmt.Sprintf(`
+AND nomis_desc.short_nomis_code = '%s'
+AND nomis_category.nomis_desc_id = nomis_desc.id
+`,
+			censustable,
+		)
+	}
+	return fromSQL, andSQL
 }
 
 // splitCols separates special column names from geography names
@@ -610,16 +697,4 @@ AND (
 %s
 )`
 	return fmt.Sprintf(template, body), nil
-}
-
-// normalise sql to single spaces and newlines only, with no blank lines
-func NormSQL(sql string) string {
-	// replace all whitespace except newlines with single space
-	fieldDetector := func(c rune) bool {
-		return unicode.IsSpace(c) && string(c) != "\n"
-	}
-	wsNormed := strings.Join(strings.FieldsFunc(sql, fieldDetector), " ")
-	// strip blank lines and return
-	multiNewlinePattern := regexp.MustCompile(`\n\s*\n+`)
-	return multiNewlinePattern.ReplaceAllString(wsNormed, "\n")
 }
