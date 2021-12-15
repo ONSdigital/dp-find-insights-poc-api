@@ -6,4 +6,4 @@ package main
 // Endpoints tagged with doc are ignored since they are only in the swagger spec for documentation.
 // They are actually handled outside the generated APIs.
 
-//go:generate oapi-codegen -generate types,chi-server -include-tags public,private -exclude-tags doc -package api -o ../../api/api.go ../../swagger.yaml
+//go:generate oapi-codegen -generate types,chi-server -include-tags public,private,spec -exclude-tags doc -package api -o ../../api/api.go ../../swagger.yaml
