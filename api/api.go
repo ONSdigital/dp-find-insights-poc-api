@@ -42,6 +42,12 @@ type ServerInterface interface {
 	// Hello world endpoint
 	// (GET /hello)
 	GetHello(w http.ResponseWriter, r *http.Request)
+	// spec
+	// (GET /swagger)
+	GetSwagger(w http.ResponseWriter, r *http.Request)
+	// spec
+	// (GET /swaggerui)
+	GetSwaggerui(w http.ResponseWriter, r *http.Request)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -173,6 +179,36 @@ func (siw *ServerInterfaceWrapper) GetHello(w http.ResponseWriter, r *http.Reque
 	handler(w, r.WithContext(ctx))
 }
 
+// GetSwagger operation middleware
+func (siw *ServerInterfaceWrapper) GetSwagger(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetSwagger(w, r)
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler(w, r.WithContext(ctx))
+}
+
+// GetSwaggerui operation middleware
+func (siw *ServerInterfaceWrapper) GetSwaggerui(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetSwaggerui(w, r)
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler(w, r.WithContext(ctx))
+}
+
 // Handler creates http.Handler with routing matching OpenAPI spec.
 func Handler(si ServerInterface) http.Handler {
 	return HandlerWithOptions(si, ChiServerOptions{})
@@ -215,6 +251,12 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/hello", wrapper.GetHello)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/swagger", wrapper.GetSwagger)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/swaggerui", wrapper.GetSwaggerui)
 	})
 
 	return r
