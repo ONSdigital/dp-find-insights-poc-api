@@ -29,7 +29,6 @@ require (
 	github.com/lib/pq v1.10.3
 	github.com/pkg/diff v0.0.0-20210226163009-20ebb0f2a09e
 	github.com/pkg/errors v0.9.1
-	github.com/pseudo-su/oapi-ui-codegen v0.0.1 // indirect
 	github.com/smartystreets/goconvey v1.6.6
 	github.com/spf13/cast v1.4.1
 	github.com/stretchr/testify v1.7.0
