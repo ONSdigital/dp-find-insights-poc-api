@@ -3,6 +3,8 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"log"
 	"os"
 	"testing"
@@ -11,38 +13,49 @@ import (
 	"github.com/pkg/diff"
 )
 
-func TestAPI(t *testing.T) {
+// parse flags
+var extra = flag.Bool("extra", false, "print full diffs on failed integration test")
+var local = flag.Bool("local", false, "run tests against locally-running API")
 
+func parseURL(test APITest) string {
+	if *local {
+		return fmt.Sprintf(`%s?%s`, test.baseURLLocal, test.query)
+	}
+	return fmt.Sprintf(`%s?%s`, test.baseURL, test.query)
+}
+
+func TestAPI(t *testing.T) {
 	for _, test := range Tests {
 
 		t.Run(test.desc, func(t *testing.T) {
 
-			b, header, err := HTTPget(test.url)
+			url := parseURL(test)
+			b, header, err := HTTPget(url)
 
 			if err != nil {
-				t.Errorf("Error getting %s: %v", test.url, err)
+				t.Errorf("Error getting %s: %v", url, err)
 			} else {
-				assertCORSHeader(header, test, t)
-				assertAPIResponse(b, test, t)
+				assertCORSHeader(header, url, t)
+				assertAPIResponse(b, test, t, url)
 			}
 		})
 	}
 }
 
 // Assert CORS header allows cross-origin requests from any source (needed for web apps to use the API)
-func assertCORSHeader(h map[string][]string, test APITest, t *testing.T) {
+func assertCORSHeader(h map[string][]string, url string, t *testing.T) {
 	cors, ok := h["Access-Control-Allow-Origin"]
 	if ok {
 		if !IsStringInSlice("*", cors) {
-			t.Errorf("Expected '*' to be included in CORS header value for response from %s, got '%s'", test.url, cors)
+			t.Errorf("Expected '*' to be included in CORS header value for response from %s, got '%s'", url, cors)
 		}
 	} else {
-		t.Errorf("CORS header missing in response from %s", test.url)
+		t.Errorf("CORS header missing in response from %s", url)
 	}
 }
 
 // Assert API responses are consistent with recorded ones
-func assertAPIResponse(b []byte, test APITest, t *testing.T) {
+func assertAPIResponse(b []byte, test APITest, t *testing.T, url string) {
 	respfiles, err := MatchingRespFile(test.desc)
 	if err != nil {
 		t.Fail()
@@ -58,12 +71,12 @@ func assertAPIResponse(b []byte, test APITest, t *testing.T) {
 		wantsha1 := RespFileSha1(respfile)
 		h := sha1Hash(b)
 		if h != wantsha1 {
-			t.Errorf("Response from %s differed from that recorded in file %s. Run 'make testvv' to see full diff.", test.url, respfile)
+			t.Errorf("Response from %s differed from that recorded in file %s. Run 'make testvv' to see full diff.", url, respfile)
 
 			// use 'go test ./... -args extra'
 			// for diff
 
-			if os.Args[len(os.Args)-1] == "extra" {
+			if *extra {
 				if err := diff.Text(DataPref+respfile, "", nil, string(b), os.Stdout); err != nil {
 					log.Print(err)
 				}
@@ -83,7 +96,8 @@ func assertAPIResponse(b []byte, test APITest, t *testing.T) {
 func BenchmarkAllTestAPI(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		for _, test := range Tests {
-			_, _, err := HTTPget(test.url)
+			url := parseURL(test)
+			_, _, err := HTTPget(url)
 			if err != nil {
 				panic(err)
 			}
@@ -105,10 +119,10 @@ func BenchmarkAllConcurrentTestAPI(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		for _, test := range Tests {
 			<-ticker.C
-
+			url := parseURL(test)
 			go func(s string) {
 				HTTPget(s)
-			}(test.url)
+			}(url)
 
 		}
 	}
