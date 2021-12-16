@@ -26,9 +26,9 @@ func New(db *database.Database, maxMetrics int) (*Geodata, error) {
 	}, nil
 }
 
-func (app *Geodata) Query(ctx context.Context, dataset, bbox, location string, radius int, polygon string, geotypes, rows, cols []string) (string, error) {
+func (app *Geodata) Query(ctx context.Context, dataset, bbox, location string, radius int, polygon string, geotypes, rows, cols []string, censustable string) (string, error) {
 	if dataset == "census" {
-		return app.censusQuery(ctx, rows, bbox, location, radius, polygon, geotypes, cols)
+		return app.censusQuery(ctx, rows, bbox, location, radius, polygon, geotypes, cols, censustable)
 	}
 
 	// geography_code is hardcoded for compatibility with previous skinny queries
@@ -419,18 +419,19 @@ type CensusQuerySQLArgs struct {
 // Although this query method is not complicated, it is too long.
 // Break it up in the fullness of time.
 //
-func (app *Geodata) censusQuery(ctx context.Context, geos []string, bbox, location string, radius int, polygon string, geotypes, cols []string) (string, error) {
+func (app *Geodata) censusQuery(ctx context.Context, geos []string, bbox, location string, radius int, polygon string, geotypes, cols []string, censustable string) (string, error) {
 
 	sql, include, err := CensusQuerySQL(
 		CensusQuerySQLArgs{
-			Ctx:      ctx,
-			Geos:     geos,
-			BBox:     bbox,
-			Location: location,
-			Radius:   radius,
-			Polygon:  polygon,
-			Geotypes: geotypes,
-			Cols:     cols,
+			Ctx:         ctx,
+			Geos:        geos,
+			BBox:        bbox,
+			Location:    location,
+			Radius:      radius,
+			Polygon:     polygon,
+			Geotypes:    geotypes,
+			Cols:        cols,
+			Censustable: censustable,
 		},
 	)
 	if err != nil {

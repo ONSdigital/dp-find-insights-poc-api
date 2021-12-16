@@ -109,6 +109,7 @@ func (app *App) Handler(ctx context.Context, req *events.APIGatewayProxyRequest)
 	}
 	bbox := req.QueryStringParameters["bbox"]
 	location := req.QueryStringParameters["location"]
+	censustable := req.QueryStringParameters["censustable"]
 
 	var radius int
 	s := req.QueryStringParameters["radius"]
@@ -126,7 +127,7 @@ func (app *App) Handler(ctx context.Context, req *events.APIGatewayProxyRequest)
 	rows := req.MultiValueQueryStringParameters["rows"]
 	cols := req.MultiValueQueryStringParameters["cols"]
 
-	body, err := app.d.Query(ctx, dataset, bbox, location, radius, polygon, geotypes, rows, cols)
+	body, err := app.d.Query(ctx, dataset, bbox, location, radius, polygon, geotypes, rows, cols, censustable)
 	if err != nil {
 		return errorResponse(http.StatusInternalServerError, "problem with query", err), nil
 	}
