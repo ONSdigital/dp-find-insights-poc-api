@@ -60,4 +60,6 @@ bounding box queries etc. which resemble the "skinny" ones.
 
 eg. bbox=-0.370947083400182,51.3624781092781,0.17687729439413147,51.67377813346024
 
+There is some description of these queries in
 
+https://docs.google.com/presentation/d/1rJYG9JIKFsFsgXU-JW16-d3Exw97551EgthULbV44mE/edit#slide=id.g105f3797443_0_0s://docs.google.com/presentation/d/1rJYG9JIKFsFsgXU-JW16-d3Exw97551EgthULbV44mE/edit#slide=id.g105f3797443_0_0
