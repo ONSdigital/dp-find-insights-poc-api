@@ -11,13 +11,13 @@ This means we have a git history of API responses as well as allowing diffs.
 
 ### - make test & make testv
 
-Runs test and verbose (-v) test.
+Runs test and verbose (-v) test. For development work, both have variants to run integration tests against locally-running API server: `make test-local` and `make testv-local`. These assume the API is available at `http://localhost:25252`.
 
 ### - make testvv
 
 This is a very verbose test and will display coloured diffs for failures.  This
 might be of some use in trying to debug failures with small diffs although the
-output is often too long.
+output is often too long. As above, a local version variant is available for development work, `make testvv-local`, assuming the API is available at `http://localhost:25252`.
 ### - make bench
 
 
