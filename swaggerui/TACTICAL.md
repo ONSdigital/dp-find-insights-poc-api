@@ -14,3 +14,12 @@ $ ssh -i frank-ec2-dev0.pem ubuntu@ec2-18-193-78-190.eu-central-1.compute.amazon
 
 dp-find-insights-poc-api is running under a detached tmux session under the
 ubuntu user (using the environment in ~ubuntu/.direnv)
+
+## Update
+
+* ssh in and type "tmux attach"
+* Control-C running binary
+* "make build" locally and scp the freshly compiled binary over
+* $ source ~/.direnv
+* start binary via "./dp-find-insights-poc-api"
+* "Control-B d" to detach tmux
