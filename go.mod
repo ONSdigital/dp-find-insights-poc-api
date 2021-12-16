@@ -14,6 +14,7 @@ require (
 	github.com/aws/aws-sdk-go v1.41.15
 	github.com/cucumber/godog v0.12.1
 	github.com/deepmap/oapi-codegen v1.9.0
+	github.com/getkin/kin-openapi v0.80.0
 	github.com/go-chi/chi/v5 v5.0.4
 	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/jackc/pgx/v4 v4.13.0
