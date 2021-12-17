@@ -1,6 +1,7 @@
 package geodata_test
 
 import (
+	"context"
 	"errors"
 	"reflect"
 	"regexp"
@@ -48,7 +49,6 @@ WHERE (
 AND geo.valid
 AND geo_type.id = geo.type_id
  -- geotype conditions:
- -- nomis_desc conditions:
 AND geo_metric.geo_id = geo.id
 AND data_ver.id = geo_metric.data_ver_id
 AND data_ver.census_year = 2011
@@ -59,8 +59,48 @@ AND nomis_category.year = 2011
 `,
 		},
 		{
+			desc: "single col condition",
+			args: geodata.CensusQuerySQLArgs{
+				Geos: []string{"E01000001"},
+				Cols: []string{"QS119EW0002"},
+			},
+			wantSQL: `
+SELECT
+ geo.code AS geography_code,
+ geo_type.name AS geotype,
+ nomis_category.long_nomis_code AS category_code,
+ geo_metric.metric AS value
+FROM
+ geo,
+ geo_type,
+ geo_metric,
+ data_ver,
+ nomis_category
+WHERE (
+ -- geo conditions:
+ geo.code IN ( 'E01000001' )
+)
+AND geo.valid
+AND geo_type.id = geo.type_id
+ -- geotype conditions:
+AND geo_metric.geo_id = geo.id
+AND data_ver.id = geo_metric.data_ver_id
+AND data_ver.census_year = 2011
+AND data_ver.ver_string = '2.2'
+AND nomis_category.id = geo_metric.category_id
+AND nomis_category.year = 2011
+ -- category conditions:
+AND (
+ nomis_category.long_nomis_code IN ( 'QS119EW0002' )
+)
+`,
+		},
+		{
 			desc: "censustable condition with single geography",
-			args: geodata.CensusQuerySQLArgs{Geos: []string{"E01000001"}, Censustable: "QS101EW"},
+			args: geodata.CensusQuerySQLArgs{
+				Geos:        []string{"E01000001"},
+				Censustable: "QS101EW",
+			},
 			wantSQL: `
 SELECT
  geo.code AS geography_code,
@@ -81,9 +121,7 @@ WHERE (
 AND geo.valid
 AND geo_type.id = geo.type_id
  -- geotype conditions:
- -- nomis_desc conditions:
 AND nomis_desc.short_nomis_code = 'QS101EW'
-AND nomis_category.nomis_desc_id = nomis_desc.id
 AND geo_metric.geo_id = geo.id
 AND data_ver.id = geo_metric.data_ver_id
 AND data_ver.census_year = 2011
@@ -91,11 +129,18 @@ AND data_ver.ver_string = '2.2'
 AND nomis_category.id = geo_metric.category_id
 AND nomis_category.year = 2011
  -- category conditions:
-`,
+AND (
+ nomis_category.nomis_desc_id = nomis_desc.id
+)
+ `,
 		},
 		{
-			desc: "censustable condition with multiple geographies",
-			args: geodata.CensusQuerySQLArgs{Geos: []string{"E01000001", "E01000002", "E01000003"}, Censustable: "QS101EW"},
+			desc: "censustable condition with single col",
+			args: geodata.CensusQuerySQLArgs{
+				Geos:        []string{"E01000001"},
+				Censustable: "QS101EW",
+				Cols:        []string{"QS119EW0002"},
+			},
 			wantSQL: `
 SELECT
  geo.code AS geography_code,
@@ -111,14 +156,12 @@ FROM
  , nomis_desc
 WHERE (
  -- geo conditions:
- geo.code IN ( 'E01000001', 'E01000002', 'E01000003' )
+ geo.code IN ( 'E01000001' )
 )
 AND geo.valid
 AND geo_type.id = geo.type_id
  -- geotype conditions:
- -- nomis_desc conditions:
 AND nomis_desc.short_nomis_code = 'QS101EW'
-AND nomis_category.nomis_desc_id = nomis_desc.id
 AND geo_metric.geo_id = geo.id
 AND data_ver.id = geo_metric.data_ver_id
 AND data_ver.census_year = 2011
@@ -126,71 +169,45 @@ AND data_ver.ver_string = '2.2'
 AND nomis_category.id = geo_metric.category_id
 AND nomis_category.year = 2011
  -- category conditions:
-			`,
-		},
-		{
-			desc: "censustable condition with range of geographies",
-			args: geodata.CensusQuerySQLArgs{Geos: []string{"E01000001...E01000005"}, Censustable: "QS101EW"},
-			wantSQL: `
-SELECT
- geo.code AS geography_code,
- geo_type.name AS geotype,
- nomis_category.long_nomis_code AS category_code,
- geo_metric.metric AS value
-FROM
- geo,
- geo_type,
- geo_metric,
- data_ver,
- nomis_category
- , nomis_desc
-WHERE (
- -- geo conditions:
- geo.code BETWEEN 'E01000001' AND 'E01000005'
-)
-AND geo.valid
-AND geo_type.id = geo.type_id
- -- geotype conditions:
- -- nomis_desc conditions:
-AND nomis_desc.short_nomis_code = 'QS101EW'
-AND nomis_category.nomis_desc_id = nomis_desc.id
-AND geo_metric.geo_id = geo.id
-AND data_ver.id = geo_metric.data_ver_id
-AND data_ver.census_year = 2011
-AND data_ver.ver_string = '2.2'
-AND nomis_category.id = geo_metric.category_id
-AND nomis_category.year = 2011
- -- category conditions:
-`,
-		},
-		{
-			desc: "censustable condition with multiple and range of geographies",
-			args: geodata.CensusQuerySQLArgs{Geos: []string{"E01000001", "E01000002", "E01000003", "E01000005...E010000010"}, Censustable: "QS101EW"},
-			wantSQL: `
-SELECT
- geo.code AS geography_code,
- geo_type.name AS geotype,
- nomis_category.long_nomis_code AS category_code,
- geo_metric.metric AS value
-FROM
- geo,
- geo_type,
- geo_metric,
- data_ver,
- nomis_category
- , nomis_desc
-WHERE (
- -- geo conditions:
- geo.code IN ( 'E01000001', 'E01000002', 'E01000003' )
+AND (
+ nomis_category.long_nomis_code IN ( 'QS119EW0002' )
  OR
- geo.code BETWEEN 'E01000005' AND 'E010000010'
+ nomis_category.nomis_desc_id = nomis_desc.id
+)
+`,
+		},
+		{
+			desc: "censustable condition with multiple col",
+			args: geodata.CensusQuerySQLArgs{
+				Geos:        []string{"E01000001"},
+				Censustable: "QS101EW",
+				Cols: []string{
+					"QS119EW0001",
+					"QS119EW0002",
+					"QS119EW0003",
+				},
+			},
+			wantSQL: `
+SELECT
+ geo.code AS geography_code,
+ geo_type.name AS geotype,
+ nomis_category.long_nomis_code AS category_code,
+ geo_metric.metric AS value
+FROM
+ geo,
+ geo_type,
+ geo_metric,
+ data_ver,
+ nomis_category
+ , nomis_desc
+WHERE (
+ -- geo conditions:
+ geo.code IN ( 'E01000001' )
 )
 AND geo.valid
 AND geo_type.id = geo.type_id
  -- geotype conditions:
- -- nomis_desc conditions:
 AND nomis_desc.short_nomis_code = 'QS101EW'
-AND nomis_category.nomis_desc_id = nomis_desc.id
 AND geo_metric.geo_id = geo.id
 AND data_ver.id = geo_metric.data_ver_id
 AND data_ver.census_year = 2011
@@ -198,11 +215,108 @@ AND data_ver.ver_string = '2.2'
 AND nomis_category.id = geo_metric.category_id
 AND nomis_category.year = 2011
  -- category conditions:
+AND (
+ nomis_category.long_nomis_code IN ( 'QS119EW0001', 'QS119EW0002', 'QS119EW0003' )
+ OR
+ nomis_category.nomis_desc_id = nomis_desc.id
+)
+`,
+		},
+		{
+			desc: "censustable condition with ranged col",
+			args: geodata.CensusQuerySQLArgs{
+				Geos:        []string{"E01000001"},
+				Censustable: "QS101EW",
+				Cols:        []string{"QS119EW0001...QS119EW0004"},
+			},
+			wantSQL: `
+SELECT
+ geo.code AS geography_code,
+ geo_type.name AS geotype,
+ nomis_category.long_nomis_code AS category_code,
+ geo_metric.metric AS value
+FROM
+ geo,
+ geo_type,
+ geo_metric,
+ data_ver,
+ nomis_category
+ , nomis_desc
+WHERE (
+ -- geo conditions:
+ geo.code IN ( 'E01000001' )
+)
+AND geo.valid
+AND geo_type.id = geo.type_id
+ -- geotype conditions:
+AND nomis_desc.short_nomis_code = 'QS101EW'
+AND geo_metric.geo_id = geo.id
+AND data_ver.id = geo_metric.data_ver_id
+AND data_ver.census_year = 2011
+AND data_ver.ver_string = '2.2'
+AND nomis_category.id = geo_metric.category_id
+AND nomis_category.year = 2011
+ -- category conditions:
+AND (
+ nomis_category.long_nomis_code BETWEEN 'QS119EW0001' AND 'QS119EW0004'
+ OR
+ nomis_category.nomis_desc_id = nomis_desc.id
+)
+`,
+		},
+		{
+			desc: "censustable condition with multiple col and range col",
+			args: geodata.CensusQuerySQLArgs{
+				Geos:        []string{"E01000001"},
+				Censustable: "QS101EW",
+				Cols: []string{
+					"QS119EW0001",
+					"QS119EW0002",
+					"QS119EW0003",
+					"QS117EW0001...QS117EW0003",
+				},
+			},
+			wantSQL: `
+SELECT
+ geo.code AS geography_code,
+ geo_type.name AS geotype,
+ nomis_category.long_nomis_code AS category_code,
+ geo_metric.metric AS value
+FROM
+ geo,
+ geo_type,
+ geo_metric,
+ data_ver,
+ nomis_category
+ , nomis_desc
+WHERE (
+ -- geo conditions:
+ geo.code IN ( 'E01000001' )
+)
+AND geo.valid
+AND geo_type.id = geo.type_id
+ -- geotype conditions:
+AND nomis_desc.short_nomis_code = 'QS101EW'
+AND geo_metric.geo_id = geo.id
+AND data_ver.id = geo_metric.data_ver_id
+AND data_ver.census_year = 2011
+AND data_ver.ver_string = '2.2'
+AND nomis_category.id = geo_metric.category_id
+AND nomis_category.year = 2011
+ -- category conditions:
+AND (
+ nomis_category.long_nomis_code IN ( 'QS119EW0001', 'QS119EW0002', 'QS119EW0003' )
+ OR
+ nomis_category.long_nomis_code BETWEEN 'QS117EW0001' AND 'QS117EW0003'
+ OR
+ nomis_category.nomis_desc_id = nomis_desc.id
+)
 `,
 		},
 	}
 	for _, test := range tests {
-		gotSQL, gotInclude, gotErr := geodata.CensusQuerySQL(test.args)
+		ctx := context.Background()
+		gotSQL, gotInclude, gotErr := geodata.CensusQuerySQL(ctx, test.args)
 		normedGotSql := normSQL(gotSQL)
 		normedWantSql := normSQL(test.wantSQL)
 		if !reflect.DeepEqual(normedGotSql, normedWantSql) {

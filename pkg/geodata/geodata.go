@@ -400,7 +400,6 @@ func (app *Geodata) collectCells(ctx context.Context, sql string, include []stri
 }
 
 type CensusQuerySQLArgs struct {
-	Ctx         context.Context
 	Geos        []string
 	BBox        string
 	Location    string
@@ -422,8 +421,8 @@ type CensusQuerySQLArgs struct {
 func (app *Geodata) censusQuery(ctx context.Context, geos []string, bbox, location string, radius int, polygon string, geotypes, cols []string, censustable string) (string, error) {
 
 	sql, include, err := CensusQuerySQL(
+		ctx,
 		CensusQuerySQLArgs{
-			Ctx:         ctx,
 			Geos:        geos,
 			BBox:        bbox,
 			Location:    location,
@@ -443,7 +442,7 @@ func (app *Geodata) censusQuery(ctx context.Context, geos []string, bbox, locati
 	return app.collectCells(ctx, sql, include)
 }
 
-func CensusQuerySQL(args CensusQuerySQLArgs) (sql string, include []string, err error) {
+func CensusQuerySQL(ctx context.Context, args CensusQuerySQLArgs) (sql string, include []string, err error) {
 	// validate args
 	if err := validateCensusQuery(args); err != nil {
 		return sql, include, err
@@ -491,13 +490,13 @@ func CensusQuerySQL(args CensusQuerySQLArgs) (sql string, include []string, err 
 	include, cats := splitCols(args.Cols)
 
 	// construct WHERE condition for categories
-	catConditions, err := additionalCondition("nomis_category.long_nomis_code", cats)
+	catConditions, err := categorySQL(cats, args.Censustable)
 	if err != nil {
 		return sql, include, err
 	}
 
 	// construct additional conditions for censustable / short_nomis_code
-	nomisDescTable, nomisDescConditions := censusTableSQL(args.Censustable)
+	censustableFromSQL, censustableAndSQL := censusTableFromAndSQL(args.Censustable)
 
 	// construct final SQL
 	template := `
@@ -521,7 +520,6 @@ AND geo.valid
 AND geo_type.id = geo.type_id
     -- geotype conditions:
 %s
-	-- nomis_desc conditions:
 %s
 AND geo_metric.geo_id = geo.id
 AND data_ver.id = geo_metric.data_ver_id
@@ -534,10 +532,10 @@ AND nomis_category.year = 2011
 `
 	sql = fmt.Sprintf(
 		template,
-		nomisDescTable,
+		censustableFromSQL,
 		geoConditions,
 		geotypeConditions,
-		nomisDescConditions,
+		censustableAndSQL,
 		catConditions,
 	)
 	return sql, include, nil
@@ -555,27 +553,24 @@ func validateCensusQuery(args CensusQuerySQLArgs) error {
 	return nil
 }
 
-func geoSQL(geos []string) (sql string, err error) {
+func geoSQL(geos []string) (string, error) {
 	if len(geos) > 0 {
-		sql, err = where.WherePart("geo.code", geos)
-		if err != nil {
-			return sql, err
-		}
+		return where.WherePart("geo.code", geos)
 	}
-	return sql, err
+	return "", nil
 }
 
-func bboxSQL(bbox string) (sql string, err error) {
+func bboxSQL(bbox string) (string, error) {
 	if bbox != "" {
 		var p1lon, p1lat, p2lon, p2lat float64
 		fields, err := fmt.Sscanf(bbox, "%f,%f,%f,%f", &p1lon, &p1lat, &p2lon, &p2lat)
 		if err != nil {
-			return sql, fmt.Errorf("scanning bbox %q: %w", bbox, err)
+			return "", fmt.Errorf("scanning bbox %q: %w", bbox, err)
 		}
 		if fields != 4 {
-			return sql, fmt.Errorf("bbox missing a number: %w", ErrMissingParams)
+			return "", fmt.Errorf("bbox missing a number: %w", ErrMissingParams)
 		}
-		sql = fmt.Sprintf(`
+		sql := fmt.Sprintf(`
 geo.wkb_geometry && ST_GeomFromText(
 	'MULTIPOINT(%f %f, %f %f)',
 	4326
@@ -586,27 +581,28 @@ geo.wkb_geometry && ST_GeomFromText(
 			p2lon,
 			p2lat,
 		)
+		return sql, nil
 	}
-	return sql, err
+	return "", nil
 }
 
-func radiusSQL(location string, radius int) (sql string, err error) {
+func radiusSQL(location string, radius int) (string, error) {
 	if location != "" || radius > 0 {
 		if location == "" || radius == 0 {
-			return sql, fmt.Errorf("radius queries require both location (%s) and radius (%d)", location, radius)
+			return "", fmt.Errorf("radius queries require both location (%s) and radius (%d)", location, radius)
 		}
 		var lon, lat float64
 		fields, err := fmt.Sscanf(location, "%f,%f", &lon, &lat)
 		if err != nil {
-			return sql, fmt.Errorf("scanning location %q: %w", location, err)
+			return "", fmt.Errorf("scanning location %q: %w", location, err)
 		}
 		if fields != 2 {
-			return sql, fmt.Errorf("location missing a number: %w", ErrMissingParams)
+			return "", fmt.Errorf("location missing a number: %w", ErrMissingParams)
 		}
 		if radius < 1 {
-			return sql, fmt.Errorf("radius must be >0: %q: %w", radius, err)
+			return "", fmt.Errorf("radius must be >0: %q: %w", radius, err)
 		}
-		sql = fmt.Sprintf(`
+		sql := fmt.Sprintf(`
 ST_DWithin(
 	geo.wkb_long_lat_geom::geography,
 	ST_SetSRID(
@@ -620,15 +616,16 @@ ST_DWithin(
 			lat,
 			radius,
 		)
+		return sql, nil
 	}
-	return sql, err
+	return "", nil
 }
 
-func polygonSQL(polygon string) (sql string, err error) {
+func polygonSQL(polygon string) (string, error) {
 	if polygon != "" {
 		points, err := ParsePolygon(polygon)
 		if err != nil {
-			return sql, fmt.Errorf("parsing polygon: %q: %w", polygon, err)
+			return "", fmt.Errorf("parsing polygon: %q: %w", polygon, err)
 		}
 		// convert the slice of Points to a slice of strings holding coordinates like "lon lat"
 		var coords []string
@@ -637,7 +634,7 @@ func polygonSQL(polygon string) (sql string, err error) {
 		}
 		// join the coordinate strings into a form usable in LINESTRING(...)
 		linestring := strings.Join(coords, ",")
-		sql = fmt.Sprintf(`
+		sql := fmt.Sprintf(`
 ST_COVERS(
 	ST_Polygon(
 		'LINESTRING (%s)'::geometry,
@@ -648,21 +645,53 @@ ST_COVERS(
 `,
 			linestring,
 		)
+		return sql, nil
 	}
-	return sql, err
+	return "", nil
 }
 
-func censusTableSQL(censustable string) (fromSQL string, andSQL string) {
+func censusTableFromAndSQL(censustable string) (string, string) {
+	var fromSQL string
+	var andSQL string
 	if censustable != "" {
 		fromSQL = ", nomis_desc"
-		andSQL = fmt.Sprintf(`
-AND nomis_desc.short_nomis_code = '%s'
-AND nomis_category.nomis_desc_id = nomis_desc.id
-`,
+		andSQL = fmt.Sprintf(
+			`AND nomis_desc.short_nomis_code = '%s'`,
 			censustable,
 		)
 	}
 	return fromSQL, andSQL
+}
+
+func categorySQL(namedCats []string, censusTable string) (string, error) {
+	if len(namedCats) == 0 && censusTable == "" {
+		return "", nil
+	}
+	// get sql for selecting named categories
+	var namedCatSQL string
+	var err error
+	if len(namedCats) > 0 {
+		namedCatSQL, err = where.WherePart("nomis_category.long_nomis_code", namedCats)
+		if err != nil {
+			return "", err
+		}
+	} else {
+		namedCatSQL = ""
+	}
+	// get sql for selecting categories by nomis desc selection - will need joining 'OR' if there were named cats
+	var censusTableSQL string
+	if censusTable != "" {
+		censusTableSQL = " nomis_category.nomis_desc_id = nomis_desc.id"
+		if namedCatSQL != "" {
+			censusTableSQL = " OR\n " + censusTableSQL
+		}
+	}
+	template := `
+AND (
+%s
+%s
+)`
+	return fmt.Sprintf(template, namedCatSQL, censusTableSQL), nil
 }
 
 // splitCols separates special column names from geography names
