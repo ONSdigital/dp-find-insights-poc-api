@@ -1,10 +1,10 @@
 package where
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
+	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/etype"
 	"github.com/lib/pq"
 )
 
@@ -65,7 +65,7 @@ func ParseRows(rows []string) (Rows, error) {
 		// split into col and specs on colon
 		parts := strings.Split(q, ":")
 		if len(parts) != 2 {
-			return nil, errors.New("expected col:rowspec[,...]")
+			return nil, etype.Param("expected col:rowspec[,...]")
 		}
 		col := parts[0]
 
@@ -83,17 +83,17 @@ func ParseRows(rows []string) (Rows, error) {
 		// and append to the set's singles or ranges list.
 		for _, rowspec := range rowspecs {
 			if len(rowspec) == 0 {
-				return nil, errors.New("rowspec must not be empty")
+				return nil, etype.Param("rowspec must not be empty")
 			}
 			if !strings.Contains(rowspec, "...") {
 				set.Singles = append(set.Singles, rowspec)
 			} else {
 				parts := strings.Split(rowspec, "...")
 				if len(parts) != 2 {
-					return nil, errors.New("range must be low...high")
+					return nil, etype.Param("range must be low...high")
 				}
 				if parts[0] == "" || parts[1] == "" {
-					return nil, errors.New("range values must not be empty")
+					return nil, etype.Param("range values must not be empty")
 				}
 				vrange := &ValueRange{
 					Low:  parts[0],

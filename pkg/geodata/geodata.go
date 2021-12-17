@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/database"
+	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/etype"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/table"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/timer"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/where"
@@ -50,7 +51,7 @@ func (app *Geodata) Query(ctx context.Context, dataset, bbox, location string, r
 func (app *Geodata) rowQuery(ctx context.Context, geos, geotypes, cats, include []string) (string, error) {
 
 	if len(geos) == 0 && len(cats) == 0 {
-		return "", ErrMissingParams
+		return "", etype.Param("missing parameter")
 	}
 
 	// Construct SQL
@@ -113,10 +114,10 @@ func (app *Geodata) bboxQuery(ctx context.Context, bbox string, geotypes, cats, 
 	var p1lon, p1lat, p2lon, p2lat float64
 	fields, err := fmt.Sscanf(bbox, "%f,%f,%f,%f", &p1lon, &p1lat, &p2lon, &p2lat)
 	if err != nil {
-		return "", fmt.Errorf("scanning bbox %q: %w", bbox, err)
+		return "", etype.ParamWrap(err, "scanning bbox %q", bbox)
 	}
 	if fields != 4 {
-		return "", fmt.Errorf("bbox missing a number: %w", ErrMissingParams)
+		return "", etype.Param("bbox missing a number")
 	}
 
 	// Construct SQL
@@ -182,14 +183,14 @@ func (app *Geodata) radiusQuery(ctx context.Context, location string, radius int
 	var lon, lat float64
 	fields, err := fmt.Sscanf(location, "%f,%f", &lon, &lat)
 	if err != nil {
-		return "", fmt.Errorf("scanning location %q: %w", location, err)
+		return "", etype.ParamWrap(err, "scanning location %q:", location)
 	}
 	if fields != 2 {
-		return "", fmt.Errorf("location missing a number: %w", ErrMissingParams)
+		return "", etype.Param("location missing a number")
 	}
 
 	if radius < 1 {
-		return "", fmt.Errorf("radius must be >0: %q: %w", radius, err)
+		return "", etype.Param("radius %d must be greater than 0", radius)
 	}
 
 	template := `
@@ -362,7 +363,7 @@ func (app *Geodata) collectCells(ctx context.Context, sql string, include []stri
 		if app.maxMetrics > 0 {
 			nmetrics++
 			if nmetrics > app.maxMetrics {
-				return "", ErrTooManyMetrics
+				return "", etype.Limit("too many metrics")
 			}
 		}
 

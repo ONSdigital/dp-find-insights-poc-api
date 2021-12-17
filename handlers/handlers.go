@@ -9,6 +9,7 @@ import (
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/api"
 	"github.com/ONSdigital/dp-find-insights-poc-api/config"
+	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/etype"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/geodata"
 	Swagger "github.com/ONSdigital/dp-find-insights-poc-api/swagger"
 )
@@ -112,9 +113,9 @@ func (svr *Server) GetDevHelloDataset(w http.ResponseWriter, r *http.Request, da
 	csv, err := svr.querygeodata.Query(ctx, dataset, bbox, location, radius, polygon, geotype, rows, cols)
 	if err != nil {
 		status := http.StatusInternalServerError
-		if errors.Is(err, geodata.ErrTooManyMetrics) {
+		if errors.Is(err, &etype.LimitError{}) {
 			status = http.StatusForbidden
-		} else if errors.Is(err, geodata.ErrMissingParams) || errors.Is(err, geodata.ErrInvalidTable) {
+		} else if errors.Is(err, &etype.ParamError{}) {
 			status = http.StatusBadRequest
 		}
 		sendError(w, status, err.Error())
