@@ -6,6 +6,7 @@ const (
 	ErrMissingParams  = Sentinel("missing parameter")
 	ErrTooManyMetrics = Sentinel("too many metrics")
 	ErrInvalidTable   = Sentinel("invalid table")
+	ErrNoContent      = Sentinel("no data found")
 )
 
 func (e Sentinel) Error() string {
