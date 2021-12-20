@@ -8,6 +8,8 @@ functionality under the AWS lambda.
 A micro EC2 instance on the free tier was provisioned via the web with an
 encrypted version of the private key in this directory.
 
+TODO: should be replaced by terraform
+
 Access via
 
 $ ssh -i frank-ec2-dev0.pem ubuntu@ec2-18-193-78-190.eu-central-1.compute.amazonaws.com
@@ -17,9 +19,9 @@ ubuntu user (using the environment in ~ubuntu/.direnv)
 
 ## Update
 
-* ssh in and type "tmux attach"
+* "make build" locally and scp the freshly compiled binary to ~ubuntu
+* ssh into the remote system and type "tmux attach"
 * Control-C running binary
-* "make build" locally and scp the freshly compiled binary over
 * $ source ~/.direnv
 * start binary via "./dp-find-insights-poc-api"
 * "Control-B d" to detach tmux
