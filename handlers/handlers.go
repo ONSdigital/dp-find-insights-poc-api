@@ -112,7 +112,9 @@ func (svr *Server) GetDevHelloDataset(w http.ResponseWriter, r *http.Request, da
 	csv, err := svr.querygeodata.Query(ctx, dataset, bbox, location, radius, polygon, geotype, rows, cols)
 	if err != nil {
 		status := http.StatusInternalServerError
-		if errors.Is(err, geodata.ErrTooManyMetrics) {
+		if errors.Is(err, geodata.ErrNoContent) {
+			status = http.StatusNoContent
+		} else if errors.Is(err, geodata.ErrTooManyMetrics) {
 			status = http.StatusForbidden
 		} else if errors.Is(err, geodata.ErrMissingParams) || errors.Is(err, geodata.ErrInvalidTable) {
 			status = http.StatusBadRequest
