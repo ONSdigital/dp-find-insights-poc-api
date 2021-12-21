@@ -133,4 +133,4 @@ generate:
 
 .PHONY: check-generate
 check-generate: generate
-	  git diff-index --quiet HEAD --
+	  @git diff-index --quiet HEAD -- || echo "commits to autogen file?" && exit
