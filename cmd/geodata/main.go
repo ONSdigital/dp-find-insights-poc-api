@@ -23,6 +23,7 @@ func main() {
 	flag.Var(&rows, "rows", "row or row range")
 	flag.Var(&cols, "cols", "column name(s) to return")
 	maxmetrics := flag.Int("maxmetrics", 0, "max skinny rows to accept (default 0 means no limit)")
+	censustable := flag.String("censustable", "", "censustable QS802EW 'nomis table' / grouping of census data categories")
 	flag.Parse()
 
 	if *dataset == "" {
@@ -47,6 +48,7 @@ func main() {
 		fmt.Printf("\t%s\n", t)
 	}
 
+	fmt.Printf("censustable: %s\n", *censustable)
 	// Open postgres connection
 	//
 
@@ -62,7 +64,7 @@ func main() {
 	}
 
 	ctx := context.Background()
-	body, err := app.Query(ctx, *dataset, *bbox, *location, *radius, *polygon, geotypes, rows, cols)
+	body, err := app.Query(ctx, *dataset, *bbox, *location, *radius, *polygon, geotypes, rows, cols, *censustable)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -71,6 +73,10 @@ func main() {
 }
 
 func usage() {
-	fmt.Fprintf(os.Stderr, "usage: %s --dataset <dataset> [--rows rowspec[,...]|--bbox p1lon,p1lat,p2lon,pl2lat|--location lon,lat --radius meters|--polygon x1,y1,...,x1,y1] [--geotype LSOA|LAD,...] [--cols col[,...]] [--maxmetrics n]\n", os.Args[0])
+	fmt.Fprintf(
+		os.Stderr,
+		"usage: %s --dataset <dataset> [--rows rowspec[,...]|--bbox p1lon,p1lat,p2lon,pl2lat|--location lon,lat --radius meters|--polygon x1,y1,...,x1,y1] [--geotype LSOA|LAD,...] [--cols col[,...]] [--maxmetrics n] [--censustable QS802EW]\n",
+		os.Args[0],
+	)
 	os.Exit(2)
 }

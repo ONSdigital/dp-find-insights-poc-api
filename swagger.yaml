@@ -124,6 +124,10 @@ paths:
           name: polygon
           schema:
             type: string
+        - in: query
+          name: censustable
+          schema:
+            type: string
       responses:
         200:
           content:
