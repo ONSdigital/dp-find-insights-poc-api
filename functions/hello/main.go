@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -128,7 +129,15 @@ func (app *App) Handler(ctx context.Context, req *events.APIGatewayProxyRequest)
 
 	body, err := app.d.Query(ctx, dataset, bbox, location, radius, polygon, geotypes, rows, cols)
 	if err != nil {
-		return errorResponse(http.StatusInternalServerError, "problem with query", err), nil
+		status := http.StatusInternalServerError
+		if errors.Is(err, geodata.ErrNoContent) {
+			status = http.StatusNoContent
+		} else if errors.Is(err, geodata.ErrTooManyMetrics) {
+			status = http.StatusForbidden
+		} else if errors.Is(err, geodata.ErrMissingParams) || errors.Is(err, geodata.ErrInvalidTable) {
+			status = http.StatusBadRequest
+		}
+		return errorResponse(status, "problem with query", err), nil
 	}
 
 	// headers
