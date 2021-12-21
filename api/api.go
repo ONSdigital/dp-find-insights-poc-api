@@ -17,12 +17,6 @@ type Error struct {
 	Error string `json:"error"`
 }
 
-// HelloResponse defines model for HelloResponse.
-type HelloResponse struct {
-	// Message returned by hello world endpoint
-	Message string `json:"message"`
-}
-
 // GetDevHelloDatasetParams defines parameters for GetDevHelloDataset.
 type GetDevHelloDatasetParams struct {
 	Rows     *[]string `json:"rows,omitempty"`
@@ -39,9 +33,6 @@ type ServerInterface interface {
 	// query census
 	// (GET /dev/hello/{dataset})
 	GetDevHelloDataset(w http.ResponseWriter, r *http.Request, dataset string, params GetDevHelloDatasetParams)
-	// Hello world endpoint
-	// (GET /hello)
-	GetHello(w http.ResponseWriter, r *http.Request)
 	// spec
 	// (GET /swagger)
 	GetSwagger(w http.ResponseWriter, r *http.Request)
@@ -164,21 +155,6 @@ func (siw *ServerInterfaceWrapper) GetDevHelloDataset(w http.ResponseWriter, r *
 	handler(w, r.WithContext(ctx))
 }
 
-// GetHello operation middleware
-func (siw *ServerInterfaceWrapper) GetHello(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	var handler = func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetHello(w, r)
-	}
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler(w, r.WithContext(ctx))
-}
-
 // GetSwagger operation middleware
 func (siw *ServerInterfaceWrapper) GetSwagger(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -248,9 +224,6 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/dev/hello/{dataset}", wrapper.GetDevHelloDataset)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/hello", wrapper.GetHello)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/swagger", wrapper.GetSwagger)

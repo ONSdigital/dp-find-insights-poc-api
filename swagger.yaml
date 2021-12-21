@@ -8,25 +8,6 @@ info:
     url: "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
 
 paths:
-  /hello:
-    get:
-      tags:
-        - public
-      summary: Hello world endpoint
-      description: Returns an example payload.
-      responses:
-        200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HelloResponse"
-        default:
-          description: internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
 
   /swagger:
     get:
@@ -36,7 +17,7 @@ paths:
       description: spec
       responses:
         200:
-          description: "Successfully returns OK status with checks of dependent services"
+          description: "Returns a JSON form of this file"
           content:
             application/json:
 
@@ -48,7 +29,7 @@ paths:
       description: spec
       responses:
         200:
-          description: "Successfully returns OK status with checks of dependent services"
+          description: "Returns swaggerui HTML form"
           content:
             text/html:
 
