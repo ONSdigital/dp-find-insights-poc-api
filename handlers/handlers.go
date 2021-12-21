@@ -47,13 +47,6 @@ func (svr *Server) GetSwaggerui(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 }
 
-func (svr *Server) GetHello(w http.ResponseWriter, r *http.Request) {
-	response := &api.HelloResponse{
-		Message: "Hello, world!",
-	}
-	sendResult(w, http.StatusOK, response)
-}
-
 func (svr *Server) GetDevHelloDataset(w http.ResponseWriter, r *http.Request, dataset string, params api.GetDevHelloDatasetParams) {
 	if !svr.private {
 		sendError(w, http.StatusNotFound, "endpoint not enabled")
@@ -75,6 +68,10 @@ func (svr *Server) GetDevHelloDataset(w http.ResponseWriter, r *http.Request, da
 		sendError(w, http.StatusNotImplemented, "database not enabled")
 		return
 	}
+
+	// add CORS header
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
 	var rows []string
 	var cols []string
 	var bbox string
@@ -127,15 +124,6 @@ func (svr *Server) GetDevHelloDataset(w http.ResponseWriter, r *http.Request, da
 		return
 	}
 	sendCSV(w, http.StatusOK, csv)
-}
-
-func sendResult(w http.ResponseWriter, code int, result interface{}) {
-	w.Header().Add("Content-Type", "application/json")
-	w.WriteHeader(code)
-	err := json.NewEncoder(w).Encode(result)
-	if err != nil {
-		log.Printf("SendResult: %s", err)
-	}
 }
 
 func sendError(w http.ResponseWriter, code int, message string) {

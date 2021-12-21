@@ -11,7 +11,15 @@ and make sure to set `AWS_REGION` and any other AWS environment variables.
 
 ### Dependencies
 
-* No further dependencies other than those defined in `go.mod`
+`swagger.yaml` is used to generate code via `oapi-codegen`, `oapi-ui-codegen` & `moq`
+
+Particularly api/api.go shouldn't be directly edited.
+
+```
+$ go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@v1.8.2 
+$ go install github.com/pseudo-su/oapi-ui-codegen/cmd/oapi-ui-codegen@v0.0.2
+$ make generate
+```
 
 ### Configuration
 

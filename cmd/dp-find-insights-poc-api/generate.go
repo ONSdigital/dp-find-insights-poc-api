@@ -7,3 +7,6 @@ package main
 // They are actually handled outside the generated APIs.
 
 //go:generate oapi-codegen -generate types,chi-server -include-tags public,private,spec -exclude-tags doc -package api -o ../../api/api.go ../../swagger.yaml
+
+//go:generate oapi-ui-codegen --generate spec -o ../../swagger/spec.gen.go ../../swagger.yaml
+//go:generate oapi-ui-codegen --generate swaggerui -o ../../swagger/swagger_ui.gen.go ../../swagger.yaml
