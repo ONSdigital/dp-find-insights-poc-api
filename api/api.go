@@ -64,9 +64,6 @@ func (siw *ServerInterfaceWrapper) GetDevHelloDataset(w http.ResponseWriter, r *
 
 	var err error
 
-	// add CORS header
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-
 	// ------------- Path parameter "dataset" -------------
 	var dataset string
 

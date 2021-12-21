@@ -75,6 +75,10 @@ func (svr *Server) GetDevHelloDataset(w http.ResponseWriter, r *http.Request, da
 		sendError(w, http.StatusNotImplemented, "database not enabled")
 		return
 	}
+
+	// add CORS header
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
 	var rows []string
 	var cols []string
 	var bbox string
