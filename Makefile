@@ -126,3 +126,11 @@ update-schema:
 .PHONY: generate
 generate:
 	@go generate ./...
+
+#
+# check no manual commits to auto-generated files on a clean tree
+#
+
+.PHONY: check-generate
+check-generate: generate
+	  git diff-index --quiet HEAD --
