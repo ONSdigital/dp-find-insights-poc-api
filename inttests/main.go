@@ -337,7 +337,8 @@ func MatchingRespFile(testDesc string) (fns []string, err error) {
 	targetFnPrefix := RespFilePrefix(testDesc)
 	for _, file := range filesInDataPref {
 		fn := file.Name()
-		if strings.HasPrefix(fn, targetFnPrefix) {
+		fnPrefix := fn[:len(fn)-40]
+		if fnPrefix == targetFnPrefix {
 			fns = append(fns, fn)
 		}
 	}
