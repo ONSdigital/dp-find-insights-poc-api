@@ -2,12 +2,7 @@ module github.com/ONSdigital/dp-find-insights-poc-api
 
 go 1.16
 
-replace (
-	github.com/coreos/etcd => github.com/coreos/etcd v3.3.24+incompatible
-
-	github.com/pseudo-su/oapi-ui-codegen => github.com/stmuk/oapi-ui-codegen v0.0.2-0.20211215143848-ce3425d0a737
-
-)
+replace github.com/coreos/etcd => github.com/coreos/etcd v3.3.24+incompatible
 
 require (
 	github.com/ONSdigital/dp-api-clients-go v1.41.1
