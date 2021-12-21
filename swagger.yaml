@@ -12,6 +12,26 @@ info:
     url: "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
 
 paths:
+  /metadata:
+    get:
+      tags:
+        - public
+      summary: Get Metadata
+      description: Returns simple TopicTable Category Data
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MetadataResponse"
+        default:
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
 
   /swagger:
     get:
@@ -262,4 +282,57 @@ components:
           description: "The last failed health check date and time of the external service"
           example: "2019-09-22T11:48:51.0000001Z"
 
-  
+    # correct
+    Metadata:
+      type: object
+      properties: 
+        code:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+
+    # correct
+    Categories:
+      type: array
+      items: 
+        $ref: '#/components/schemas/Metadata'
+              
+        #MetadataResponse:
+        #  type: array
+        #  items: 
+        #    $ref: '#/components/schemas/Categories'
+
+    # correct
+    Tables:
+      type: object
+      properties: 
+        name:
+          type: string
+        slug:
+          type: string
+        categories: 
+          $ref: '#/components/schemas/Categories'
+
+          ## WIP
+          #MetadataResponse:
+          #  meta:
+          #    $ref: '#/components/schemas/Metadata'
+          #  type: array
+          #  items: 
+          #    $ref: '#/components/schemas/Tables'
+
+    # WIP
+    MetadataResponse:
+      type: object
+      properties: 
+        code:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        tables:
+          $ref: '#/components/schemas/Tables'
+
