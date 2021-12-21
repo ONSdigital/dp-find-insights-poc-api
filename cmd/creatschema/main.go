@@ -90,8 +90,18 @@ func main() {
 
 	db.Save(&model.SchemaVer{BuildTime: BuildTime, GitCommit: GitCommit, Version: Version})
 
+	// REFACTOR into something like SetupData
 	// populate data_ver
 	db.Save(&model.DataVer{ID: 1, CensusYear: 2011, VerString: "2.2", Public: true, Source: "Nomis Bulk API", Notes: "Release date 12/02/2013 Revised 17/01/2014"})
+	db.Save(&model.NomisTopic{TopNomisCode: "QS1", Name: "Population Basics"})
+	db.Save(&model.NomisTopic{TopNomisCode: "QS2", Name: "Origins & Beliefs"})
+	db.Save(&model.NomisTopic{TopNomisCode: "QS3", Name: "Health"})
+	db.Save(&model.NomisTopic{TopNomisCode: "QS4", Name: "Housing"})
+	db.Save(&model.NomisTopic{TopNomisCode: "QS5", Name: "Education"})
+	db.Save(&model.NomisTopic{TopNomisCode: "QS6", Name: "Employment"})
+	db.Save(&model.NomisTopic{TopNomisCode: "QS6", Name: "Employment"})
+	db.Save(&model.NomisTopic{TopNomisCode: "QS7", Name: "Travel to Work"})
+	db.Save(&model.NomisTopic{TopNomisCode: "QS8", Name: "Residency"})
 
 }
 

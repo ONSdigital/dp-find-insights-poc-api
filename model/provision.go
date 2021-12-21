@@ -57,6 +57,7 @@ func Migrate(db *gorm.DB) {
 	// More useful in dev than prod
 
 	if err := db.AutoMigrate(
+		&NomisTopic{},
 		&SchemaVer{},
 		&DataVer{},
 		&GeoType{},

@@ -103,7 +103,8 @@ CREATE TABLE public.geo_metric (
     geo_id integer,
     category_id integer,
     metric numeric,
-    data_ver_id integer
+    data_ver_id integer,
+    g_metric numeric
 );
 
 
@@ -226,7 +227,8 @@ CREATE TABLE public.nomis_desc (
     name text,
     pop_stat text,
     short_nomis_code text,
-    year integer
+    year integer,
+    nomis_topic_id integer
 );
 
 
@@ -252,6 +254,41 @@ ALTER TABLE public.nomis_desc_id_seq OWNER TO insights;
 --
 
 ALTER SEQUENCE public.nomis_desc_id_seq OWNED BY public.nomis_desc.id;
+
+
+--
+-- Name: nomis_topic; Type: TABLE; Schema: public; Owner: insights
+--
+
+CREATE TABLE public.nomis_topic (
+    id integer NOT NULL,
+    top_nomis_code text,
+    name text
+);
+
+
+ALTER TABLE public.nomis_topic OWNER TO insights;
+
+--
+-- Name: nomis_topic_id_seq; Type: SEQUENCE; Schema: public; Owner: insights
+--
+
+CREATE SEQUENCE public.nomis_topic_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.nomis_topic_id_seq OWNER TO insights;
+
+--
+-- Name: nomis_topic_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: insights
+--
+
+ALTER SEQUENCE public.nomis_topic_id_seq OWNED BY public.nomis_topic.id;
 
 
 --
@@ -328,6 +365,13 @@ ALTER TABLE ONLY public.nomis_desc ALTER COLUMN id SET DEFAULT nextval('public.n
 
 
 --
+-- Name: nomis_topic id; Type: DEFAULT; Schema: public; Owner: insights
+--
+
+ALTER TABLE ONLY public.nomis_topic ALTER COLUMN id SET DEFAULT nextval('public.nomis_topic_id_seq'::regclass);
+
+
+--
 -- Name: schema_ver id; Type: DEFAULT; Schema: public; Owner: insights
 --
 
@@ -391,17 +435,56 @@ ALTER TABLE ONLY public.nomis_desc
 
 
 --
+-- Name: nomis_topic nomis_topic_pkey; Type: CONSTRAINT; Schema: public; Owner: insights
+--
+
+ALTER TABLE ONLY public.nomis_topic
+    ADD CONSTRAINT nomis_topic_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: schema_ver schema_ver_pkey; Type: CONSTRAINT; Schema: public; Owner: insights
 --
 
 ALTER TABLE ONLY public.schema_ver
     ADD CONSTRAINT schema_ver_pkey PRIMARY KEY (id);
 
+
+--
+-- Name: nomis_category uq_long_nomis_code; Type: CONSTRAINT; Schema: public; Owner: insights
+--
+
+ALTER TABLE ONLY public.nomis_category
+    ADD CONSTRAINT uq_long_nomis_code UNIQUE (long_nomis_code);
+
+
+--
+-- Name: nomis_desc uq_short_nomis_code; Type: CONSTRAINT; Schema: public; Owner: insights
+--
+
+ALTER TABLE ONLY public.nomis_desc
+    ADD CONSTRAINT uq_short_nomis_code UNIQUE (short_nomis_code);
+
+
+--
+-- Name: data_ver_ver_string_idx; Type: INDEX; Schema: public; Owner: insights
+--
+
+CREATE INDEX data_ver_ver_string_idx ON public.data_ver USING btree (ver_string);
+
+
 --
 -- Name: geo_long_lat_geom_idx; Type: INDEX; Schema: public; Owner: insights
 --
 
 CREATE INDEX geo_long_lat_geom_idx ON public.geo USING gist (wkb_long_lat_geom);
+
+
+--
+-- Name: geo_type_name_idx; Type: INDEX; Schema: public; Owner: insights
+--
+
+CREATE INDEX geo_type_name_idx ON public.geo_type USING btree (name);
 
 
 --
@@ -484,6 +567,14 @@ ALTER TABLE ONLY public.geo_metric
 
 ALTER TABLE ONLY public.nomis_category
     ADD CONSTRAINT fk_nomis_desc_nomis_categories FOREIGN KEY (nomis_desc_id) REFERENCES public.nomis_desc(id);
+
+
+--
+-- Name: nomis_desc fk_nomis_topic_nomis_descs; Type: FK CONSTRAINT; Schema: public; Owner: insights
+--
+
+ALTER TABLE ONLY public.nomis_desc
+    ADD CONSTRAINT fk_nomis_topic_nomis_descs FOREIGN KEY (nomis_topic_id) REFERENCES public.nomis_topic(id);
 
 
 --

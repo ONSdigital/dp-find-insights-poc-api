@@ -105,7 +105,8 @@ func (NomisCategory) TableName() string {
 }
 
 type NomisDesc struct {
-	ID              int32 `gorm:"primaryKey"`
+	ID              int32 `gorm:"primaryKey"` // uniqueIndex
+	NomisTopicID    int32 `gorm:"primaryKey"` // XXX
 	Name            string
 	PopStat         string
 	ShortNomisCode  string
@@ -116,4 +117,16 @@ type NomisDesc struct {
 // don't pluralise table name
 func (NomisDesc) TableName() string {
 	return "nomis_desc"
+}
+
+type NomisTopic struct {
+	ID           int32 `gorm:"primaryKey"`
+	TopNomisCode string
+	Name         string
+	NomisDescs   []NomisDesc `gorm:"foreignKey:NomisTopicID;references:ID"`
+}
+
+// don't pluralise table name
+func (NomisTopic) TableName() string {
+	return "nomis_topic"
 }
