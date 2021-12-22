@@ -26,7 +26,7 @@ type GetDevHelloDatasetParams struct {
 	Location    *string   `json:"location,omitempty"`
 	Radius      *int      `json:"radius,omitempty"`
 	Polygon     *string   `json:"polygon,omitempty"`
-	Censustable *string   `json:"polygon,omitempty"`
+	Censustable *string   `json:"censustable,omitempty"`
 }
 
 // ServerInterface represents all server handlers.
