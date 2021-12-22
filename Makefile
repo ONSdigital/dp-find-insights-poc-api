@@ -142,4 +142,5 @@ generate:
 
 .PHONY: check-generate
 check-generate: generate
-	  @git diff-index --quiet HEAD -- || echo "commits to autogen file?" && exit 1
+	  @[ "$$(git diff)" = "" ] || (echo "commits to autogen file?" && exit 1)
+
