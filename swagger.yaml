@@ -1,3 +1,7 @@
+#
+# IMPORTANT: run 'make generate' after editing this file!
+#
+ 
 openapi: "3.0.0"
 info:
   title: "dp-find-insights-poc-api"
