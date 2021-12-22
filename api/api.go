@@ -11,6 +11,9 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+// Categories defines model for Categories.
+type Categories []Metadata
+
 // Error defines model for Error.
 type Error struct {
 	// error message
@@ -22,6 +25,28 @@ type GetDevCkmeansParams struct {
 	Cat     *string `json:"cat,omitempty"`
 	Geotype *string `json:"geotype,omitempty"`
 	K       *int    `json:"k,omitempty"`
+}
+
+// Metadata defines model for Metadata.
+type Metadata struct {
+	Code *string `json:"code,omitempty"`
+	Name *string `json:"name,omitempty"`
+	Slug *string `json:"slug,omitempty"`
+}
+
+// MetadataResponse defines model for MetadataResponse.
+type MetadataResponse struct {
+	Code   *string `json:"code,omitempty"`
+	Name   *string `json:"name,omitempty"`
+	Slug   *string `json:"slug,omitempty"`
+	Tables *Tables `json:"tables,omitempty"`
+}
+
+// Tables defines model for Tables.
+type Tables struct {
+	Categories *Categories `json:"categories,omitempty"`
+	Name       *string     `json:"name,omitempty"`
+	Slug       *string     `json:"slug,omitempty"`
 }
 
 // GetDevHelloDatasetParams defines parameters for GetDevHelloDataset.
@@ -44,6 +69,9 @@ type ServerInterface interface {
 	// query census
 	// (GET /dev/hello/{dataset})
 	GetDevHelloDataset(w http.ResponseWriter, r *http.Request, dataset string, params GetDevHelloDatasetParams)
+	// Get Metadata
+	// (GET /metadata)
+	GetMetadata(w http.ResponseWriter, r *http.Request)
 	// spec
 	// (GET /swagger)
 	GetSwagger(w http.ResponseWriter, r *http.Request)
@@ -230,6 +258,21 @@ func (siw *ServerInterfaceWrapper) GetDevHelloDataset(w http.ResponseWriter, r *
 	handler(w, r.WithContext(ctx))
 }
 
+// GetMetadata operation middleware
+func (siw *ServerInterfaceWrapper) GetMetadata(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetMetadata(w, r)
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler(w, r.WithContext(ctx))
+}
+
 // GetSwagger operation middleware
 func (siw *ServerInterfaceWrapper) GetSwagger(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -302,6 +345,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/dev/hello/{dataset}", wrapper.GetDevHelloDataset)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/metadata", wrapper.GetMetadata)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/swagger", wrapper.GetSwagger)
