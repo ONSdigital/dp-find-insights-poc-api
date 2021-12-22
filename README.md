@@ -9,17 +9,11 @@ To enable postgres and census queries, set `ENABLE_DATABASE`, and the postgres e
 To lookup the postgres password in Secrets Manager, set `FI_PG_SECRET_ID` instead of `PGPASSWORD`,
 and make sure to set `AWS_REGION` and any other AWS environment variables.
 
-### Dependencies
+### Auto generated code
 
-`swagger.yaml` is used to generate code via `oapi-codegen`, `oapi-ui-codegen` & `moq`
+`swagger.yaml` is used to generate code via `make generate`
 
-Particularly api/api.go shouldn't be directly edited.
-
-```
-$ go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@v1.8.2 
-$ go install github.com/pseudo-su/oapi-ui-codegen/cmd/oapi-ui-codegen@v0.0.2
-$ make generate
-```
+Particularly api/api.go (and similar files) shouldn't be directly edited.
 
 ### Configuration
 

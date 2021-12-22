@@ -131,7 +131,11 @@ update-schema:
 
 .PHONY: generate
 generate:
-	@go generate ./...
+	@go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@v1.8.2
+	@go install github.com/pseudo-su/oapi-ui-codegen/cmd/oapi-ui-codegen@v0.0.2
+
+	# moq is also used but which version is unclear & manual changes made!
+	@go generate cmd/dp-find-insights-poc-api/generate.go
 
 #
 # check no manual commits to auto-generated files on a clean tree
