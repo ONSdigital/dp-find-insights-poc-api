@@ -16,14 +16,18 @@ require (
 	github.com/deepmap/oapi-codegen v1.9.0
 	github.com/getkin/kin-openapi v0.86.0
 	github.com/go-chi/chi/v5 v5.0.4
+	github.com/google/go-cmp v0.5.6 // indirect
+	github.com/gosimple/slug v1.12.0
 	github.com/jackc/pgx/v4 v4.13.0
 	github.com/jtrim-ons/ckmeans v0.0.0-20211215160356-425b5803b027
 	github.com/justinas/alice v1.2.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/kylelemons/godebug v1.1.0
+	github.com/labstack/gommon v0.3.0
 	github.com/lib/pq v1.10.3
 	github.com/pkg/diff v0.0.0-20210226163009-20ebb0f2a09e
 	github.com/pkg/errors v0.9.1
+	github.com/ryboe/q v1.0.15
 	github.com/smartystreets/goconvey v1.6.6
 	github.com/spf13/cast v1.4.1
 	github.com/stretchr/testify v1.7.0
@@ -43,7 +47,6 @@ require (
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/gofrs/uuid v4.0.0+incompatible // indirect
 	github.com/golang/snappy v0.0.3 // indirect
-	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20210202160940-bed99a852dfe // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.0 // indirect
 	github.com/hashicorp/go-memdb v1.3.0 // indirect
