@@ -37,6 +37,12 @@ debug:	## run poc service in debug mode
 test:	## run poc tests
 	go test -race -cover ./...
 
+.PHONY: cover
+cover:	## aggregate coverage hat tip @efragkiadaki
+	go test -count=1 -coverprofile=coverage.out ./...
+	@awk 'BEGIN {cov=0; stat=0;} $$3!="" { cov+=($$3==1?$$2:0); stat+=$$2; } END {printf("Total coverage: %.2f%% of statements\n", (cov/stat)*100);}' coverage.out
+	@go tool cover -html=coverage.out
+
 .PHONY: test-integration
 test-integration:	## integration tests needs web server
 	go test -count=1 ./inttests -tags=integration
