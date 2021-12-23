@@ -13,6 +13,7 @@ require (
 	github.com/aws/aws-lambda-go v1.27.0
 	github.com/aws/aws-sdk-go v1.41.15
 	github.com/cucumber/godog v0.12.1
+	github.com/davecgh/go-spew v1.1.1
 	github.com/deepmap/oapi-codegen v1.9.0
 	github.com/getkin/kin-openapi v0.86.0
 	github.com/go-chi/chi/v5 v5.0.4

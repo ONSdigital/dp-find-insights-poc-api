@@ -282,49 +282,15 @@ components:
           description: "The last failed health check date and time of the external service"
           example: "2019-09-22T11:48:51.0000001Z"
 
-    # correct
-    Metadata:
-      type: object
-      properties: 
-        code:
-          type: string
-        name:
-          type: string
-        slug:
-          type: string
-
-    # correct
-    Categories:
-      type: array
-      items: 
-        $ref: '#/components/schemas/Metadata'
-              
-        #MetadataResponse:
-        #  type: array
-        #  items: 
-        #    $ref: '#/components/schemas/Categories'
-
-    # correct
-    Tables:
-      type: object
-      properties: 
-        name:
-          type: string
-        slug:
-          type: string
-        categories: 
-          $ref: '#/components/schemas/Categories'
-
-          ## WIP
-          #MetadataResponse:
-          #  meta:
-          #    $ref: '#/components/schemas/Metadata'
-          #  type: array
-          #  items: 
-          #    $ref: '#/components/schemas/Tables'
 
     # WIP
     MetadataResponse:
+      type: array
+      items: 
+        $ref: '#/components/schemas/Metadata'
+       
+    #
+    Metadata:
       type: object
       properties: 
         code:
@@ -335,4 +301,36 @@ components:
           type: string
         tables:
           $ref: '#/components/schemas/Tables'
+
+    Categories:
+      type: array
+      items: 
+        $ref: '#/components/schemas/Triplet'
+       
+    Triplet:
+      type: object
+      properties: 
+        code:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+       
+    Tables:
+      type: array
+      items: 
+        $ref: '#/components/schemas/Table'
+
+    Table:
+      type: object
+      properties: 
+        code:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        categories: 
+          $ref: '#/components/schemas/Categories'
 

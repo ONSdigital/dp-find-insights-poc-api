@@ -12,7 +12,7 @@ import (
 )
 
 // Categories defines model for Categories.
-type Categories []Metadata
+type Categories []Triplet
 
 // Error defines model for Error.
 type Error struct {
@@ -29,24 +29,31 @@ type GetDevCkmeansParams struct {
 
 // Metadata defines model for Metadata.
 type Metadata struct {
-	Code *string `json:"code,omitempty"`
-	Name *string `json:"name,omitempty"`
-	Slug *string `json:"slug,omitempty"`
-}
-
-// MetadataResponse defines model for MetadataResponse.
-type MetadataResponse struct {
 	Code   *string `json:"code,omitempty"`
 	Name   *string `json:"name,omitempty"`
 	Slug   *string `json:"slug,omitempty"`
 	Tables *Tables `json:"tables,omitempty"`
 }
 
-// Tables defines model for Tables.
-type Tables struct {
+// MetadataResponse defines model for MetadataResponse.
+type MetadataResponse []Metadata
+
+// Table defines model for Table.
+type Table struct {
 	Categories *Categories `json:"categories,omitempty"`
+	Code       *string     `json:"code,omitempty"`
 	Name       *string     `json:"name,omitempty"`
 	Slug       *string     `json:"slug,omitempty"`
+}
+
+// Tables defines model for Tables.
+type Tables []Table
+
+// Triplet defines model for Triplet.
+type Triplet struct {
+	Code *string `json:"code,omitempty"`
+	Name *string `json:"name,omitempty"`
+	Slug *string `json:"slug,omitempty"`
 }
 
 // GetDevHelloDatasetParams defines parameters for GetDevHelloDataset.
