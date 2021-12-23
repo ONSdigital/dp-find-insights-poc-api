@@ -77,7 +77,7 @@ func (Geo) TableName() string {
 type GeoMetric struct {
 	ID         int32 `gorm:"primaryKey"`
 	GeoID      int32 `gorm:"index"`
-	CategoryID int32
+	CategoryID int32 `gorm:"index"`
 	Metric     float64
 	DataVerID  int32
 }
