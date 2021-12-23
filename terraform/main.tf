@@ -246,6 +246,39 @@ resource "aws_api_gateway_integration" "fi-get-hello" {
   uri = aws_lambda_function.fi-hello.invoke_arn
 }
 
+# /ckmeans
+#
+resource "aws_api_gateway_resource" "fi-ckmeans" {
+  rest_api_id = aws_api_gateway_rest_api.fi-hello.id
+  parent_id   = aws_api_gateway_rest_api.fi-hello.root_resource_id
+  path_part   = "ckmeans"
+}
+
+# GET /ckmeans
+#
+resource "aws_api_gateway_method" "fi-get-ckmeans" {
+  rest_api_id   = aws_api_gateway_rest_api.fi-hello.id
+  resource_id   = aws_api_gateway_resource.fi-ckmeans.id
+  http_method   = "GET"
+  authorization = "NONE"
+}
+
+# Integrate GET /hello/{dataset} method with lambda
+#
+resource "aws_api_gateway_integration" "fi-get-ckmeans" {
+  rest_api_id = aws_api_gateway_rest_api.fi-hello.id
+  resource_id = aws_api_gateway_resource.fi-ckmeans.id
+  http_method = aws_api_gateway_method.fi-get-ckmeans.http_method
+
+  # lambda methods can only be invoked with POST integration_http_method
+  integration_http_method = "POST"
+
+  # AWS_PROXY type required for lambda integration
+  type = "AWS_PROXY"
+
+  uri = aws_lambda_function.fi-hello.invoke_arn
+}
+
 resource "aws_api_gateway_deployment" "fi-hello" {
   rest_api_id = aws_api_gateway_rest_api.fi-hello.id
 
@@ -257,8 +290,11 @@ resource "aws_api_gateway_deployment" "fi-hello" {
     redeployment = sha1(jsonencode([
       aws_api_gateway_resource.fi-hello.id,
       aws_api_gateway_resource.fi-hello-dataset.id,
+      aws_api_gateway_resource.fi-ckmeans.id,
       aws_api_gateway_method.fi-get-hello.id,
+      aws_api_gateway_method.fi-get-ckmeans.id,
       aws_api_gateway_integration.fi-get-hello.id,
+      aws_api_gateway_integration.fi-get-ckmeans.id,
     ]))
   }
 

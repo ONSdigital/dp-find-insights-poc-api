@@ -6,65 +6,63 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/database"
 	geodata "github.com/ONSdigital/dp-find-insights-poc-api/pkg/geodata"
 )
 
 func main() {
-	var rows, cols, geotypes multiFlag
-
-	dataset := flag.String("dataset", "", "name of dataset to query")
-	bbox := flag.String("bbox", "", "bounding box lon1,lat1,lon2,lat2 (any two opposite corners)")
-	location := flag.String("location", "", "central point for radius queries")
-	radius := flag.Int("radius", 0, "radius in meters")
-	polygon := flag.String("polygon", "", "polygon x1,y1,...,x1,y1 (closed linestring)")
-	flag.Var(&geotypes, "geotype", "geography types (LSOA, LAD, etc)")
-	flag.Var(&rows, "rows", "row or row range")
-	flag.Var(&cols, "cols", "column name(s) to return")
-	maxmetrics := flag.Int("maxmetrics", 0, "max skinny rows to accept (default 0 means no limit)")
-	censustable := flag.String("censustable", "", "censustable QS802EW 'nomis table' / grouping of census data categories")
+	maxmetrics := flag.Int("maxmetrics", 0, "max number of rows to accept from db query (default 0 means no limit)")
+	flag.Usage = func() {
+		fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s [command-options] original|ckmeans [subcommand-options]\n", filepath.Base(os.Args[0]))
+		flag.PrintDefaults()
+	}
 	flag.Parse()
 
-	if *dataset == "" {
-		usage()
+	if flag.NArg() == 0 {
+		flag.Usage()
+		os.Exit(2)
 	}
-	fmt.Printf("bbox: %s\n", *bbox)
-	fmt.Printf("location: %s\n", *location)
-	fmt.Printf("radius: %d meters\n", *radius)
-	fmt.Printf("polygon: %s\n", *polygon)
-	fmt.Printf("rows:\n")
-	for _, r := range rows {
-		fmt.Printf("\t%s\n", r)
-	}
-
-	fmt.Printf("cols:\n")
-	for _, c := range cols {
-		fmt.Printf("\t%s\n", c)
-	}
-
-	fmt.Printf("geotypes:\n")
-	for _, t := range geotypes {
-		fmt.Printf("\t%s\n", t)
-	}
-
-	fmt.Printf("censustable: %s\n", *censustable)
-	// Open postgres connection
-	//
 
 	db, err := database.Open("pgx", database.GetDSN())
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	// Set up our geodata app
 	app, err := geodata.New(db, *maxmetrics)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
 	ctx := context.Background()
-	body, err := app.Query(ctx, *dataset, *bbox, *location, *radius, *polygon, geotypes, rows, cols, *censustable)
+	switch flag.Arg(0) {
+	case "original":
+		original(ctx, app, flag.Args()[1:])
+	case "ckmeans":
+		ckmeans(ctx, app, flag.Args()[1:])
+	default:
+		flag.Usage()
+		os.Exit(2)
+	}
+}
+
+func original(ctx context.Context, app *geodata.Geodata, argv []string) {
+	var rows, cols, geotypes multiFlag
+
+	flagset := flag.NewFlagSet("original", flag.ExitOnError)
+
+	bbox := flagset.String("bbox", "", "bounding box lon1,lat1,lon2,lat2 (any two opposite corners)")
+	location := flagset.String("location", "", "central point for radius queries")
+	radius := flagset.Int("radius", 0, "radius in meters")
+	polygon := flagset.String("polygon", "", "polygon x1,y1,...,x1,y1 (closed linestring)")
+	censustable := flagset.String("censustable", "", "censustable QS802EW 'nomis table' / grouping of census data categories")
+	flagset.Var(&geotypes, "geotype", "geography types (LSOA, LAD, etc)")
+	flagset.Var(&rows, "rows", "row or row range")
+	flagset.Var(&cols, "cols", "column name(s) to return")
+	flagset.Parse(argv)
+
+	body, err := app.Query(ctx, "census", *bbox, *location, *radius, *polygon, geotypes, rows, cols, *censustable)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -72,11 +70,19 @@ func main() {
 	fmt.Printf("%s", body)
 }
 
-func usage() {
-	fmt.Fprintf(
-		os.Stderr,
-		"usage: %s --dataset <dataset> [--rows rowspec[,...]|--bbox p1lon,p1lat,p2lon,pl2lat|--location lon,lat --radius meters|--polygon x1,y1,...,x1,y1] [--geotype LSOA|LAD,...] [--cols col[,...]] [--maxmetrics n] [--censustable QS802EW]\n",
-		os.Args[0],
-	)
-	os.Exit(2)
+func ckmeans(ctx context.Context, app *geodata.Geodata, argv []string) {
+	flagset := flag.NewFlagSet("ckmeans", flag.ExitOnError)
+
+	cat := flagset.String("cat", "", "category code")
+	geotype := flagset.String("geotype", "", "geography type (LSOA,...)")
+	k := flagset.Int("k", 5, "number of clusters/bins")
+	flagset.Parse(argv)
+
+	breaks, err := app.CKmeans(ctx, *cat, *geotype, *k)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	for _, breakpoint := range breaks {
+		fmt.Printf("%0.13g\n", breakpoint)
+	}
 }

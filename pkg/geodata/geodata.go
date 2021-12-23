@@ -359,8 +359,8 @@ func (app *Geodata) collectCells(ctx context.Context, sql string, include []stri
 			break
 		}
 
+		nmetrics++
 		if app.maxMetrics > 0 {
-			nmetrics++
 			if nmetrics > app.maxMetrics {
 				return "", ErrTooManyMetrics
 			}

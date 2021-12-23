@@ -17,6 +17,13 @@ type Error struct {
 	Error string `json:"error"`
 }
 
+// GetDevCkmeansParams defines parameters for GetDevCkmeans.
+type GetDevCkmeansParams struct {
+	Cat     *string `json:"cat,omitempty"`
+	Geotype *string `json:"geotype,omitempty"`
+	K       *int    `json:"k,omitempty"`
+}
+
 // GetDevHelloDatasetParams defines parameters for GetDevHelloDataset.
 type GetDevHelloDatasetParams struct {
 	Rows        *[]string `json:"rows,omitempty"`
@@ -26,11 +33,14 @@ type GetDevHelloDatasetParams struct {
 	Location    *string   `json:"location,omitempty"`
 	Radius      *int      `json:"radius,omitempty"`
 	Polygon     *string   `json:"polygon,omitempty"`
-	Censustable *string   `json:"polygon,omitempty"`
+	Censustable *string   `json:"censustable,omitempty"`
 }
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// calculate ckmeans over a given category and geography type
+	// (GET /dev/ckmeans)
+	GetDevCkmeans(w http.ResponseWriter, r *http.Request, params GetDevCkmeansParams)
 	// query census
 	// (GET /dev/hello/{dataset})
 	GetDevHelloDataset(w http.ResponseWriter, r *http.Request, dataset string, params GetDevHelloDatasetParams)
@@ -49,6 +59,59 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(http.HandlerFunc) http.HandlerFunc
+
+// GetDevCkmeans operation middleware
+func (siw *ServerInterfaceWrapper) GetDevCkmeans(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var err error
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetDevCkmeansParams
+
+	// ------------- Optional query parameter "cat" -------------
+	if paramValue := r.URL.Query().Get("cat"); paramValue != "" {
+
+	}
+
+	err = runtime.BindQueryParameter("form", true, false, "cat", r.URL.Query(), &params.Cat)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid format for parameter cat: %s", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "geotype" -------------
+	if paramValue := r.URL.Query().Get("geotype"); paramValue != "" {
+
+	}
+
+	err = runtime.BindQueryParameter("form", true, false, "geotype", r.URL.Query(), &params.Geotype)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid format for parameter geotype: %s", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "k" -------------
+	if paramValue := r.URL.Query().Get("k"); paramValue != "" {
+
+	}
+
+	err = runtime.BindQueryParameter("form", true, false, "k", r.URL.Query(), &params.K)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid format for parameter k: %s", err), http.StatusBadRequest)
+		return
+	}
+
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetDevCkmeans(w, r, params)
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler(w, r.WithContext(ctx))
+}
 
 // GetDevHelloDataset operation middleware
 func (siw *ServerInterfaceWrapper) GetDevHelloDataset(w http.ResponseWriter, r *http.Request) {
@@ -234,6 +297,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		HandlerMiddlewares: options.Middlewares,
 	}
 
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/dev/ckmeans", wrapper.GetDevCkmeans)
+	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/dev/hello/{dataset}", wrapper.GetDevHelloDataset)
 	})

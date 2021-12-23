@@ -93,7 +93,6 @@ func NewApp() *App {
 }
 
 func (app *App) Handler(ctx context.Context, req *events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
-
 	// log req (probably too verbose)
 	fmt.Printf("req: %#v\n", req)
 
@@ -101,6 +100,17 @@ func (app *App) Handler(ctx context.Context, req *events.APIGatewayProxyRequest)
 	if app.err != nil {
 		return errorResponse(http.StatusInternalServerError, app.errmsg, app.err), nil
 	}
+
+	if req.Path == "/hello/census" {
+		return app.HelloHandler(ctx, req)
+	} else if req.Path == "/ckmeans" {
+		return app.CkmeansHandler(ctx, req)
+	}
+
+	return errorResponse(http.StatusNotFound, "unrecognized endpoint", nil), nil
+}
+
+func (app *App) HelloHandler(ctx context.Context, req *events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
 
 	// grab parameters from path and query string
 	//
@@ -147,6 +157,53 @@ func (app *App) Handler(ctx context.Context, req *events.APIGatewayProxyRequest)
 	response := &events.APIGatewayProxyResponse{
 		StatusCode: http.StatusOK,
 		Body:       body,
+		Headers:    headers,
+	}
+
+	return response, nil
+}
+
+func (app *App) CkmeansHandler(ctx context.Context, req *events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
+	category := req.QueryStringParameters["category"]
+	geotype := req.QueryStringParameters["geotype"]
+	kstring := req.QueryStringParameters["k"]
+
+	if category == "" || geotype == "" || kstring == "" {
+		return clientResponse("category, geotype and k required"), nil
+	}
+
+	var k int
+	k, err := strconv.Atoi(kstring)
+	if err != nil {
+		return errorResponse(http.StatusBadRequest, "malformed k value", err), nil
+	}
+	if k < 1 {
+		return clientResponse("k must be greater than 0"), nil
+	}
+
+	breaks, err := app.d.CKmeans(ctx, category, geotype, k)
+	if err != nil {
+		status := http.StatusInternalServerError
+		if errors.Is(err, geodata.ErrNoContent) {
+			status = http.StatusNoContent
+		} else if errors.Is(err, geodata.ErrTooManyMetrics) {
+			status = http.StatusForbidden
+		} else if errors.Is(err, geodata.ErrMissingParams) || errors.Is(err, geodata.ErrInvalidTable) {
+			status = http.StatusBadRequest
+		}
+		return errorResponse(status, "problem with query", err), nil
+	}
+
+	body, err := json.MarshalIndent(breaks, "", "    ")
+	if err != nil {
+		return errorResponse(http.StatusInternalServerError, "problem marshaling json", err), nil
+	}
+
+	headers := map[string]string{"Access-Control-Allow-Origin": "*"}
+
+	response := &events.APIGatewayProxyResponse{
+		StatusCode: http.StatusOK,
+		Body:       string(body),
 		Headers:    headers,
 	}
 

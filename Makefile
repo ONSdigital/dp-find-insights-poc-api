@@ -103,7 +103,7 @@ invoke-curl:	## invoke lambda via curl
 #
 
 .PHONY: build-cli
-build-cli:	## build the hello cli (build/hello-cli)
+build-cli:	## build the hello cli (build/geodata)
 	go build -o build/geodata ./cmd/geodata/...
 
 .PHONY: run-cli
