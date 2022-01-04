@@ -15,7 +15,7 @@ import (
 func main() {
 	maxmetrics := flag.Int("maxmetrics", 0, "max number of rows to accept from db query (default 0 means no limit)")
 	flag.Usage = func() {
-		fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s [command-options] original|ckmeans [subcommand-options]\n", filepath.Base(os.Args[0]))
+		fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s [command-options] query|ckmeans [subcommand-options]\n", filepath.Base(os.Args[0]))
 		flag.PrintDefaults()
 	}
 	flag.Parse()
@@ -37,8 +37,8 @@ func main() {
 
 	ctx := context.Background()
 	switch flag.Arg(0) {
-	case "original":
-		original(ctx, app, flag.Args()[1:])
+	case "query":
+		query(ctx, app, flag.Args()[1:])
 	case "ckmeans":
 		ckmeans(ctx, app, flag.Args()[1:])
 	default:
@@ -47,7 +47,7 @@ func main() {
 	}
 }
 
-func original(ctx context.Context, app *geodata.Geodata, argv []string) {
+func query(ctx context.Context, app *geodata.Geodata, argv []string) {
 	var rows, cols, geotypes multiFlag
 
 	flagset := flag.NewFlagSet("original", flag.ExitOnError)
