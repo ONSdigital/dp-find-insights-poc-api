@@ -27,6 +27,7 @@ func TestGetCensusQuery(t *testing.T) {
 			args:    geodata.CensusQuerySQLArgs{},
 			wantErr: errors.New("must specify a condition (rows, bbox, location/radius, and/or polygon)"),
 		},
+		// Rows
 		{
 			desc: "rows condition only",
 			args: geodata.CensusQuerySQLArgs{Geos: []string{"E01000001"}},
@@ -58,6 +59,57 @@ AND nomis_category.year = 2011
  -- category conditions:
 `,
 		},
+		// Bounding Box
+		{
+			desc: "bbox condition only",
+			args: geodata.CensusQuerySQLArgs{BBox: "-0.370947083400182,51.3624781092781,0.17687729439413147,51.673778133460246"},
+			wantSQL: `
+SELECT
+ geo.code AS geography_code,
+ geo_type.name AS geotype,
+ nomis_category.long_nomis_code AS category_code,
+ geo_metric.metric AS value
+FROM
+ geo,
+ geo_type,
+ geo_metric,
+ data_ver,
+ nomis_category
+WHERE (
+ -- geo conditions:
+geo.wkb_geometry && ST_GeomFromText(
+ 'MULTIPOINT(-0.370947 51.362478, 0.176877 51.673778)',
+ 4326
+)
+)
+AND geo.valid
+AND geo_type.id = geo.type_id
+ -- geotype conditions:
+AND geo_metric.geo_id = geo.id
+AND data_ver.id = geo_metric.data_ver_id
+AND data_ver.census_year = 2011
+AND data_ver.ver_string = '2.2'
+AND nomis_category.id = geo_metric.category_id
+AND nomis_category.year = 2011
+ -- category conditions:
+`,
+		},
+		{
+			desc:    "bbox error - non-numeric data",
+			args:    geodata.CensusQuerySQLArgs{BBox: "X,51.3624781092781,0.17687729439413147,51.673778133460246"},
+			wantErr: errors.New("error parsing bbox \"X,51.3624781092781,0.17687729439413147,51.673778133460246\": strconv.ParseFloat: parsing \"X\": invalid syntax"),
+		},
+		{
+			desc:    "bbox error - too few coords",
+			args:    geodata.CensusQuerySQLArgs{BBox: "-0.370947083400182,51.3624781092781"},
+			wantErr: errors.New("valid bbox is 'lon,lat,lon,lat', received \"-0.370947083400182,51.3624781092781\": invalid parameter"),
+		},
+		{
+			desc:    "bbox error - too many coords",
+			args:    geodata.CensusQuerySQLArgs{BBox: "-0.370947083400182,51.3624781092781,0.17687729439413147,51.673778133460246,-0.370947083400182,0.17687729439413147,51.673778133460246"},
+			wantErr: errors.New("valid bbox is 'lon,lat,lon,lat', received \"-0.370947083400182,51.3624781092781,0.17687729439413147,51.673778133460246,-0.370947083400182,0.17687729439413147,51.673778133460246\": invalid parameter"),
+		},
+		// Columns
 		{
 			desc: "single col condition",
 			args: geodata.CensusQuerySQLArgs{

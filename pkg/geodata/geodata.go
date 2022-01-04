@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/database"
@@ -566,13 +567,16 @@ func geoSQL(geos []string) (string, error) {
 
 func bboxSQL(bbox string) (string, error) {
 	if bbox != "" {
-		var p1lon, p1lat, p2lon, p2lat float64
-		fields, err := fmt.Sscanf(bbox, "%f,%f,%f,%f", &p1lon, &p1lat, &p2lon, &p2lat)
-		if err != nil {
-			return "", fmt.Errorf("scanning bbox %q: %w", bbox, err)
+		coords := []float64{}
+		for _, coordStr := range strings.Split(bbox, ",") {
+			coord, err := strconv.ParseFloat(coordStr, 64)
+			if err != nil {
+				return "", fmt.Errorf("error parsing bbox %q: %w", bbox, err)
+			}
+			coords = append(coords, coord)
 		}
-		if fields != 4 {
-			return "", fmt.Errorf("bbox missing a number: %w", ErrMissingParams)
+		if len(coords) != 4 {
+			return "", fmt.Errorf("valid bbox is 'lon,lat,lon,lat', received %q: %w", bbox, ErrInvalidParams)
 		}
 		sql := fmt.Sprintf(`
 geo.wkb_geometry && ST_GeomFromText(
@@ -580,10 +584,10 @@ geo.wkb_geometry && ST_GeomFromText(
 	4326
 )
 `,
-			p1lon,
-			p1lat,
-			p2lon,
-			p2lat,
+			coords[0],
+			coords[1],
+			coords[2],
+			coords[3],
 		)
 		return sql, nil
 	}
