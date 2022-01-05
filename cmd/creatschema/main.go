@@ -84,7 +84,6 @@ func main() {
 			fmt.Println("check-in sql/schema.sql")
 		} else {
 			fmt.Println("no schema changes")
-			os.Exit(0)
 		}
 	}
 
