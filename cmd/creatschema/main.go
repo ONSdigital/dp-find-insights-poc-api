@@ -99,7 +99,6 @@ func main() {
 	db.Save(&model.NomisTopic{TopNomisCode: "QS4", Name: "Housing"})
 	db.Save(&model.NomisTopic{TopNomisCode: "QS5", Name: "Education"})
 	db.Save(&model.NomisTopic{TopNomisCode: "QS6", Name: "Employment"})
-	db.Save(&model.NomisTopic{TopNomisCode: "QS6", Name: "Employment"})
 	db.Save(&model.NomisTopic{TopNomisCode: "QS7", Name: "Travel to Work"})
 	db.Save(&model.NomisTopic{TopNomisCode: "QS8", Name: "Residency"})
 
