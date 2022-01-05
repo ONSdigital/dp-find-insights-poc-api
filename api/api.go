@@ -20,13 +20,6 @@ type Error struct {
 	Error string `json:"error"`
 }
 
-// GetDevCkmeansParams defines parameters for GetDevCkmeans.
-type GetDevCkmeansParams struct {
-	Cat     *string `json:"cat,omitempty"`
-	Geotype *string `json:"geotype,omitempty"`
-	K       *int    `json:"k,omitempty"`
-}
-
 // Metadata defines model for Metadata.
 type Metadata struct {
 	Code   *string `json:"code,omitempty"`
@@ -54,6 +47,13 @@ type Triplet struct {
 	Code *string `json:"code,omitempty"`
 	Name *string `json:"name,omitempty"`
 	Slug *string `json:"slug,omitempty"`
+}
+
+// GetDevCkmeansParams defines parameters for GetDevCkmeans.
+type GetDevCkmeansParams struct {
+	Cat     *string `json:"cat,omitempty"`
+	Geotype *string `json:"geotype,omitempty"`
+	K       *int    `json:"k,omitempty"`
 }
 
 // GetDevHelloDatasetParams defines parameters for GetDevHelloDataset.
