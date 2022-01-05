@@ -64,9 +64,12 @@ convey:	## run goconvey
 	goconvey ./...
 
 .PHONY: test-component
-test-component:	## run component tests and coverage
-	go test -cover -coverpkg=github.com/ONSdigital/dp-find-insights-poc-api/... -component
+test-component:	test-comptest
 
+#.PHONY: test-component
+#test-component:	## run component tests and coverage
+#	go test -cover -coverpkg=github.com/ONSdigital/dp-find-insights-poc-api/... -component
+ 
 #
 # these are the lambda-related targets
 #

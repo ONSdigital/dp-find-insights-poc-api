@@ -18,7 +18,7 @@ require (
 	github.com/go-chi/chi/v5 v5.0.4
 	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/jackc/pgx/v4 v4.13.0
-	github.com/jtrim-ons/ckmeans v0.0.0-20211215160356-425b5803b027 // indirect
+	github.com/jtrim-ons/ckmeans v0.0.0-20211215160356-425b5803b027
 	github.com/justinas/alice v1.2.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/klauspost/compress v1.12.3 // indirect
