@@ -10,7 +10,6 @@ import (
 	"github.com/ONSdigital/dp-find-insights-poc-api/model"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/database"
 	"github.com/gosimple/slug"
-	"github.com/ryboe/q"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -137,18 +136,91 @@ func TestReadSomeData(t *testing.T) {
 
 }
 
+// Refactor
 func TestReadData(t *testing.T) {
+	db, err := gorm.Open(postgres.Open(database.GetDSN()), &gorm.Config{
+		//	Logger: logger.Default.LogMode(logger.Info),
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
 
+	var topics []model.NomisTopic
+	db.Preload("NomisDescs", func(db *gorm.DB) *gorm.DB { return db.Order("short_nomis_code") }).Find(&topics)
+
+	var mdr MetadataResponse
+
+	var newTabs Tables
+
+	for _, topic := range topics {
+
+		var nd model.NomisDesc
+		for _, nd = range topic.NomisDescs {
+			db.Preload("NomisCategories").Find(&nd)
+
+			var cats Categories
+			for _, trip := range nd.NomisCategories {
+				cats = append(cats, Triplet{Code: spointer(trip.LongNomisCode), Name: spointer(trip.CategoryName), Slug: spointer(slug.Make(trip.CategoryName))})
+			}
+
+			newTabs = append(newTabs,
+				Table{
+					Name:       spointer(nd.Name),
+					Slug:       spointer(slug.Make(nd.Name)),
+					Code:       spointer(nd.ShortNomisCode),
+					Categories: &cats,
+				})
+		}
+
+		mdr = append(mdr, Metadata{
+			Code:   spointer(topic.TopNomisCode),
+			Name:   spointer(topic.Name),
+			Slug:   spointer(slug.Make(topic.Name)),
+			Tables: &newTabs,
+		})
+
+	}
+
+	jmarsh(mdr)
+}
+
+func XTestReadData(t *testing.T) {
 	db, err := gorm.Open(postgres.Open(database.GetDSN()), &gorm.Config{})
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	var topics []model.NomisTopic
-	db.Preload("NomisDescs").Find(&topics)
-	//	fmt.Printf("%#v\n", topics[0])
-	q.Q(topics[0])
+	db.Preload("NomisDescs").First(&topics)
+	topic := topics[0]
 
+	var nd model.NomisDesc
+	var mdr MetadataResponse
+
+	for _, nd = range topic.NomisDescs {
+		db.Preload("NomisCategories").Find(&nd)
+
+		var cats Categories
+		for _, trip := range nd.NomisCategories {
+			cats = append(cats, Triplet{Code: spointer(trip.LongNomisCode), Name: spointer(trip.CategoryName), Slug: spointer(slug.Make(trip.CategoryName))})
+		}
+
+		mdr = append(mdr, Metadata{
+			Code: spointer(topic.TopNomisCode),
+			Name: spointer(topic.Name),
+			Slug: spointer(slug.Make(topic.Name)),
+			Tables: &Tables{{
+				Name:       spointer(nd.Name),
+				Slug:       spointer(slug.Make(nd.Name)),
+				Code:       spointer(nd.ShortNomisCode),
+				Categories: &cats,
+			},
+			},
+		})
+
+	}
+
+	jmarsh(mdr)
 }
 
 func TestStruct(t *testing.T) {
