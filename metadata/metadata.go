@@ -26,6 +26,7 @@ func New() (*Metadata, error) {
 
 func (md *Metadata) Get() (b []byte, err error) {
 	var topics []model.NomisTopic
+
 	md.db.Preload("NomisDescs", func(db *gorm.DB) *gorm.DB { return db.Order("short_nomis_code") }).Find(&topics)
 
 	var mdr api.MetadataResponse
@@ -35,6 +36,7 @@ func (md *Metadata) Get() (b []byte, err error) {
 	for _, topic := range topics {
 
 		var nd model.NomisDesc
+
 		for _, nd = range topic.NomisDescs {
 			md.db.Preload("NomisCategories").Find(&nd)
 
@@ -60,6 +62,7 @@ func (md *Metadata) Get() (b []byte, err error) {
 		})
 
 	}
+
 	b, err = json.Marshal(&mdr)
 
 	if err != nil {
