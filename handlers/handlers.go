@@ -30,7 +30,8 @@ func (svr *Server) GetSwagger(w http.ResponseWriter, r *http.Request) {
 	spec, _ := Swagger.GetOpenAPISpec()
 	b, err := spec.MarshalJSON()
 	if err != nil {
-		log.Print(err)
+		sendError(w, http.StatusInternalServerError, err.Error())
+		return
 	}
 
 	w.Write(b)
@@ -39,24 +40,33 @@ func (svr *Server) GetSwagger(w http.ResponseWriter, r *http.Request) {
 func (svr *Server) GetSwaggerui(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "html")
 	w.WriteHeader(http.StatusOK)
-	c, _ := config.Get()
+	c, err := config.Get()
+	if err != nil {
+		sendError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
 	b, err := Swagger.GetSwaggerUIPage("http://"+c.BindAddr+"/swagger", "")
 	if err != nil {
-		log.Print(err)
+		sendError(w, http.StatusInternalServerError, err.Error())
+		return
 	}
 
 	w.Write(b)
 }
 
 func (svr *Server) GetMetadata(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("Content-Type", "html")
 	w.WriteHeader(http.StatusOK)
 
 	md, err := metadata.New()
+	if err != nil {
+		sendError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
 
 	b, err := md.Get()
 	if err != nil {
-		log.Print(err)
+		sendError(w, http.StatusInternalServerError, err.Error())
+		return
 	}
 
 	w.Write(b)
