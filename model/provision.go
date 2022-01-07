@@ -45,6 +45,16 @@ func SetupDB(dsn string) {
 
 		Migrate(db)
 
+		db.Save(&DataVer{ID: 1, CensusYear: 2011, VerString: "2.2", Public: true, Source: "Nomis Bulk API", Notes: "Release date 12/02/2013 Revised 17/01/2014"})
+		db.Save(&NomisTopic{TopNomisCode: "QS1", Name: "Population Basics"})
+		db.Save(&NomisTopic{TopNomisCode: "QS2", Name: "Origins & Beliefs"})
+		db.Save(&NomisTopic{TopNomisCode: "QS3", Name: "Health"})
+		db.Save(&NomisTopic{TopNomisCode: "QS4", Name: "Housing"})
+		db.Save(&NomisTopic{TopNomisCode: "QS5", Name: "Education"})
+		db.Save(&NomisTopic{TopNomisCode: "QS6", Name: "Employment"})
+		db.Save(&NomisTopic{TopNomisCode: "QS7", Name: "Travel to Work"})
+		db.Save(&NomisTopic{TopNomisCode: "QS8", Name: "Residency"})
+
 	}
 
 }
