@@ -9,6 +9,7 @@ import (
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/api"
 	"github.com/ONSdigital/dp-find-insights-poc-api/config"
+	"github.com/ONSdigital/dp-find-insights-poc-api/metadata"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/geodata"
 	Swagger "github.com/ONSdigital/dp-find-insights-poc-api/swagger"
 )
@@ -40,6 +41,20 @@ func (svr *Server) GetSwaggerui(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	c, _ := config.Get()
 	b, err := Swagger.GetSwaggerUIPage("http://"+c.BindAddr+"/swagger", "")
+	if err != nil {
+		log.Print(err)
+	}
+
+	w.Write(b)
+}
+
+func (svr *Server) GetMetadata(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Content-Type", "html")
+	w.WriteHeader(http.StatusOK)
+
+	md, err := metadata.New()
+
+	b, err := md.Get()
 	if err != nil {
 		log.Print(err)
 	}
