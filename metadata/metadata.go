@@ -1,12 +1,13 @@
 package metadata
 
 import (
+	"context"
 	"encoding/json"
-	"log"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/api"
 	"github.com/ONSdigital/dp-find-insights-poc-api/model"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/database"
+	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gosimple/slug"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -66,7 +67,8 @@ func (md *Metadata) Get() (b []byte, err error) {
 	b, err = json.Marshal(&mdr)
 
 	if err != nil {
-		log.Print(err)
+		log.Error(context.Background(), err.Error(), err)
+		return b, err
 	}
 
 	return b, nil

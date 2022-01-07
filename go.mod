@@ -13,7 +13,6 @@ require (
 	github.com/aws/aws-lambda-go v1.27.0
 	github.com/aws/aws-sdk-go v1.41.15
 	github.com/cucumber/godog v0.12.1
-	github.com/davecgh/go-spew v1.1.1
 	github.com/deepmap/oapi-codegen v1.9.0
 	github.com/getkin/kin-openapi v0.86.0
 	github.com/go-chi/chi/v5 v5.0.4
@@ -24,11 +23,9 @@ require (
 	github.com/justinas/alice v1.2.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/kylelemons/godebug v1.1.0
-	github.com/labstack/gommon v0.3.0
 	github.com/lib/pq v1.10.3
 	github.com/pkg/diff v0.0.0-20210226163009-20ebb0f2a09e
 	github.com/pkg/errors v0.9.1
-	github.com/ryboe/q v1.0.15
 	github.com/smartystreets/goconvey v1.6.6
 	github.com/spf13/cast v1.4.1
 	github.com/stretchr/testify v1.7.0
