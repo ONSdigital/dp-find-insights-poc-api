@@ -7,7 +7,10 @@ import (
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
+
+// TODO fuller SQL logs
 
 // prepare DB
 func SetupDB(dsn string) {
@@ -38,22 +41,20 @@ func SetupDB(dsn string) {
 	}
 
 	{
-		db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+		db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+			Logger: logger.Default.LogMode(logger.Info),
+		})
+
 		if err != nil {
 			log.Print(err)
 		}
 
 		Migrate(db)
 
+		// XXX checkme
 		db.Save(&DataVer{ID: 1, CensusYear: 2011, VerString: "2.2", Public: true, Source: "Nomis Bulk API", Notes: "Release date 12/02/2013 Revised 17/01/2014"})
-		db.Save(&NomisTopic{TopNomisCode: "QS1", Name: "Population Basics"})
-		db.Save(&NomisTopic{TopNomisCode: "QS2", Name: "Origins & Beliefs"})
-		db.Save(&NomisTopic{TopNomisCode: "QS3", Name: "Health"})
-		db.Save(&NomisTopic{TopNomisCode: "QS4", Name: "Housing"})
-		db.Save(&NomisTopic{TopNomisCode: "QS5", Name: "Education"})
-		db.Save(&NomisTopic{TopNomisCode: "QS6", Name: "Employment"})
-		db.Save(&NomisTopic{TopNomisCode: "QS7", Name: "Travel to Work"})
-		db.Save(&NomisTopic{TopNomisCode: "QS8", Name: "Residency"})
+
+		DataPopulate(db)
 
 	}
 
@@ -85,6 +86,33 @@ func Migrate(db *gorm.DB) {
 		"CREATE INDEX geo_wkb_geometry_geom_idx ON public.geo USING gist (wkb_geometry)",
 		"ALTER TABLE geo ADD COLUMN wkb_long_lat_geom geometry(Geometry,4326)",
 		"CREATE INDEX geo_long_lat_geom_idx ON public.geo USING gist ( wkb_long_lat_geom)"})
+
+}
+
+func DataPopulate(db *gorm.DB) {
+
+	// populate topic -- top level metadata
+	db.Save(&NomisTopic{ID: 1, TopNomisCode: "QS1", Name: "Population Basics"})
+	db.Save(&NomisTopic{ID: 2, TopNomisCode: "QS2", Name: "Origins & Beliefs"})
+	db.Save(&NomisTopic{ID: 3, TopNomisCode: "QS3", Name: "Health"})
+	db.Save(&NomisTopic{ID: 4, TopNomisCode: "QS4", Name: "Housing"})
+	db.Save(&NomisTopic{ID: 5, TopNomisCode: "QS5", Name: "Education"})
+	db.Save(&NomisTopic{ID: 6, TopNomisCode: "QS6", Name: "Employment"})
+	db.Save(&NomisTopic{ID: 7, TopNomisCode: "QS7", Name: "Travel to Work"})
+	db.Save(&NomisTopic{ID: 8, TopNomisCode: "QS8", Name: "Residency"})
+
+	// FK relationship for topic
+
+	execSQL(db, []string{
+		"UPDATE nomis_desc SET nomis_topic_id=1 WHERE short_nomis_code LIKE 'QS1%'",
+		"UPDATE nomis_desc SET nomis_topic_id=2 WHERE short_nomis_code LIKE 'QS2%'",
+		"UPDATE nomis_desc SET nomis_topic_id=3 WHERE short_nomis_code LIKE 'QS3%'",
+		"UPDATE nomis_desc SET nomis_topic_id=4 WHERE short_nomis_code LIKE 'QS4%'",
+		"UPDATE nomis_desc SET nomis_topic_id=5 WHERE short_nomis_code LIKE 'QS5%'",
+		"UPDATE nomis_desc SET nomis_topic_id=6 WHERE short_nomis_code LIKE 'QS6%'",
+		"UPDATE nomis_desc SET nomis_topic_id=7 WHERE short_nomis_code LIKE 'QS7%'",
+		"UPDATE nomis_desc SET nomis_topic_id=8 WHERE short_nomis_code LIKE 'QS8%'",
+	})
 
 }
 

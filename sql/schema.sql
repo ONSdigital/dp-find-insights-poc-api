@@ -502,6 +502,13 @@ CREATE INDEX idx_data_ver_deleted_at ON public.data_ver USING btree (deleted_at)
 
 
 --
+-- Name: idx_geo_metric_category_id; Type: INDEX; Schema: public; Owner: insights
+--
+
+CREATE INDEX idx_geo_metric_category_id ON public.geo_metric USING btree (category_id);
+
+
+--
 -- Name: idx_geo_metric_geo_id; Type: INDEX; Schema: public; Owner: insights
 --
 
