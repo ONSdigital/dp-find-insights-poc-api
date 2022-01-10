@@ -19,3 +19,5 @@ Session.vim
 # terraform
 .terraform
 .terraform.lock.hcl
+
+PGPASSWORD.env

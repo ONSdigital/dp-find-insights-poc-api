@@ -144,3 +144,20 @@ generate:
 check-generate: generate
 	  @[ "$$(git diff)" = "" ] || (echo "commits to autogen file?" && exit 1)
 
+
+
+# local docker
+#
+.PHONY: image
+image:	## create docker image for local api
+	docker build -t dp-find-insights-poc-api -f Dockerfile.api .
+
+.PHONY: run-image
+run-api:	## run api in local docker
+	docker run \
+		-it \
+		--rm \
+		--publish 127.0.0.1:12550:12550 \
+		--env-file PGPASSWORD.env \
+		--name dp-find-insights-poc-api \
+		dp-find-insights-poc-api

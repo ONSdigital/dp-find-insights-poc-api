@@ -1,0 +1,22 @@
+# This creates a docker image running the API for local development.
+# 
+
+FROM golang:1.16
+
+WORKDIR /go/src/app
+
+COPY . .
+
+RUN go get -d -v ./...
+RUN make build
+
+ENV PGHOST=fi-database-2.cbhpmcuqy9vo.eu-central-1.rds.amazonaws.com
+ENV PGPORT=54322
+ENV PGUSER=insights
+ENV PGDATABASE=census
+ENV ENABLE_DATABASE=1
+ENV BIND_ADDR=0.0.0.0:12550
+
+EXPOSE 12550
+
+CMD ["/go/src/app/build/dp-find-insights-poc-api"]
