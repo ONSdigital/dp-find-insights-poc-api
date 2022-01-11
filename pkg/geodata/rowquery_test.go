@@ -13,7 +13,7 @@ import (
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/database"
 )
 
-const dsn = "postgres://insights:insights@localhost:54323/censustest"
+const dsn = comptests.DefaultDSN
 
 // passing -args -kill=true to the test will kill docker postgres
 var kill = flag.Bool("kill", false, "docker kill postgres")
@@ -21,7 +21,7 @@ var kill = flag.Bool("kill", false, "docker kill postgres")
 // TODO Check empty
 func TestRowQuery(t *testing.T) {
 	comptests.SetupDockerDB(dsn)
-	model.SetupDB(dsn)
+	model.SetupDBOnceOnly(dsn)
 
 	db, err := database.Open("pgx", dsn)
 	if err != nil {

@@ -60,6 +60,30 @@ func SetupDB(dsn string) {
 
 }
 
+// special case for use in comptests - only setup db if it has not already been set up. This is safe to call multiple times against the same db.
+func SetupDBOnceOnly(dsn string) {
+	// assume if censustest db exists, the work is done
+	_, pw, host, port, _ := ParseDSN(dsn)
+
+	{
+		db, err := gorm.Open(postgres.Open(CreatDSN("postgres", pw, host, port, "postgres")), &gorm.Config{})
+		if err != nil {
+			log.Print(err)
+		}
+
+		// check if db exists already, return if so
+		var isDBCreated bool
+		db.Raw("SELECT EXISTS (SELECT datname FROM pg_catalog.pg_database WHERE datname='censustest')").Scan(&isDBCreated)
+		if isDBCreated {
+			log.Println("Database already setup, skipping...")
+			return
+		}
+	}
+
+	// else run SetupDB
+	SetupDB(dsn)
+}
+
 // setup schema
 func Migrate(db *gorm.DB) {
 
