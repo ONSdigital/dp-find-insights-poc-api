@@ -69,6 +69,7 @@ func main() {
 	}
 
 	model.Migrate(db)
+	model.DataPopulate(db)
 
 	if haveDump {
 		ndump, _ := pgDump()
