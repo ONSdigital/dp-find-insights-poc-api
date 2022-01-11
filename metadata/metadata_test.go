@@ -43,8 +43,7 @@ func TestMetaDataTest(t *testing.T) {
 
 		db.Exec("INSERT INTO NOMIS_CATEGORY (id,nomis_desc_id,category_name,measurement_unit,stat_unit,long_nomis_code,year) VALUES (211,15,'All categories: Dependent children in family','Count','Family','QS118EW0001',2011)")
 
-		md, _ := New()
-		md.db = db
+		md, _ := New(db)
 
 		b, err := md.Get()
 		if err != nil {

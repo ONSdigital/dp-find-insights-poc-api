@@ -17,12 +17,18 @@ type Metadata struct {
 	db *gorm.DB
 }
 
-func New() (*Metadata, error) {
-	db, err := gorm.Open(postgres.Open(database.GetDSN()), &gorm.Config{
-		//	Logger: logger.Default.LogMode(logger.Info), // display SQL
-	})
+// New takes optimal optimal db args for testing override
+func New(dbs ...*gorm.DB) (*Metadata, error) {
+	var err error
+	if len(dbs) == 0 {
+		dbs[0], err = gorm.Open(postgres.Open(database.GetDSN()), &gorm.Config{
+			//	Logger: logger.Default.LogMode(logger.Info), // display SQL
+		})
 
-	return &Metadata{db: db}, err
+		//return &Metadata{db: dbs[0]}, err
+	}
+
+	return &Metadata{db: dbs[0]}, err
 }
 
 func (md *Metadata) Get() (b []byte, err error) {
