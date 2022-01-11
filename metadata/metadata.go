@@ -24,8 +24,6 @@ func New(dbs ...*gorm.DB) (*Metadata, error) {
 		dbs[0], err = gorm.Open(postgres.Open(database.GetDSN()), &gorm.Config{
 			//	Logger: logger.Default.LogMode(logger.Info), // display SQL
 		})
-
-		//return &Metadata{db: dbs[0]}, err
 	}
 
 	return &Metadata{db: dbs[0]}, err
