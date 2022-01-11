@@ -14,25 +14,26 @@ import (
 )
 
 type Metadata struct {
-	db *gorm.DB
+	gdb *gorm.DB
 }
 
 // New takes optimal optimal db args for testing override
 func New(dbs ...*gorm.DB) (*Metadata, error) {
 	var err error
 	if len(dbs) == 0 {
+
 		dbs[0], err = gorm.Open(postgres.Open(database.GetDSN()), &gorm.Config{
 			//	Logger: logger.Default.LogMode(logger.Info), // display SQL
 		})
 	}
 
-	return &Metadata{db: dbs[0]}, err
+	return &Metadata{gdb: dbs[0]}, err
 }
 
 func (md *Metadata) Get() (b []byte, err error) {
 	var topics []model.NomisTopic
 
-	md.db.Preload("NomisDescs", func(db *gorm.DB) *gorm.DB { return db.Order("short_nomis_code") }).Find(&topics)
+	md.gdb.Preload("NomisDescs", func(gdb *gorm.DB) *gorm.DB { return gdb.Order("short_nomis_code") }).Find(&topics)
 
 	var mdr api.MetadataResponse
 
@@ -43,7 +44,7 @@ func (md *Metadata) Get() (b []byte, err error) {
 		var nd model.NomisDesc
 
 		for _, nd = range topic.NomisDescs {
-			md.db.Preload("NomisCategories").Find(&nd)
+			md.gdb.Preload("NomisCategories").Find(&nd)
 
 			var cats api.Categories
 			for _, trip := range nd.NomisCategories {
