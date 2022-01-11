@@ -22,9 +22,16 @@ func New(dbs ...*gorm.DB) (*Metadata, error) {
 	var err error
 	if len(dbs) == 0 {
 
-		dbs[0], err = gorm.Open(postgres.Open(database.GetDSN()), &gorm.Config{
+		// TODO this func should accept a persistent *sql.DB from
+		// handler/hander.go and make gdb from that eg.
+		// gorm.Open(postgres.New(postgres.Config{Conn: db.DB()}))
+
+		var gdb *gorm.DB
+		gdb, err = gorm.Open(postgres.Open(database.GetDSN()), &gorm.Config{
 			//	Logger: logger.Default.LogMode(logger.Info), // display SQL
 		})
+
+		return &Metadata{gdb: gdb}, err
 	}
 
 	return &Metadata{gdb: dbs[0]}, err
