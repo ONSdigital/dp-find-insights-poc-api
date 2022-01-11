@@ -467,24 +467,10 @@ ALTER TABLE ONLY public.nomis_desc
 
 
 --
--- Name: data_ver_ver_string_idx; Type: INDEX; Schema: public; Owner: insights
---
-
-CREATE INDEX data_ver_ver_string_idx ON public.data_ver USING btree (ver_string);
-
-
---
 -- Name: geo_long_lat_geom_idx; Type: INDEX; Schema: public; Owner: insights
 --
 
 CREATE INDEX geo_long_lat_geom_idx ON public.geo USING gist (wkb_long_lat_geom);
-
-
---
--- Name: geo_type_name_idx; Type: INDEX; Schema: public; Owner: insights
---
-
-CREATE INDEX geo_type_name_idx ON public.geo_type USING btree (name);
 
 
 --
