@@ -20,4 +20,4 @@ Session.vim
 .terraform
 .terraform.lock.hcl
 
-PGPASSWORD.env
+secrets/PGPASSWORD.env

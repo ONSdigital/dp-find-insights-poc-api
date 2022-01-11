@@ -1,7 +1,7 @@
 #!/bin/bash -x
 
-# gpg -d create.env.asc for PGPASSWORD
-. ./create.env
+# gpg -d PGPASSWORD.env.asc for PGPASSWORD
+. ../../secrets/PGPASSWORD.env
 
 NAME="fi-database-1"
 PORT=54322

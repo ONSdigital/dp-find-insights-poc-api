@@ -158,6 +158,6 @@ run-api:	## run api in local docker
 		-it \
 		--rm \
 		--publish 127.0.0.1:12550:12550 \
-		--env-file PGPASSWORD.env \
+		--env-file secrets/PGPASSWORD.env \
 		--name dp-find-insights-poc-api \
 		dp-find-insights-poc-api

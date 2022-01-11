@@ -15,11 +15,12 @@ You need to rebuild the image if you change any of the Go code in the project.
 
 ## Decrypt the database password
 
-The RDS password is encrypted in `PGPASSWORD.env.asc`.
+The RDS password is encrypted in `secrets/PGPASSWORD.env.asc`.
 Decrypt this:
 
 ```shell
-gpg -d < PGPASSWORD.env.asc > PGPASSWORD.env
+cd secrets
+gpg -d PGPASSWORD.env.asc > PGPASSWORD.env
 ```
 You need to have the `ons-develop` key in your keychain.
 

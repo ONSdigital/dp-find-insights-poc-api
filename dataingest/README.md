@@ -29,16 +29,16 @@ $ env |grep PG
 
 ## dbsetup
 
-* create.env.asc
+* `../../secrets/PGPASSWORD.env.asc`
   * Encrypted version of postgres password - currently same for "postgres" (admin
 user) & "insights" (app user)
 
-Decrypt
+Decrypt within `secrets/` directory
 ```
-gpg -d create.env.asc
+gpg -d PGPASSWORD.env.asc
 ```
 
-to create "create.env"
+to create "PGPASSWORD.env"
 
 ## One off processes
 * awscreate.sh
