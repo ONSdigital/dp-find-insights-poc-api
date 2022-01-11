@@ -26,13 +26,18 @@ Also see a real test  pkg/geodata/rowquery_test.go which uses
 
 */
 
-const dsn = "postgres://insights:insights@localhost:54322/censustest"
+/*
+you can use your own postgres dsn for tests, but it might clash with that in use by other tests.
+Safest is to use the default set in comptests/docker.DefaultDSN
+(which at time of writing was postgres://insights:insights@localhost:54322/censustest)
+*/
+const dsn = comptests.DefaultDSN
 
 var db *gorm.DB
 
 func init() {
 	comptests.SetupDockerDB(dsn)
-	model.SetupDB(dsn)
+	model.SetupDBOnceOnly(dsn)
 	var err error
 	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {

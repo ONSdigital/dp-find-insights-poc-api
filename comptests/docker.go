@@ -11,6 +11,8 @@ import (
 	"gorm.io/gorm"
 )
 
+const DefaultDSN = "postgres://insights:insights@localhost:54322/censustest"
+
 func SetupDockerDB(dsn string) {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
