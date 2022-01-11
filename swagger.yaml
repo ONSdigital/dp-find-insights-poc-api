@@ -283,13 +283,11 @@ components:
           example: "2019-09-22T11:48:51.0000001Z"
 
 
-    # WIP
     MetadataResponse:
       type: array
       items: 
         $ref: '#/components/schemas/Metadata'
        
-    #
     Metadata:
       type: object
       properties: 
