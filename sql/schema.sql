@@ -62,9 +62,9 @@ CREATE TABLE public.geo (
     type_id integer,
     code text,
     name text,
+    valid boolean DEFAULT true,
     lat numeric,
     long numeric,
-    valid boolean DEFAULT true,
     wkb_geometry public.geometry(Geometry,4326),
     wkb_long_lat_geom public.geometry(Geometry,4326)
 );
@@ -103,8 +103,7 @@ CREATE TABLE public.geo_metric (
     geo_id integer,
     category_id integer,
     metric numeric,
-    data_ver_id integer,
-    g_metric numeric
+    data_ver_id integer
 );
 
 
@@ -481,6 +480,13 @@ CREATE INDEX geo_wkb_geometry_geom_idx ON public.geo USING gist (wkb_geometry);
 
 
 --
+-- Name: idx_category_id; Type: INDEX; Schema: public; Owner: insights
+--
+
+CREATE INDEX idx_category_id ON public.geo_metric USING btree (category_id);
+
+
+--
 -- Name: idx_data_ver_deleted_at; Type: INDEX; Schema: public; Owner: insights
 --
 
@@ -568,6 +574,16 @@ ALTER TABLE ONLY public.nomis_category
 
 ALTER TABLE ONLY public.nomis_desc
     ADD CONSTRAINT fk_nomis_topic_nomis_descs FOREIGN KEY (nomis_topic_id) REFERENCES public.nomis_topic(id);
+
+
+--
+-- Name: SCHEMA public; Type: ACL; Schema: -; Owner: postgres
+--
+
+REVOKE ALL ON SCHEMA public FROM rdsadmin;
+REVOKE ALL ON SCHEMA public FROM PUBLIC;
+GRANT ALL ON SCHEMA public TO postgres;
+GRANT ALL ON SCHEMA public TO PUBLIC;
 
 
 --
