@@ -70,7 +70,6 @@ func main() {
 
 	model.SetupDB(dsn)
 	model.Migrate(db)
-	model.DataPopulate(db)
 
 	if haveDump {
 		ndump, _ := pgDump()
