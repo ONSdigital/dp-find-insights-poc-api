@@ -68,6 +68,7 @@ func main() {
 		log.Print(err)
 	}
 
+	model.SetupDB(dsn)
 	model.Migrate(db)
 	model.DataPopulate(db)
 
