@@ -5,6 +5,7 @@ import (
 	"log"
 	"regexp"
 
+	"github.com/ryboe/q"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -16,32 +17,33 @@ import (
 func SetupDB(dsn string) {
 
 	_, pw, host, port, db := ParseDSN(dsn)
+	q.Q(dsn) // XXX check test provision
 
 	{
-		db, err := gorm.Open(postgres.Open(CreatDSN("postgres", pw, host, port, "postgres")), &gorm.Config{})
+		gdb, err := gorm.Open(postgres.Open(CreatDSN("postgres", pw, host, port, "postgres")), &gorm.Config{})
 		if err != nil {
 			log.Print(err)
 		}
 
 		// should replace creatdbuser.sh
-		execSQL(db, []string{
-			"CREATE DATABASE censustest",
+		execSQL(gdb, []string{
+			"CREATE DATABASE " + db,
 			"CREATE USER insights WITH PASSWORD 'insights'",
 			"ALTER USER insights WITH CREATEDB"})
 	}
 
 	{
-		db, err := gorm.Open(postgres.Open(CreatDSN("postgres", pw, host, port, db)), &gorm.Config{})
+		gdb, err := gorm.Open(postgres.Open(CreatDSN("postgres", pw, host, port, db)), &gorm.Config{})
 		if err != nil {
 			log.Print(err)
 		}
 
 		// should replace creatdb.sh
-		execSQL(db, []string{"CREATE EXTENSION postgis"})
+		execSQL(gdb, []string{"CREATE EXTENSION postgis"})
 	}
 
 	{
-		db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+		gdb, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 			Logger: logger.Default.LogMode(logger.Info),
 		})
 
@@ -49,12 +51,12 @@ func SetupDB(dsn string) {
 			log.Print(err)
 		}
 
-		Migrate(db)
+		Migrate(gdb)
 
 		// XXX checkme
-		db.Save(&DataVer{ID: 1, CensusYear: 2011, VerString: "2.2", Public: true, Source: "Nomis Bulk API", Notes: "Release date 12/02/2013 Revised 17/01/2014"})
+		gdb.Save(&DataVer{ID: 1, CensusYear: 2011, VerString: "2.2", Public: true, Source: "Nomis Bulk API", Notes: "Release date 12/02/2013 Revised 17/01/2014"})
 
-		DataPopulate(db)
+		DataPopulate(gdb)
 
 	}
 
