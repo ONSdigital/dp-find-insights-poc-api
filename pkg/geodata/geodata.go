@@ -15,6 +15,8 @@ import (
 	_ "github.com/jackc/pgx/v4/stdlib"
 )
 
+const allRowsToken = "ALL" // rows= token that means grab all rows, as in rows=ALL
+
 type Geodata struct {
 	db         *database.Database
 	maxMetrics int
@@ -453,37 +455,43 @@ func CensusQuerySQL(ctx context.Context, args CensusQuerySQLArgs) (sql string, i
 		return sql, include, err
 	}
 
-	// fetch conditions SQL
-	geoCondition, geoErr := geoSQL(args.Geos)
-	bboxCondition, bboxErr := bboxSQL(args.BBox)
-	radiusCondition, radiusErr := radiusSQL(args.Location, args.Radius)
-	polygonCondition, polygonErr := polygonSQL(args.Polygon)
+	var geoConditions string
+	if !wantAllRows(args.Geos) {
+		// fetch conditions SQL
+		geoCondition, geoErr := geoSQL(args.Geos)
+		bboxCondition, bboxErr := bboxSQL(args.BBox)
+		radiusCondition, radiusErr := radiusSQL(args.Location, args.Radius)
+		polygonCondition, polygonErr := polygonSQL(args.Polygon)
 
-	// check errs, return on first found
-	for _, err := range []error{
-		geoErr,
-		bboxErr,
-		radiusErr,
-		polygonErr,
-	} {
-		if err != nil {
-			return sql, include, err
+		// check errs, return on first found
+		for _, err := range []error{
+			geoErr,
+			bboxErr,
+			radiusErr,
+			polygonErr,
+		} {
+			if err != nil {
+				return sql, include, err
+			}
 		}
-	}
 
-	// collate join conditions with sql OR
-	var conditions []string
-	for _, condition := range []string{
-		geoCondition,
-		bboxCondition,
-		radiusCondition,
-		polygonCondition,
-	} {
-		if condition != "" {
-			conditions = append(conditions, condition)
+		// collate join conditions with sql OR
+		var conditions []string
+		for _, condition := range []string{
+			geoCondition,
+			bboxCondition,
+			radiusCondition,
+			polygonCondition,
+		} {
+			if condition != "" {
+				conditions = append(conditions, condition)
+			}
 		}
+		geoConditions = fmt.Sprintf(
+			"AND (\n    %s)\n",
+			strings.Join(conditions, "    OR\n"),
+		)
 	}
-	geoConditions := strings.Join(conditions, "    OR\n")
 
 	// construct WHERE condition for geotypes
 	geotypeConditions, err := additionalCondition("geo_type.name", args.Geotypes)
@@ -517,13 +525,11 @@ FROM
     data_ver,
     nomis_category
 	%s
-WHERE (
-    -- geo conditions:
-	%s
-)
-AND geo.valid
+WHERE geo.valid
 AND geo_type.id = geo.type_id
     -- geotype conditions:
+%s
+	-- geo conditions:
 %s
 %s
 AND geo_metric.geo_id = geo.id
@@ -538,8 +544,8 @@ AND nomis_category.year = 2011
 	sql = fmt.Sprintf(
 		template,
 		censustableFromSQL,
-		geoConditions,
 		geotypeConditions,
+		geoConditions,
 		censustableAndSQL,
 		catConditions,
 	)
@@ -555,7 +561,25 @@ func validateCensusQuery(args CensusQuerySQLArgs) error {
 		args.Polygon == "" {
 		return errors.New("must specify a condition (rows, bbox, location/radius, and/or polygon)")
 	}
+	// if ALL is in Geos, it must be first and only Geos token
+	if len(args.Geos) > 1 {
+		for i := 1; i < len(args.Geos); i++ {
+			if isAll(args.Geos[i]) {
+				return errors.New("if used, ALL must be first and only rows= token")
+			}
+		}
+	}
 	return nil
+}
+
+// wantAllRows is true if rows=ALL
+func wantAllRows(geos []string) bool {
+	return len(geos) == 1 && isAll(geos[0])
+}
+
+// isAll is true if token is allRowsToken
+func isAll(token string) bool {
+	return strings.EqualFold(token, allRowsToken)
 }
 
 func geoSQL(geos []string) (string, error) {
