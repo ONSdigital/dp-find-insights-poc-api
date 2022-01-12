@@ -105,8 +105,8 @@ func (NomisCategory) TableName() string {
 }
 
 type NomisDesc struct {
-	ID              int32 `gorm:"primaryKey"` // uniqueIndex
-	NomisTopicID    int32 `gorm:"primaryKey"` // XXX
+	ID              int32 `gorm:"uniqueIndex;primaryKey"`
+	NomisTopicID    int32 `gorm:"primaryKey"` // XXX check this ???
 	Name            string
 	PopStat         string
 	ShortNomisCode  string
