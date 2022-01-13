@@ -1,6 +1,6 @@
 # Data Ingest Processes
 
-WARNING these processes are in rapid flux as of Dec 2021 and subject to change.
+WARNING these processes are in rapid flux as of Jan 2022 and subject to change.
 
 Various scripts to provision & load data into a AWS RDS (Postgres 13.4)
 instance used by the Find Insights back-end team.
@@ -61,9 +61,8 @@ client tools (eg. psql, pgdump, createdb, dropdb etc.) in the PATH
 ## Create database and schema
 
 ```
-$ createdb censustiny
-$ cd dp-find-insights-poc-api
-$ make update-schema
+$ createdb census2i
+$ cd dp-find-insights-poc-api && make update-schema
 ```
 
 Answer "y" to questions in last step. "Record not found warning" can be
@@ -72,13 +71,12 @@ ignored.
 ## Get source data (dev)
 
 ```
-$ cd nomis-bulk-to-postgres
-$ ./download-data-qs101.sh
+$ cd nomis-bulk-to-postgres && ./download-data-2i.sh
 ```
 
-Note the last step downloads CSV under the "data" directory.  A tiny DB can be
-populated by restricting the download to "qs101" but usually
-"download-data-qs.sh" would be used for production (see below).
+Note the last step downloads CSV under the "data" directory. 
+
+"download-data-qs.sh" would be used for a large dev db (eg. for DataVis)
 
 ## Populate database
 
@@ -99,8 +97,7 @@ $ python add_to_db.py
 
 *  Run 
 ```
-$ cd dp-find-insights-poc-api
-$ make update-schema
+$ cd dp-find-insights-poc-api && make update-schema
 $ ./dataingest/dbsetup/cleandb.sh
  ```
 
