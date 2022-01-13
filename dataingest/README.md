@@ -45,9 +45,6 @@ to create "PGPASSWORD.env"
   * Tactical solution to create AWS RDS instance and security group opening (non-standard) postgres port of 54322.
   * XXX should be migrated to Terraform.
 
-* creatdbuser.sh
-  * creates "insights" pg user
-
 * creatdb.sh
   * used to import an existing db dump & enable PostGIS
 
@@ -65,7 +62,6 @@ client tools (eg. psql, pgdump, createdb, dropdb etc.) in the PATH
 
 ```
 $ createdb censustiny
-$ psql -U postgres -d censustiny -c "CREATE EXTENSION postgis"
 $ cd dp-find-insights-poc-api
 $ make update-schema
 ```
@@ -103,15 +99,18 @@ $ python add_to_db.py
 
 *  Run 
 ```
-$ ./dbsetup/cleandb.sh 
+$ cd dp-find-insights-poc-api
+$ make update-schema
+$ ./dataingest/dbsetup/cleandb.sh
  ```
 
 ## Geo data import
 
 * Import data from GeoJSON files
+  * This puts POLYGON in geo.wkb_geometry
 
 ```
-$ ./spacial/import.sh
+$ ./dataingest/spatial/import.sh linux-localhost
 ```
 * Populate geo.wkb_long_lat_geom with long, lat POINT
 

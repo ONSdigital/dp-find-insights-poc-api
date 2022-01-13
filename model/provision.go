@@ -117,6 +117,14 @@ func Migrate(db *gorm.DB) {
 
 func DataPopulate(db *gorm.DB) {
 
+	// id=0 is undefined topic, can't see how to do this with gorm!
+	// we need this when we import data before FK set up as default value
+	// in "nomis-bulk-to-postgres/add_to_db.py" function "add_meta_tables"
+
+	execSQL(db, []string{
+		"INSERT INTO NOMIS_TOPIC (id) VALUES (0)",
+	})
+
 	// populate topic -- top level metadata
 	db.Save(&NomisTopic{ID: 1, TopNomisCode: "QS1", Name: "Population Basics"})
 	db.Save(&NomisTopic{ID: 2, TopNomisCode: "QS2", Name: "Origins & Beliefs"})
@@ -127,6 +135,10 @@ func DataPopulate(db *gorm.DB) {
 	db.Save(&NomisTopic{ID: 7, TopNomisCode: "QS7", Name: "Travel to Work"})
 	db.Save(&NomisTopic{ID: 8, TopNomisCode: "QS8", Name: "Residency"})
 
+	db.Save(&NomisTopic{ID: 100, TopNomisCode: "KS1", Name: "Population Basics"})
+	db.Save(&NomisTopic{ID: 200, TopNomisCode: "KS2", Name: "Origins & Beliefs"})
+
+	// XXX DC6 "Population Basics"
 	// FK relationship for topic
 
 	execSQL(db, []string{
@@ -138,6 +150,8 @@ func DataPopulate(db *gorm.DB) {
 		"UPDATE nomis_desc SET nomis_topic_id=6 WHERE short_nomis_code LIKE 'QS6%'",
 		"UPDATE nomis_desc SET nomis_topic_id=7 WHERE short_nomis_code LIKE 'QS7%'",
 		"UPDATE nomis_desc SET nomis_topic_id=8 WHERE short_nomis_code LIKE 'QS8%'",
+		"UPDATE nomis_desc SET nomis_topic_id=100 WHERE short_nomis_code LIKE 'KS1%'",
+		"UPDATE nomis_desc SET nomis_topic_id=200 WHERE short_nomis_code LIKE 'KS2%'",
 	})
 
 }
