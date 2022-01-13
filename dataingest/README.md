@@ -46,7 +46,7 @@ to create "PGPASSWORD.env"
   * XXX should be migrated to Terraform.
 
 * creatdb.sh
-  * used to import an existing db dump & enable PostGIS
+  * used to import an existing db dump 
 
 # Provision Tiny dev DB locally & create prod DB dump
 
