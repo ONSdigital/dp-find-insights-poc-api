@@ -55,6 +55,8 @@ func (svr *Server) GetSwaggerui(w http.ResponseWriter, r *http.Request) {
 }
 
 func (svr *Server) GetMetadata(w http.ResponseWriter, r *http.Request) {
+	// add CORS header
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.WriteHeader(http.StatusOK)
 
 	md, err := metadata.New()
