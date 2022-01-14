@@ -44,10 +44,9 @@ func (md *Metadata) Get() (b []byte, err error) {
 
 	var mdr api.MetadataResponse
 
-	var newTabs api.Tables
-
 	for _, topic := range topics {
 
+		var newTabs api.Tables
 		var nd model.NomisDesc
 
 		for _, nd = range topic.NomisDescs {
