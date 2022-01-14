@@ -19,7 +19,7 @@ ubuntu user (using the environment in ~ubuntu/.direnv)
 
 ## Update
 
-* "make build" locally and scp the freshly compiled binary to ~ubuntu
+* "make build-linux-amd" locally and scp the freshly compiled binary to ~ubuntu
 * ssh into the remote system and type "tmux attach"
 * Control-C running binary
 * $ source ~/.direnv
