@@ -67,10 +67,6 @@ test-comptest-kill:	## this provisions a docker DB automatically & kills it
 convey:	## run goconvey
 	goconvey ./...
 
-.PHONY: test-component
-test-component:	## run component tests and coverage
-	go test -cover -coverpkg=github.com/ONSdigital/dp-find-insights-poc-api/... -component
-
 #
 # these are the lambda-related targets
 #
@@ -82,31 +78,6 @@ build-lambda:	## compile lambda
 .PHONY: bundle-lambda
 bundle-lambda:	## bundle lambda into .zip to deploy
 	zip -j build/hello.zip build/hello
-
-.PHONY: invoke-lambda
-invoke-lambda:	## invoke lambda and display response
-	aws --profile development --region eu-central-1 lambda invoke --function-name find-insights-hello .lambda.out
-	cat .lambda.out
-	rm .lambda.out
-
-.PHONY: invoke-api
-invoke-api:	## invoke lambda via api gateway
-	REST_API_ID=$$(aws --profile development --region eu-central-1 apigateway get-rest-apis --query 'items[?name==`find-insights-api`]' | jq -r '.[0] .id') ; \
-	echo $$REST_API_ID ; \
-	RESOURCE_ID=$$(aws --profile development --region eu-central-1 apigateway get-resources --rest-api-id $$REST_API_ID --query 'items[?path==`/hello/{dataset+}`]' | jq -r '.[0] .id') ; \
-	echo $$RESOURCE_ID ; \
-	aws --profile development --region eu-central-1 \
-		apigateway test-invoke-method \
-			--rest-api-id $$REST_API_ID \
-			--resource-id $$RESOURCE_ID \
-			--http-method GET \
-			--path-with-query-string /hello/atlas2011.qs101ew
-
-.PHONY: invoke-curl
-invoke-curl:	## invoke lambda via curl
-	REST_API_ID=$$(aws --profile development --region eu-central-1 apigateway get-rest-apis --query 'items[?name==`find-insights-api`]' | jq -r '.[0] .id') ; \
-	echo $$REST_API_ID ; \
-	curl --include https://$$REST_API_ID.execute-api.eu-central-1.amazonaws.com/dev/hello/atlas2011.qs101ew
 
 #
 # cli targets
@@ -147,7 +118,6 @@ generate:
 .PHONY: check-generate
 check-generate: generate
 	  @[ "$$(git diff)" = "" ] || (echo "commits to autogen file?" && exit 1)
-
 
 
 # local docker
