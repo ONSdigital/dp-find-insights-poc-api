@@ -43,13 +43,13 @@ FROM
  geo_metric,
  data_ver,
  nomis_category
-WHERE (
- -- geo conditions:
- geo.code IN ( 'E01000001' )
-)
-AND geo.valid
+WHERE geo.valid
 AND geo_type.id = geo.type_id
  -- geotype conditions:
+ -- geo conditions:
+AND (
+    geo.code IN ( 'E01000001' )
+)
 AND geo_metric.geo_id = geo.id
 AND data_ver.id = geo_metric.data_ver_id
 AND data_ver.census_year = 2011
@@ -75,16 +75,16 @@ FROM
  geo_metric,
  data_ver,
  nomis_category
-WHERE (
+WHERE geo.valid
+AND geo_type.id = geo.type_id
+ -- geotype conditions:
  -- geo conditions:
+AND (
 geo.wkb_geometry && ST_GeomFromText(
  'MULTIPOINT(-0.370947 51.362478, 0.176877 51.673778)',
  4326
 )
 )
-AND geo.valid
-AND geo_type.id = geo.type_id
- -- geotype conditions:
 AND geo_metric.geo_id = geo.id
 AND data_ver.id = geo_metric.data_ver_id
 AND data_ver.census_year = 2011
@@ -128,13 +128,13 @@ FROM
  geo_metric,
  data_ver,
  nomis_category
-WHERE (
- -- geo conditions:
- geo.code IN ( 'E01000001' )
-)
-AND geo.valid
+WHERE geo.valid
 AND geo_type.id = geo.type_id
  -- geotype conditions:
+ -- geo conditions:
+AND (
+ geo.code IN ( 'E01000001' )
+)
 AND geo_metric.geo_id = geo.id
 AND data_ver.id = geo_metric.data_ver_id
 AND data_ver.census_year = 2011
@@ -145,7 +145,7 @@ AND nomis_category.year = 2011
 AND (
  nomis_category.long_nomis_code IN ( 'QS119EW0002' )
 )
-`,
+			`,
 		},
 		{
 			desc: "censustable condition with single geography",
@@ -166,13 +166,13 @@ FROM
  data_ver,
  nomis_category
  , nomis_desc
-WHERE (
- -- geo conditions:
- geo.code IN ( 'E01000001' )
-)
-AND geo.valid
+WHERE geo.valid
 AND geo_type.id = geo.type_id
  -- geotype conditions:
+ -- geo conditions:
+AND (
+ geo.code IN ( 'E01000001' )
+)
 AND nomis_desc.short_nomis_code = 'QS101EW'
 AND geo_metric.geo_id = geo.id
 AND data_ver.id = geo_metric.data_ver_id
@@ -206,13 +206,13 @@ FROM
  data_ver,
  nomis_category
  , nomis_desc
-WHERE (
- -- geo conditions:
- geo.code IN ( 'E01000001' )
-)
-AND geo.valid
+WHERE geo.valid
 AND geo_type.id = geo.type_id
  -- geotype conditions:
+ -- geo conditions:
+AND (
+ geo.code IN ( 'E01000001' )
+)
 AND nomis_desc.short_nomis_code = 'QS101EW'
 AND geo_metric.geo_id = geo.id
 AND data_ver.id = geo_metric.data_ver_id
@@ -252,13 +252,13 @@ FROM
  data_ver,
  nomis_category
  , nomis_desc
-WHERE (
- -- geo conditions:
- geo.code IN ( 'E01000001' )
-)
-AND geo.valid
+WHERE geo.valid
 AND geo_type.id = geo.type_id
  -- geotype conditions:
+ -- geo conditions:
+AND (
+ geo.code IN ( 'E01000001' )
+)
 AND nomis_desc.short_nomis_code = 'QS101EW'
 AND geo_metric.geo_id = geo.id
 AND data_ver.id = geo_metric.data_ver_id
@@ -294,13 +294,13 @@ FROM
  data_ver,
  nomis_category
  , nomis_desc
-WHERE (
- -- geo conditions:
- geo.code IN ( 'E01000001' )
-)
-AND geo.valid
+WHERE geo.valid
 AND geo_type.id = geo.type_id
  -- geotype conditions:
+ -- geo conditions:
+AND (
+ geo.code IN ( 'E01000001' )
+)
 AND nomis_desc.short_nomis_code = 'QS101EW'
 AND geo_metric.geo_id = geo.id
 AND data_ver.id = geo_metric.data_ver_id
@@ -341,13 +341,13 @@ FROM
  data_ver,
  nomis_category
  , nomis_desc
-WHERE (
- -- geo conditions:
- geo.code IN ( 'E01000001' )
-)
-AND geo.valid
+WHERE geo.valid
 AND geo_type.id = geo.type_id
  -- geotype conditions:
+ -- geo conditions:
+AND (
+ geo.code IN ( 'E01000001' )
+)
 AND nomis_desc.short_nomis_code = 'QS101EW'
 AND geo_metric.geo_id = geo.id
 AND data_ver.id = geo_metric.data_ver_id
@@ -363,6 +363,39 @@ AND (
  OR
  nomis_category.nomis_desc_id = nomis_desc.id
 )
+`,
+		},
+		{
+			desc:    "all rows, too many tokens",
+			args:    geodata.CensusQuerySQLArgs{Geos: []string{"x", "all"}},
+			wantErr: errors.New("if used, ALL must be first and only rows= token"),
+		},
+		{
+			desc: "all rows, all categories",
+			args: geodata.CensusQuerySQLArgs{Geos: []string{"all"}},
+			wantSQL: `
+SELECT
+ geo.code AS geography_code,
+ geo_type.name AS geotype,
+ nomis_category.long_nomis_code AS category_code,
+ geo_metric.metric AS value
+FROM
+ geo,
+ geo_type,
+ geo_metric,
+ data_ver,
+ nomis_category
+WHERE geo.valid
+AND geo_type.id = geo.type_id
+ -- geotype conditions:
+ -- geo conditions:
+AND geo_metric.geo_id = geo.id
+AND data_ver.id = geo_metric.data_ver_id
+AND data_ver.census_year = 2011
+AND data_ver.ver_string = '2.2'
+AND nomis_category.id = geo_metric.category_id
+AND nomis_category.year = 2011
+ -- category conditions:
 `,
 		},
 	}

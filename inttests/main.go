@@ -174,6 +174,13 @@ var Tests = []APITest{
 		baseURLLocal,
 		`cols=QS119EW0001,QS119EW0002,QS119EW0003&rows=E01000001&censustable=QS101EW`,
 	},
+	// all LAD rows, single category
+	{
+		"all rows single category LAD",
+		baseURL,
+		baseURLLocal,
+		`rows=ALL&cols=geography_code,geotype,QS802EW0009&geotype=LAD`,
+	},
 }
 
 var DataPref = "resp/"
