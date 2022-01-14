@@ -28,6 +28,10 @@ lint:	## doesn't really lint
 build:	## build poc service
 	go build -tags 'production' $(LDFLAGS) -o $(BINPATH)/dp-find-insights-poc-api ./cmd/dp-find-insights-poc-api
 
+.PHONY: build-linux-amd
+build-linux-amd:	## build poc service specifically for linux on amd64 (used for EC2 deploy)
+	GOOS=linux GOARCH=amd64 go build -tags 'production' $(LDFLAGS) -o $(BINPATH)/dp-find-insights-poc-api ./cmd/dp-find-insights-poc-api
+
 .PHONY: debug
 debug:	## run poc service in debug mode
 	go build -tags 'debug' $(LDFLAGS) -o $(BINPATH)/dp-find-insights-poc-api ./cmd/dp-find-insights-poc-api
