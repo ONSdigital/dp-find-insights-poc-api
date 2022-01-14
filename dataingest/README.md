@@ -50,8 +50,6 @@ to create "PGPASSWORD.env"
 
 # Provision Tiny dev DB locally & create prod DB dump
 
-These instructions are for the "new" or "skinny" database.
-
 TODO automate further
 
 Assumes postgres is running on developer desktop natively or via docker with pg
