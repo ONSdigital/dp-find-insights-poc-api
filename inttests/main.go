@@ -212,6 +212,14 @@ var Tests = []APITest{
 		metadataEndpoint,
 		"",
 	},
+	// ckmeans
+	{
+		"ckmeans",
+		baseURL,
+		baseURLLocal,
+		ckmeansEndpoint,
+		"cat=QS208EW0002&geotype=LSOA&k=5",
+	},
 }
 
 var DataPref = "resp/"
