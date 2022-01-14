@@ -18,10 +18,14 @@ var extra = flag.Bool("extra", false, "print full diffs on failed integration te
 var local = flag.Bool("local", false, "run tests against locally-running API")
 
 func parseURL(test APITest) string {
-	if *local {
-		return fmt.Sprintf(`%s?%s`, test.baseURLLocal, test.query)
+	var queryString string
+	if test.query != "" {
+		queryString = "?" + test.query
 	}
-	return fmt.Sprintf(`%s?%s`, test.baseURL, test.query)
+	if *local {
+		return fmt.Sprintf(`%s/%s%s`, test.baseURLLocal, test.endpoint, queryString)
+	}
+	return fmt.Sprintf(`%s/%s%s`, test.baseURL, test.endpoint, queryString)
 }
 
 func TestAPI(t *testing.T) {
