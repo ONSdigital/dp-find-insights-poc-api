@@ -11,35 +11,35 @@ update:
 # Usual test
 .PHONY: test
 test:
-	@go test ./... -tags=integration
+	@go test ./... -count=1 -tags=integration
 
 # Usual test (local)
 .PHONY: test
 test-local:
-	@go test ./... -tags=integration -local
+	@go test ./...  -count=1 -tags=integration -local
 
 # Verbose test
 .PHONY: testv
 testv:
-	 @go test -v ./... -tags=integration
+	 @go test -v ./... -count=1 -tags=integration
 
 # Verbose test (local)
 .PHONY: testv
 testv-local:
-	 @go test -v ./... -tags=integration -local
+	 @go test -v ./... -count=1 -tags=integration -local
 
 
 # Very verbose test - displays long coloured diffs for failures
 .PHONY: testvv
 testvv:
-	 @go test -v ./... -tags=integration -extra
+	 @go test -v ./... -count=1 -tags=integration -extra
 
 # Very verbose test - displays long coloured diffs for failures (local)
 .PHONY: testvv
 testvv-local:
-	 @go test -v ./... -tags=integration -extra -local
+	 @go test -v ./... -count=1 -tags=integration -extra -local
 
 # Benchmark
 .PHONY: bench
 bench:
-	 @go test -bench . -tags=integration
+	 @go test -bench . -count=1 -tags=integration
