@@ -98,8 +98,6 @@ $ cd dataingest/geo && go run .
 $ cd dp-find-insights-poc-api/dataingest/spatial
 $ ./import.sh linux-localhost
 
-TODO remove "K04000001 name TODO" etc with null lat and long
-
 ```
 * Populate geo.wkb_long_lat_geom with long, lat POINT
 
