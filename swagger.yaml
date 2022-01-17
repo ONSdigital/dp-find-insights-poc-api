@@ -135,7 +135,7 @@ paths:
       parameters:
         - in: path
           name: dataset
-          description: name of datset to query, or skinny
+          description: name of dataset to query, typically census
           required: true
           schema:
             type: string
@@ -190,16 +190,6 @@ paths:
 
 components:
   schemas:
-
-    HelloResponse:
-      type: object
-      required:
-        - message
-      properties:
-        message:
-          type: string
-          description: Message returned by hello world endpoint
-          example: "Hello, world!"
 
     Error:
       type: object
