@@ -64,7 +64,7 @@ Download the gzip into `docker-entrypoint-initdb.d` and uncompress.
 
 ```
 cd docker-entrypoint-initdb.d
-aws --profile development s3 cp s3://find-insights-db-dumps/census2i-20220112.sql.gz .
+aws --profile development --region eu-central-1 s3 cp s3://find-insights-db-dumps/census2i-20220112.sql.gz .
 gunzip census2i-20220112.sql.gz
 ```
 
@@ -77,21 +77,26 @@ So the user script starts with a number so it sorts earlier.)
 ## Clear postgres data directory
 
 Postgres holds its data files in a persistent volume mounted from `dbdata`.
-When this directory is empty when postgres starts up, sql files and shell scripts in `docker-entrypoint-initdb.d` are run.
+This directory will be created the first time docker compose is run.
+
+If `dbdata` empty when postgres starts up, sql files and shell scripts in `docker-entrypoint-initdb.d` are run.
 
 If `dbdata` is not empty when postgres starts, postgres will simply start the database as-is.
 
-So when you want to setup a database from the dump file, make sure `dbdata` is empty:
+So when you want to setup a database from the dump file, make sure `dbdata` is empty or gone:
 
 ```
 rm -rf dbdata
-mkdir dbdata
 ```
 
 ## Start the containers
 
 ```
 docker compose up
+```
+or
+```
+docker-compose up
 ```
 
 It will take several minutes for postgres to import the db dump the first time.
@@ -110,8 +115,17 @@ curl --include http://localhost:12550/dev/hello/census?rows=K04000001\&cols=geog
 
 ## psql
 
-If you want to use psql to connect to the containerised postgres:
+You can use psql to connect to the containserised postgres.
+If you are using `docker compose`, you can do this:
 
 ```
 docker exec -it dp-find-insights-poc-api-db-1 psql -U postgres
 ```
+
+If you are using `docker-compose`, you can do this:
+
+```
+docker exec -it dp-find-insights-poc-api_db_1 psql -U postgres
+```
+
+(Looks like `docker-compose` will use underscores in some places where `docker compose` uses dashes.)

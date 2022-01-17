@@ -4,6 +4,7 @@ services:
   api:
     build:
       dockerfile: Dockerfile.api
+      context: .
     image: dp-find-insights-poc-api:latest
     environment:
       - PGHOST=db
