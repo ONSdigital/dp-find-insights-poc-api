@@ -24,10 +24,9 @@ func SetupUpdateDB(dsn string) {
 			log.Print(err)
 		}
 
-		// should replace creatdbuser.sh
 		execSQL(gdb, []string{
 			"CREATE DATABASE " + db,
-			"CREATE USER insights WITH PASSWORD 'insights'",
+			"CREATE USER insights WITH PASSWORD 'insights'", // XXX pw hardcoded
 			"ALTER USER insights WITH CREATEDB"})
 	}
 
@@ -37,8 +36,7 @@ func SetupUpdateDB(dsn string) {
 			log.Print(err)
 		}
 
-		// should replace creatdb.sh
-		execSQL(gdb, []string{"CREATE EXTENSION postgis"})
+		execSQL(gdb, []string{"CREATE EXTENSION IF NOT EXISTS postgis"})
 	}
 
 	{
