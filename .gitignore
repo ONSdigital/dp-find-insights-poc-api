@@ -21,3 +21,9 @@ Session.vim
 .terraform.lock.hcl
 
 secrets/PGPASSWORD.env
+
+# postgres 
+dbdata
+docker-entrypoint-initdb.d/*
+!docker-entrypoint-initdb.d/30-user.sql
+!docker-entrypoint-initdb.d/40-synchronous-commit.sql

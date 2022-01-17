@@ -1,0 +1,3 @@
+CREATE USER insights WITH PASSWORD 'insights';
+
+ALTER USER insights WITH CREATEDB;

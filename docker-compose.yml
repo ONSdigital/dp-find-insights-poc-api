@@ -1,0 +1,27 @@
+version: "3.0"
+
+services:
+  api:
+    build:
+      dockerfile: Dockerfile.api
+      context: .
+    image: dp-find-insights-poc-api:latest
+    environment:
+      - PGHOST=db
+      - PGPORT=5432
+      - PGDATABASE=postgres
+      - PGPASSWORD=insights
+    ports:
+      - "12550:12550"
+    env_file:
+      - secrets/PGPASSWORD.env
+
+  db:
+    image: postgis/postgis
+    environment:
+      POSTGRES_PASSWORD: mylocalsecret
+    ports:
+      - "5432:5432"
+    volumes:
+      - "./dbdata:/var/lib/postgresql/data"
+      - "./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d"

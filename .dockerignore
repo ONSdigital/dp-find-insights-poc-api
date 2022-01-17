@@ -1,3 +1,4 @@
 build
 dbdata
 terraform
+docker-entrypoint-initdb.d
