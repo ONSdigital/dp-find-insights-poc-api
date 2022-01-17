@@ -53,7 +53,7 @@ func SetupUpdateDB(dsn string) {
 		Migrate(gdb)
 
 		// XXX checkme
-		gdb.Save(&DataVer{ID: 1, CensusYear: 2011, VerString: "2.2", Public: true, Source: "Nomis Bulk API", Notes: "Release date 12/02/2013 Revised 17/01/2014"})
+		gdb.Save(&DataVer{ID: 1, CensusYear: 2011, VerString: "2.2", Public: true, Source: "Nomis Bulk API", Notes: "20220117 2i based on metadata/i2.txt (fewer QS + some KS rows)"})
 
 		DataPopulate(gdb)
 
