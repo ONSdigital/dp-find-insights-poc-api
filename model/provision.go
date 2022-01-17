@@ -5,7 +5,6 @@ import (
 	"log"
 	"regexp"
 
-	"github.com/ryboe/q"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -13,11 +12,11 @@ import (
 
 // TODO fuller SQL logs
 
-// prepare DB
-func SetupDB(dsn string) {
+// SetupUpdate is used both to create and update the database
+// It's OK to call this more than once on the same DB
+func SetupUpdateDB(dsn string) {
 
 	_, pw, host, port, db := ParseDSN(dsn)
-	q.Q(dsn) // XXX check test provision
 
 	{
 		gdb, err := gorm.Open(postgres.Open(CreatDSN("postgres", pw, host, port, "postgres")), &gorm.Config{})
@@ -83,7 +82,7 @@ func SetupDBOnceOnly(dsn string) {
 	}
 
 	// else run SetupDB
-	SetupDB(dsn)
+	SetupUpdateDB(dsn)
 }
 
 // setup schema
