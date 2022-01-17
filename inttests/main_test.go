@@ -17,6 +17,10 @@ import (
 var extra = flag.Bool("extra", false, "print full diffs on failed integration test")
 var local = flag.Bool("local", false, "run tests against locally-running API")
 
+func init() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+}
+
 func parseURL(test APITest) string {
 	var queryString string
 	if test.query != "" {
@@ -75,7 +79,7 @@ func assertAPIResponse(b []byte, test APITest, t *testing.T, url string) {
 		wantsha1 := RespFileSha1(respfile)
 		h := sha1Hash(b)
 		if h != wantsha1 {
-			t.Errorf("Response from %s differed from that recorded in file %s. Run 'make testvv' to see full diff.", url, respfile)
+			t.Errorf("Response from %s differed from that recorded in file %s. Run 'make testvv' or 'testvv-local' to see full diff.", url, respfile)
 
 			// use 'go test ./... -args extra'
 			// for diff
