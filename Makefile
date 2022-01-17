@@ -135,3 +135,11 @@ run-api:	## run api in local docker
 		--env-file secrets/PGPASSWORD.env \
 		--name dp-find-insights-poc-api \
 		dp-find-insights-poc-api
+
+.PHONY: update-schema-image
+update-schema-image:	## build the update-schema image
+	docker build -t update-schema -f Dockerfile.update-schema .
+
+.PHONY: run-update-schema
+run-update-schema:	## run update-schema in a local container
+	docker run -it --rm --network dp-find-insights-poc-api_default update-schema
