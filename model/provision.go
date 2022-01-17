@@ -25,8 +25,8 @@ func SetupUpdateDB(dsn string) {
 		}
 
 		execSQL(gdb, []string{
-			"CREATE DATABASE " + db,
 			"CREATE USER insights WITH PASSWORD 'insights'", // XXX pw hardcoded
+			"CREATE DATABASE " + db + " WITH OWNER insights",
 			"ALTER USER insights WITH CREATEDB"})
 	}
 
