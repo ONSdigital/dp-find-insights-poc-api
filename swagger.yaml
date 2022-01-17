@@ -135,7 +135,7 @@ paths:
       parameters:
         - in: path
           name: dataset
-          description: name of datset to query, or skinny
+          description: name of dataset to query, typically census
           required: true
           schema:
             type: string
