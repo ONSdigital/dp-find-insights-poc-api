@@ -56,6 +56,14 @@ type GetDevCkmeansParams struct {
 	K       *int    `json:"k,omitempty"`
 }
 
+// GetDevCkmeansratioParams defines parameters for GetDevCkmeansratio.
+type GetDevCkmeansratioParams struct {
+	Cat1    *string `json:"cat1,omitempty"`
+	Cat2    *string `json:"cat2,omitempty"`
+	Geotype *string `json:"geotype,omitempty"`
+	K       *int    `json:"k,omitempty"`
+}
+
 // GetDevHelloDatasetParams defines parameters for GetDevHelloDataset.
 type GetDevHelloDatasetParams struct {
 	Rows        *[]string `json:"rows,omitempty"`
@@ -73,6 +81,9 @@ type ServerInterface interface {
 	// calculate ckmeans over a given category and geography type
 	// (GET /dev/ckmeans)
 	GetDevCkmeans(w http.ResponseWriter, r *http.Request, params GetDevCkmeansParams)
+	// calculate ckmeans for the ratio between two given categories (cat1 / cat2) for a given geography type
+	// (GET /dev/ckmeansratio)
+	GetDevCkmeansratio(w http.ResponseWriter, r *http.Request, params GetDevCkmeansratioParams)
 	// query census
 	// (GET /dev/hello/{dataset})
 	GetDevHelloDataset(w http.ResponseWriter, r *http.Request, dataset string, params GetDevHelloDatasetParams)
@@ -139,6 +150,70 @@ func (siw *ServerInterfaceWrapper) GetDevCkmeans(w http.ResponseWriter, r *http.
 
 	var handler = func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetDevCkmeans(w, r, params)
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler(w, r.WithContext(ctx))
+}
+
+// GetDevCkmeansratio operation middleware
+func (siw *ServerInterfaceWrapper) GetDevCkmeansratio(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var err error
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetDevCkmeansratioParams
+
+	// ------------- Optional query parameter "cat1" -------------
+	if paramValue := r.URL.Query().Get("cat1"); paramValue != "" {
+
+	}
+
+	err = runtime.BindQueryParameter("form", true, false, "cat1", r.URL.Query(), &params.Cat1)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid format for parameter cat1: %s", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "cat2" -------------
+	if paramValue := r.URL.Query().Get("cat2"); paramValue != "" {
+
+	}
+
+	err = runtime.BindQueryParameter("form", true, false, "cat2", r.URL.Query(), &params.Cat2)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid format for parameter cat2: %s", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "geotype" -------------
+	if paramValue := r.URL.Query().Get("geotype"); paramValue != "" {
+
+	}
+
+	err = runtime.BindQueryParameter("form", true, false, "geotype", r.URL.Query(), &params.Geotype)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid format for parameter geotype: %s", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "k" -------------
+	if paramValue := r.URL.Query().Get("k"); paramValue != "" {
+
+	}
+
+	err = runtime.BindQueryParameter("form", true, false, "k", r.URL.Query(), &params.K)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid format for parameter k: %s", err), http.StatusBadRequest)
+		return
+	}
+
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetDevCkmeansratio(w, r, params)
 	}
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -349,6 +424,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/dev/ckmeans", wrapper.GetDevCkmeans)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/dev/ckmeansratio", wrapper.GetDevCkmeansratio)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/dev/hello/{dataset}", wrapper.GetDevHelloDataset)

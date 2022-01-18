@@ -127,6 +127,54 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  /dev/ckmeansratio:
+    get:
+      tags:
+        - public
+      summary: calculate ckmeans for the ratio between two given categories (cat1 / cat2) for a given geography type
+      descriptions: Returns a list of the maximum values in each ckmean cluster.
+      parameters:
+        - in: query
+          name: cat1
+          schema:
+            type: string
+        - in: query
+          name: cat2
+          schema:
+            type: string
+        - in: query
+          name: geotype
+          schema:
+            type: string
+        - in: query
+          name: k
+          schema:
+            type: integer
+      responses:
+        200:
+          description: ckmeans successfully calculated
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: number
+                  format: double
+        204:
+          descriptions: no results found
+        400:
+          description: missing or badly formed input values
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
   /dev/hello/{dataset}:
     get:
       tags:
