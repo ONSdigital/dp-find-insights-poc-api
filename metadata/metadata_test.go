@@ -12,7 +12,7 @@ import (
 	"gorm.io/gorm"
 )
 
-const dsn = "postgres://insights:insights@localhost:54322/censustest"
+const dsn = comptests.DefaultDSN
 
 var db *gorm.DB
 
