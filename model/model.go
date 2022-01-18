@@ -94,7 +94,7 @@ type NomisCategory struct {
 	CategoryName    string
 	MeasurementUnit string
 	StatUnit        string
-	LongNomisCode   string
+	LongNomisCode   string // made unique in cleandb.sh
 	Year            int32
 	GoMetrics       []GeoMetric `gorm:"foreignKey:CategoryID;references:ID"`
 }
@@ -105,11 +105,11 @@ func (NomisCategory) TableName() string {
 }
 
 type NomisDesc struct {
-	ID              int32 `gorm:"primaryKey"` // uniqueIndex
-	NomisTopicID    int32 `gorm:"primaryKey"` // XXX
+	ID              int32 `gorm:"uniqueIndex;primaryKey"`
+	NomisTopicID    int32 `gorm:"primaryKey"`
 	Name            string
 	PopStat         string
-	ShortNomisCode  string
+	ShortNomisCode  string // made unique in cleandb.sh
 	Year            int32
 	NomisCategories []NomisCategory `gorm:"foreignKey:NomisDescID;references:ID"`
 }

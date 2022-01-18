@@ -12,36 +12,35 @@ import (
 
 // TODO fuller SQL logs
 
-// prepare DB
-func SetupDB(dsn string) {
+// SetupUpdate is used both to create and update the database
+// It's OK to call this more than once on the same DB
+func SetupUpdateDB(dsn string) {
 
 	_, pw, host, port, db := ParseDSN(dsn)
 
 	{
-		db, err := gorm.Open(postgres.Open(CreatDSN("postgres", pw, host, port, "postgres")), &gorm.Config{})
+		gdb, err := gorm.Open(postgres.Open(CreatDSN("postgres", pw, host, port, "postgres")), &gorm.Config{})
 		if err != nil {
 			log.Print(err)
 		}
 
-		// should replace creatdbuser.sh
-		execSQL(db, []string{
-			"CREATE DATABASE censustest",
-			"CREATE USER insights WITH PASSWORD 'insights'",
+		execSQL(gdb, []string{
+			"CREATE USER insights WITH PASSWORD 'insights'", // XXX pw hardcoded
+			"CREATE DATABASE " + db + " WITH OWNER insights",
 			"ALTER USER insights WITH CREATEDB"})
 	}
 
 	{
-		db, err := gorm.Open(postgres.Open(CreatDSN("postgres", pw, host, port, db)), &gorm.Config{})
+		gdb, err := gorm.Open(postgres.Open(CreatDSN("postgres", pw, host, port, db)), &gorm.Config{})
 		if err != nil {
 			log.Print(err)
 		}
 
-		// should replace creatdb.sh
-		execSQL(db, []string{"CREATE EXTENSION postgis"})
+		execSQL(gdb, []string{"CREATE EXTENSION IF NOT EXISTS postgis"})
 	}
 
 	{
-		db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+		gdb, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 			Logger: logger.Default.LogMode(logger.Info),
 		})
 
@@ -49,12 +48,12 @@ func SetupDB(dsn string) {
 			log.Print(err)
 		}
 
-		Migrate(db)
+		Migrate(gdb)
 
 		// XXX checkme
-		db.Save(&DataVer{ID: 1, CensusYear: 2011, VerString: "2.2", Public: true, Source: "Nomis Bulk API", Notes: "Release date 12/02/2013 Revised 17/01/2014"})
+		gdb.Save(&DataVer{ID: 1, CensusYear: 2011, VerString: "2.2", Public: true, Source: "Nomis Bulk API", Notes: "20220117 2i based on metadata/i2.txt (fewer QS + some KS rows)"})
 
-		DataPopulate(db)
+		DataPopulate(gdb)
 
 	}
 
@@ -81,7 +80,7 @@ func SetupDBOnceOnly(dsn string) {
 	}
 
 	// else run SetupDB
-	SetupDB(dsn)
+	SetupUpdateDB(dsn)
 }
 
 // setup schema
@@ -115,6 +114,14 @@ func Migrate(db *gorm.DB) {
 
 func DataPopulate(db *gorm.DB) {
 
+	// id=0 is undefined topic, can't see how to do this with gorm!
+	// we need this when we import data before FK set up as default value
+	// in "nomis-bulk-to-postgres/add_to_db.py" function "add_meta_tables"
+
+	execSQL(db, []string{
+		"INSERT INTO NOMIS_TOPIC (id) VALUES (0)",
+	})
+
 	// populate topic -- top level metadata
 	db.Save(&NomisTopic{ID: 1, TopNomisCode: "QS1", Name: "Population Basics"})
 	db.Save(&NomisTopic{ID: 2, TopNomisCode: "QS2", Name: "Origins & Beliefs"})
@@ -125,6 +132,10 @@ func DataPopulate(db *gorm.DB) {
 	db.Save(&NomisTopic{ID: 7, TopNomisCode: "QS7", Name: "Travel to Work"})
 	db.Save(&NomisTopic{ID: 8, TopNomisCode: "QS8", Name: "Residency"})
 
+	db.Save(&NomisTopic{ID: 100, TopNomisCode: "KS1", Name: "Population Basics"})
+	db.Save(&NomisTopic{ID: 200, TopNomisCode: "KS2", Name: "Origins & Beliefs"})
+
+	// XXX DC6 "Population Basics"
 	// FK relationship for topic
 
 	execSQL(db, []string{
@@ -136,6 +147,8 @@ func DataPopulate(db *gorm.DB) {
 		"UPDATE nomis_desc SET nomis_topic_id=6 WHERE short_nomis_code LIKE 'QS6%'",
 		"UPDATE nomis_desc SET nomis_topic_id=7 WHERE short_nomis_code LIKE 'QS7%'",
 		"UPDATE nomis_desc SET nomis_topic_id=8 WHERE short_nomis_code LIKE 'QS8%'",
+		"UPDATE nomis_desc SET nomis_topic_id=100 WHERE short_nomis_code LIKE 'KS1%'",
+		"UPDATE nomis_desc SET nomis_topic_id=200 WHERE short_nomis_code LIKE 'KS2%'",
 	})
 
 }

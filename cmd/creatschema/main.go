@@ -68,7 +68,7 @@ func main() {
 		log.Print(err)
 	}
 
-	model.Migrate(db)
+	model.SetupUpdateDB(dsn)
 
 	if haveDump {
 		ndump, _ := pgDump()

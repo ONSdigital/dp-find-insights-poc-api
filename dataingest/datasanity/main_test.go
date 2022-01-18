@@ -166,13 +166,13 @@ func TestLatLongGeom(t *testing.T) {
 func TestSomeValues(t *testing.T) {
 	metric := model.GeoMetric{}
 	db.First(&metric)
-	if metric.Metric != 23366044.0 {
+	if metric.Metric != 56075912.0 {
 		t.Errorf("got %f", metric.Metric)
 	}
 
 	geo := model.Geo{}
-	db.First(&geo)
-	if geo.Name != "England and Wales" {
+	db.First(&geo)                                                                              
+	if geo.Name != "England and Wales" {  
 		t.Errorf("got %s", geo.Name)
 	}
 
