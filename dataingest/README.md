@@ -42,14 +42,16 @@ $ cd dp-find-insights-poc-api && make update-schema
 Answer "y" to questions in last step. "Record not found warning" can be
 ignored.
 
-## Download source data 
+## Download NOMIS source data 
+
+XXX actual 2021 data will probably look different and need further processing
 
 ```
 $ git clone git@github.com:ONSdigital/nomis-bulk-to-postgres.git
 $ cd nomis-bulk-to-postgres && ./download-data-2i.sh
 ```
 
-Note the last step downloads CSV under the "data" directory. 
+The last step downloads CSV under the "data" directory. 
 
 "download-data-2i.sh" downloads some QS and a few KS rows
 

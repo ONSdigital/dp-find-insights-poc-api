@@ -1,4 +1,5 @@
 #!/bin/bash
+# This is linux specific and needs replacing
 
 set -e
 
