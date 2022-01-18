@@ -66,12 +66,14 @@ TODO python should pick up from the env like everything else (?) or just rewrite
 TODO migrate this to go code enable to run under AWS (Lambda or Fargate etc.) &
 read from S3
 
-* The following imports data
+* The following imports data and takes ~20mins
 
 ```
 $ . ./bulk/bin/activate
 $ python add_to_db.py
 ```
+
+TODO skipping import of MSOA would be faster
 
 ## Clean up Database
 
