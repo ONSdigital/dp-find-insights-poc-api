@@ -81,7 +81,7 @@ $ cd dp-find-insights-poc-api && make update-schema
 $ ./dataingest/dbsetup/cleandb.sh
  ```
 
-## Non LSOA geo.name population
+## geo.name population
 
 * unzip "Code_History_Database_(June_2021)_UK.zip"
 * see dataingest/geo/README.md & fi-census-data/geo
