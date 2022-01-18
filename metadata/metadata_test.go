@@ -18,7 +18,7 @@ var db *gorm.DB
 
 func init() {
 	comptests.SetupDockerDB(dsn)
-	model.SetupDB(dsn)
+	model.SetupUpdateDB(dsn)
 
 	var err error
 	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
@@ -58,5 +58,5 @@ func TestMetaDataTest(t *testing.T) {
 }
 
 func result() string {
-	return `[{"code":"QS1","name":"Population Basics","slug":"population-basics","tables":[{"categories":[{"code":"QS118EW0001","name":"All categories: Dependent children in family","slug":"all-categories-dependent-children-in-family"}],"code":"QS118EW","name":"Families with dependent children","slug":"families-with-dependent-children"}]}]`
+	return `[{"code":"","name":"","slug":"","tables":null},{"code":"QS1","name":"Population Basics","slug":"population-basics","tables":[{"categories":[{"code":"QS118EW0001","name":"All categories: Dependent children in family","slug":"all-categories-dependent-children-in-family"}],"code":"QS118EW","name":"Families with dependent children","slug":"families-with-dependent-children"}]}]`
 }
