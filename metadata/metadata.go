@@ -55,7 +55,7 @@ func (md *Metadata) Get() (b []byte, err error) {
 		var nd model.NomisDesc
 
 		for _, nd = range topic.NomisDescs {
-			md.gdb.Preload("NomisCategories").Find(&nd)
+			md.gdb.Preload("NomisCategories", func(gdb *gorm.DB) *gorm.DB { return gdb.Order("long_nomis_code") }).Find(&nd)
 
 			var cats api.Categories
 			for _, trip := range nd.NomisCategories {
