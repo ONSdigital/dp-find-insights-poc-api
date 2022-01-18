@@ -46,6 +46,11 @@ func (md *Metadata) Get() (b []byte, err error) {
 
 	for _, topic := range topics {
 
+		// this is a dummy row used to import
+		if topic.ID == 0 {
+			continue
+		}
+
 		var newTabs api.Tables
 		var nd model.NomisDesc
 
