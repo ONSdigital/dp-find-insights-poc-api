@@ -59,6 +59,10 @@ test-datasanity:	## this needs a DB and postgres env vars set
 test-comptest:	## this provisions a docker DB automatically
 	go test -count=1 ./...  -tags=comptest
 
+.PHONY: test-comptestv
+test-comptestv:	## this provisions a docker DB automatically
+	go test -v -count=1 ./...  -tags=comptest
+
 .PHONY: test-comptest-kill
 test-comptest-kill:	## this provisions a docker DB automatically & kills it
 	go test -count=1 ./...  -tags=comptest -args -kill=true
