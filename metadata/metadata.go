@@ -7,6 +7,7 @@ import (
 	"github.com/ONSdigital/dp-find-insights-poc-api/api"
 	"github.com/ONSdigital/dp-find-insights-poc-api/model"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/database"
+	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gosimple/slug"
 	"gorm.io/driver/postgres"
@@ -21,11 +22,6 @@ type Metadata struct {
 func New(dbs ...*gorm.DB) (*Metadata, error) {
 	var err error
 	if len(dbs) == 0 {
-
-		// TODO this func should accept a persistent *sql.DB from
-		// handler/hander.go and make gdb from that eg.
-		// gorm.Open(postgres.New(postgres.Config{Conn: db.DB()}))
-
 		var gdb *gorm.DB
 		gdb, err = gorm.Open(postgres.Open(database.GetDSN()), &gorm.Config{
 			//	Logger: logger.Default.LogMode(logger.Info), // display SQL
@@ -92,4 +88,20 @@ func (md *Metadata) Get() (b []byte, err error) {
 
 func spointer(s string) *string {
 	return &s
+}
+
+func (md *Metadata) Checker(ctx context.Context, state *healthcheck.CheckState) error {
+	db, err := md.gdb.DB() // extract gorm's underlying db handle
+	if err != nil {
+		state.Update(healthcheck.StatusCritical, err.Error(), 0)
+		return nil
+	}
+	conn, err := db.Conn(ctx)
+	if err != nil {
+		state.Update(healthcheck.StatusCritical, err.Error(), 0)
+		return nil
+	}
+	state.Update(healthcheck.StatusOK, "gorm healthy", 0)
+	conn.Close()
+	return nil
 }

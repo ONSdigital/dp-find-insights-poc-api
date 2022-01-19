@@ -3,16 +3,20 @@ package service
 import (
 	"context"
 	"os"
+	"time"
 
 	"github.com/ONSdigital/dp-api-clients-go/middleware"
 	"github.com/ONSdigital/dp-find-insights-poc-api/api"
 	"github.com/ONSdigital/dp-find-insights-poc-api/config"
 	"github.com/ONSdigital/dp-find-insights-poc-api/handlers"
+	"github.com/ONSdigital/dp-find-insights-poc-api/metadata"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/database"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/geodata"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/justinas/alice"
 	"github.com/pkg/errors"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 // Service contains all the configs, server and clients to run the dp-topic-api API
@@ -32,6 +36,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 
 	var db *database.Database
 	var queryGeodata *geodata.Geodata
+	var md *metadata.Metadata
 	var err error
 	if cfg.EnableDatabase {
 		// figure out postgres password
@@ -49,7 +54,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 
 		// open postgres connection
 
-		db, err := database.Open("pgx", database.GetDSN(pgpwd))
+		db, err = database.Open("pgx", database.GetDSN(pgpwd))
 		if err != nil {
 			return nil, err
 		}
@@ -59,10 +64,33 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		if err != nil {
 			return nil, err
 		}
+
+		// metadata.New can set up gorm itself, but it calls GetDSN without an
+		// argument, so it cannot know about passwords held in AWS secrets.
+		//
+		// We loop here in case the db isn't up yet (happens when using docker compose).
+		var gdb *gorm.DB
+		for try := 0; try < 5; try++ {
+			gdb, err = gorm.Open(postgres.Open(database.GetDSN(pgpwd)), &gorm.Config{
+				//	Logger: logger.Default.LogMode(logger.Info), // display SQL
+			})
+			if err != nil {
+				log.Info(ctx, "cannot-connect-to-postgres-yet")
+				time.Sleep(1 * time.Second)
+			}
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		md, err = metadata.New(gdb)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// Setup the API
-	a := handlers.New(true, queryGeodata) // always include private handlers for now
+	a := handlers.New(true, queryGeodata, md) // always include private handlers for now
 
 	// Setup health checks
 	hc, err := serviceList.GetHealthCheck(cfg, buildTime, gitCommit, version)
@@ -70,7 +98,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		log.Fatal(ctx, "could not instantiate healthcheck", err)
 		return nil, err
 	}
-	if err := registerCheckers(ctx, hc, db); err != nil {
+	if err := registerCheckers(ctx, hc, db, md); err != nil {
 		return nil, errors.Wrap(err, "unable to register checkers")
 	}
 	hc.Start(ctx)
@@ -148,12 +176,13 @@ func (svc *Service) Close(ctx context.Context) error {
 func registerCheckers(ctx context.Context,
 	hc HealthChecker,
 	db *database.Database,
+	md *metadata.Metadata,
 ) (err error) {
-
-	// TODO: add other health checks here, as per dp-upload-service
-
 	if db != nil {
 		err = hc.AddCheck("postgres", db.Checker)
+	}
+	if md != nil {
+		err = hc.AddCheck("gorm", md.Checker)
 	}
 	return err
 }

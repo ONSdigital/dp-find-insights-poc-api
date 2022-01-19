@@ -17,12 +17,14 @@ import (
 type Server struct {
 	private      bool             // true if private endpoint feature flag is enabled
 	querygeodata *geodata.Geodata // if nil, database not available
+	md           *metadata.Metadata
 }
 
-func New(private bool, querygeodata *geodata.Geodata) *Server {
+func New(private bool, querygeodata *geodata.Geodata, md *metadata.Metadata) *Server {
 	return &Server{
 		private:      private,
 		querygeodata: querygeodata,
+		md:           md,
 	}
 }
 
@@ -59,13 +61,7 @@ func (svr *Server) GetMetadata(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.WriteHeader(http.StatusOK)
 
-	md, err := metadata.New()
-	if err != nil {
-		sendError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	b, err := md.Get()
+	b, err := svr.md.Get()
 	if err != nil {
 		sendError(w, http.StatusInternalServerError, err.Error())
 		return
