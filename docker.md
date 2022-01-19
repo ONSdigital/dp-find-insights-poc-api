@@ -129,3 +129,17 @@ docker exec -it dp-find-insights-poc-api_db_1 psql -U postgres
 ```
 
 (Looks like `docker-compose` will use underscores in some places where `docker compose` uses dashes.)
+
+## Update Schema
+
+The `update-schema` Makefile target runs Go code to handle database schema migrations.
+This should be run against your local containerised postgres instance whenever there are schema changes.
+
+You can run this without a local Go compiler by building an image with the required binaries:
+
+    make update-schema-image
+
+And then run it against your local postgres instance.
+Your local postgres instance must be up for this to work.
+
+    make run-update-schema
