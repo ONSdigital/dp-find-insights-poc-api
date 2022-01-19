@@ -306,6 +306,10 @@ func MatchingRespFile(testDesc string) (fns []string, err error) {
 	targetFnPrefix := RespFilePrefix(testDesc)
 	for _, file := range filesInDataPref {
 		fn := file.Name()
+		if len(fn) < 40 {
+			log.Printf("rogue file: %s", DataPref+fn)
+			os.Exit(1)
+		}
 		fnPrefix := fn[:len(fn)-40]
 		if fnPrefix == targetFnPrefix {
 			fns = append(fns, fn)
