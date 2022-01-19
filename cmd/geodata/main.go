@@ -8,14 +8,24 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/ONSdigital/dp-find-insights-poc-api/metadata"
+	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/aws"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/database"
 	geodata "github.com/ONSdigital/dp-find-insights-poc-api/pkg/geodata"
 )
 
+// Service holds dependencies and is populated by wire in InitService.
+type Service struct {
+	aws      *aws.Clients
+	db       *database.Database
+	geodata  *geodata.Geodata
+	metadata *metadata.Metadata
+}
+
 func main() {
 	maxmetrics := flag.Int("maxmetrics", 0, "max number of rows to accept from db query (default 0 means no limit)")
 	flag.Usage = func() {
-		fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s [command-options] query|ckmeans [subcommand-options]\n", filepath.Base(os.Args[0]))
+		fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s [command-options] query|ckmeans|metadata [subcommand-options]\n", filepath.Base(os.Args[0]))
 		flag.PrintDefaults()
 	}
 	flag.Parse()
@@ -25,12 +35,7 @@ func main() {
 		os.Exit(2)
 	}
 
-	db, err := database.Open("pgx", database.GetDSN())
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	app, err := geodata.New(db, *maxmetrics)
+	svc, err := InitService(geodata.MetricCount(*maxmetrics))
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -38,9 +43,11 @@ func main() {
 	ctx := context.Background()
 	switch flag.Arg(0) {
 	case "query":
-		query(ctx, app, flag.Args()[1:])
+		query(ctx, svc.geodata, flag.Args()[1:])
 	case "ckmeans":
-		ckmeans(ctx, app, flag.Args()[1:])
+		ckmeans(ctx, svc.geodata, flag.Args()[1:])
+	case "metadata":
+		cmdMetadata(ctx, svc.metadata, flag.Args()[1:])
 	default:
 		flag.Usage()
 		os.Exit(2)
@@ -50,7 +57,7 @@ func main() {
 func query(ctx context.Context, app *geodata.Geodata, argv []string) {
 	var rows, cols, geotypes multiFlag
 
-	flagset := flag.NewFlagSet("original", flag.ExitOnError)
+	flagset := flag.NewFlagSet("query", flag.ExitOnError)
 
 	bbox := flagset.String("bbox", "", "bounding box lon1,lat1,lon2,lat2 (any two opposite corners)")
 	location := flagset.String("location", "", "central point for radius queries")
@@ -85,4 +92,12 @@ func ckmeans(ctx context.Context, app *geodata.Geodata, argv []string) {
 	for _, breakpoint := range breaks {
 		fmt.Printf("%0.13g\n", breakpoint)
 	}
+}
+
+func cmdMetadata(ctx context.Context, md *metadata.Metadata, argv []string) {
+	buf, err := md.Get()
+	if err != nil {
+		log.Fatalln(err)
+	}
+	fmt.Printf("%s\n", buf)
 }

@@ -8,12 +8,40 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/aws"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 )
 
 type Database struct {
 	driver string
 	db     *sql.DB
+}
+
+// These unique types and the Provide* functions below are
+// glue to make wire work.
+//
+type Password string
+type DSN string
+
+func ProvidePassword(aws *aws.Clients) (Password, error) {
+	pwd := os.Getenv("PGPASSWORD")
+	if pwd != "" {
+		return Password(pwd), nil
+	}
+	pwd, err := aws.GetSecret(os.Getenv("FI_PG_SECRET_ID"))
+	return Password(pwd), err
+}
+
+func ProvideDSN(pwd Password) DSN {
+	return DSN(GetDSN(string(pwd)))
+}
+
+func ProvideDatabase(dsn DSN) (*Database, error) {
+	db, err := Open("pgx", string(dsn))
+	if err != nil {
+		return nil, err
+	}
+	return db, nil
 }
 
 func Open(driverName, dsn string) (*Database, error) {

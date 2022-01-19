@@ -17,6 +17,15 @@ type Metadata struct {
 	gdb *gorm.DB
 }
 
+// ProvideMetadata is wire glue.
+func ProvideMetadata(dsn database.DSN) (*Metadata, error) {
+	cfg := &gorm.Config{}
+	gdb, err := gorm.Open(postgres.Open(string(dsn)), cfg)
+	return &Metadata{
+		gdb: gdb,
+	}, err
+}
+
 // New takes optimal optimal db args for testing override
 func New(dbs ...*gorm.DB) (*Metadata, error) {
 	var err error

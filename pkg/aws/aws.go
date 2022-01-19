@@ -28,3 +28,14 @@ func New() (*Clients, error) {
 		sm:   sm,
 	}, nil
 }
+
+// ProvideAWS is a wrapper around New that does not conk out
+// if there is an error.
+// We don't always need AWS support, so it's not necessarily
+// an error if the AWS environment variable aren't set.
+// Methods of *Clients must be prepared to see a nil
+// receiver.
+func ProvideAWS() *Clients {
+	aws, _ := New()
+	return aws
+}

@@ -33,6 +33,8 @@ require (
 	gorm.io/gorm v1.22.2
 )
 
+require github.com/google/wire v0.5.0
+
 require (
 	github.com/ONSdigital/dp-mongodb-in-memory v1.1.0 // indirect
 	github.com/cucumber/gherkin-go/v19 v19.0.3 // indirect
