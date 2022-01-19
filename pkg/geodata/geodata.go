@@ -22,6 +22,13 @@ type Geodata struct {
 	maxMetrics int
 }
 
+// MetricCount and ProvideGeodata are glue for wire.
+type MetricCount int
+
+func ProvideGeodata(db *database.Database, maxMetrics MetricCount) (*Geodata, error) {
+	return New(db, int(maxMetrics))
+}
+
 func New(db *database.Database, maxMetrics int) (*Geodata, error) {
 	return &Geodata{
 		db:         db,
