@@ -85,11 +85,12 @@ $ ./dataingest/dbsetup/cleandb.sh
 
 ## geo.name population
 
-* unzip "Code_History_Database_(June_2021)_UK.zip"
-* see dataingest/geo/README.md & fi-census-data/geo
+* see geo/README.md
 
 ```
-$ cd dataingest/geo && go run .
+$ cd dataingest/geo
+$ aws --region eu-central-1 s3 sync s3://find-insights-input-data-files/geoname/ .
+$ go run .
 ```
 
 ## Geo data import
@@ -99,14 +100,15 @@ $ cd dataingest/geo && go run .
   * *.geojson from https://github.com/ONSdigital/fi-census-data/tree/main/spatial should be in place
 
 ```
-$ cd dp-find-insights-poc-api/dataingest/spatial
+$ cd ../spatial
+$ aws --region eu-central-1 s3 sync s3://find-insights-input-data-files/geojson/ .
 $ ./import.sh linux-localhost
 
 ```
 * Populate geo.wkb_long_lat_geom with long, lat POINT
 
 ```
-$ cd dataingest/spatial/longlatgeom    
+$ cd longlatgeom    
 $ go run .
 ```
 

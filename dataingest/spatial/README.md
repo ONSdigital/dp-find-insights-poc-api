@@ -15,4 +15,4 @@ https://geoportal.statistics.gov.uk/datasets/lower-layer-super-output-areas-dece
 
 Source of "Lower_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.geojson"
 
-Copies of both files are in https://github.com/ONSdigital/fi-census-data/tree/main/spatial
+Copies of both files are in s3://find-insights-input-data-files/geojson (see other docs)

@@ -9,3 +9,5 @@ Uses https://ons.maps.arcgis.com/home/item.html?id=db8e133607244b58a1e2e5dca4333
 Javascript download to 'Code_History_Database_(June_2021)_UK'
 
 Extract and use ChangeHistory.csv & Equivalents.csv
+
+Or use versions s3://find-insights-input-data-files/geoname (see other docs)
