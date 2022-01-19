@@ -17,8 +17,6 @@ import (
 // Service holds dependencies and is populated by wire in InitService.
 type Service struct {
 	aws      *aws.Clients
-	pwd      database.Password
-	dsn      database.DSN
 	db       *database.Database
 	geodata  *geodata.Geodata
 	metadata *metadata.Metadata

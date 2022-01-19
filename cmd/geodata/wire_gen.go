@@ -36,8 +36,6 @@ func InitService(maxmetrics geodata.MetricCount) (*Service, error) {
 	}
 	service := &Service{
 		aws:      clients,
-		pwd:      password,
-		dsn:      dsn,
 		db:       databaseDatabase,
 		geodata:  geodataGeodata,
 		metadata: metadataMetadata,
