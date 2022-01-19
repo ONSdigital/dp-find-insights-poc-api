@@ -137,7 +137,9 @@ This should be run against your local containerised postgres instance whenever t
 
 You can run this without a local Go compiler by building an image with the required binaries:
 
-```
-make update-schema-image
-make run-update-schema
-```
+    make update-schema-image
+
+And then run it against your local postgres instance.
+Your local postgres instance must be up for this to work.
+
+    make run-update-schema
