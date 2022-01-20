@@ -56,12 +56,19 @@ func (svr *Server) GetSwaggerui(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 }
 
-func (svr *Server) GetMetadata(w http.ResponseWriter, r *http.Request) {
+func (svr *Server) GetMetadata(w http.ResponseWriter, r *http.Request, params api.GetMetadataParams) {
 	// add CORS header
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.WriteHeader(http.StatusOK)
 
-	b, err := svr.md.Get()
+	var filtertotals bool
+	if params.Filtertotals != nil {
+		filtertotals = *params.Filtertotals
+	} else {
+		filtertotals = false
+	}
+
+	b, err := svr.md.Get(filtertotals)
 	if err != nil {
 		sendError(w, http.StatusInternalServerError, err.Error())
 		return

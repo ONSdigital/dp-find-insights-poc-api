@@ -37,6 +37,7 @@ type Table struct {
 	Code       *string     `json:"code,omitempty"`
 	Name       *string     `json:"name,omitempty"`
 	Slug       *string     `json:"slug,omitempty"`
+	Total      *Triplet    `json:"total,omitempty"`
 }
 
 // Tables defines model for Tables.
@@ -76,6 +77,11 @@ type GetDevHelloDatasetParams struct {
 	Censustable *string   `json:"censustable,omitempty"`
 }
 
+// GetMetadataParams defines parameters for GetMetadata.
+type GetMetadataParams struct {
+	Filtertotals *bool `json:"filtertotals,omitempty"`
+}
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// calculate ckmeans over a given category and geography type
@@ -89,7 +95,7 @@ type ServerInterface interface {
 	GetDevHelloDataset(w http.ResponseWriter, r *http.Request, dataset string, params GetDevHelloDatasetParams)
 	// Get Metadata
 	// (GET /metadata)
-	GetMetadata(w http.ResponseWriter, r *http.Request)
+	GetMetadata(w http.ResponseWriter, r *http.Request, params GetMetadataParams)
 	// spec
 	// (GET /swagger)
 	GetSwagger(w http.ResponseWriter, r *http.Request)
@@ -344,8 +350,24 @@ func (siw *ServerInterfaceWrapper) GetDevHelloDataset(w http.ResponseWriter, r *
 func (siw *ServerInterfaceWrapper) GetMetadata(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
+	var err error
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetMetadataParams
+
+	// ------------- Optional query parameter "filtertotals" -------------
+	if paramValue := r.URL.Query().Get("filtertotals"); paramValue != "" {
+
+	}
+
+	err = runtime.BindQueryParameter("form", true, false, "filtertotals", r.URL.Query(), &params.Filtertotals)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid format for parameter filtertotals: %s", err), http.StatusBadRequest)
+		return
+	}
+
 	var handler = func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetMetadata(w, r)
+		siw.Handler.GetMetadata(w, r, params)
 	}
 
 	for _, middleware := range siw.HandlerMiddlewares {
