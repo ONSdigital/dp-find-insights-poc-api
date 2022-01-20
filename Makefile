@@ -72,18 +72,6 @@ convey:	## run goconvey
 	goconvey ./...
 
 #
-# these are the lambda-related targets
-#
-
-.PHONY: build-lambda
-build-lambda:	## compile lambda
-	GOOS=linux GOARCH=amd64 go build -o build/hello ./functions/hello/...
-
-.PHONY: bundle-lambda
-bundle-lambda:	## bundle lambda into .zip to deploy
-	zip -j build/hello.zip build/hello
-
-#
 # cli targets
 #
 
