@@ -1,8 +1,8 @@
-# Create a KMS customer master key to encrypt/decrypt sensitive data needed by the lambda,
+# Create a KMS customer master key to encrypt/decrypt sensitive data needed by the census api,
 # such as the postgres password.
 #
-# The first statement preserves permissions for normal users to access the key.
-# The second statement is specific to the lambda.
+# The Statement preserves permissions for normal users to access the key.
+# Additional statements should be added for other users of the key.
 #
 resource "aws_kms_key" "fi-cmk" {
   description = "master key for find insights lambda passwords"

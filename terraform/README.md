@@ -5,6 +5,4 @@ the state file doesn't seem compatible between versions.
 
 * terraform init
 
-* cd .. && make build-lambda && make bundle-lambda && cd -
-
 * terraform plan

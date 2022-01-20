@@ -2,8 +2,7 @@
 
 http://ec2-18-193-78-190.eu-central-1.compute.amazonaws.com:25252/swaggerui
 
-This is a Temporary Fix (TM) until we either move fully to EC2 or support this
-functionality under the AWS lambda.
+This is a Temporary Fix (TM) until we either move fully to EC2.
 
 A micro EC2 instance on the free tier was provisioned via the web with an
 encrypted version of the private key in this directory.
