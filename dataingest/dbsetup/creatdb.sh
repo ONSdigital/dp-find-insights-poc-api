@@ -9,6 +9,7 @@ if [[ $1 == "" ]]; then
 fi
 
 createdb "$PGDATABASE"
+psql -U postgres -d "$PGDATABASE" -c "CREATE EXTENSION postgis"
 
 psql <<EOT
 \x

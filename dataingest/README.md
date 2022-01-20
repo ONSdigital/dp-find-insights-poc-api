@@ -66,12 +66,14 @@ TODO python should pick up from the env like everything else (?) or just rewrite
 TODO migrate this to go code enable to run under AWS (Lambda or Fargate etc.) &
 read from S3
 
-* The following imports data
+* The following imports data and takes ~20mins
 
 ```
 $ . ./bulk/bin/activate
 $ python add_to_db.py
 ```
+
+TODO skipping import of MSOA would be faster
 
 ## Clean up Database
 
@@ -81,13 +83,14 @@ $ cd dp-find-insights-poc-api && make update-schema
 $ ./dataingest/dbsetup/cleandb.sh
  ```
 
-## Non LSOA geo.name population
+## geo.name population
 
-* unzip "Code_History_Database_(June_2021)_UK.zip"
-* see dataingest/geo/README.md & fi-census-data/geo
+* see geo/README.md
 
 ```
-$ cd dataingest/geo && go run .
+$ cd dataingest/geo
+$ aws --region eu-central-1 s3 sync s3://find-insights-input-data-files/geoname/ .
+$ go run .
 ```
 
 ## Geo data import
@@ -97,14 +100,15 @@ $ cd dataingest/geo && go run .
   * *.geojson from https://github.com/ONSdigital/fi-census-data/tree/main/spatial should be in place
 
 ```
-$ cd dp-find-insights-poc-api/dataingest/spatial
+$ cd ../spatial
+$ aws --region eu-central-1 s3 sync s3://find-insights-input-data-files/geojson/ .
 $ ./import.sh linux-localhost
 
 ```
 * Populate geo.wkb_long_lat_geom with long, lat POINT
 
 ```
-$ cd dataingest/spatial/longlatgeom    
+$ cd longlatgeom    
 $ go run .
 ```
 
