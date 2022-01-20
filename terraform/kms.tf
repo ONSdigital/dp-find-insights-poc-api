@@ -18,23 +18,6 @@ resource "aws_kms_key" "fi-cmk" {
       },
       "Action": "kms:*",
       "Resource": "*"
-    },
-    {
-      "Sid": "Allow lambda to use the key",
-      "Effect": "Allow",
-      "Principal": {
-        "AWS": [
-          "${aws_iam_role.fi-lambda-execution.arn}"
-        ]
-      },
-      "Action": [
-        "kms:Encrypt",
-        "kms:Decrypt",
-        "kms:ReEncrypt*",
-        "kms:GenerateDataKey*",
-        "kms:DescribeKey"
-      ],
-      "Resource": "*"
     }
   ]
 }
