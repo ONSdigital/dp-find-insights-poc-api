@@ -69,15 +69,17 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		// argument, so it cannot know about passwords held in AWS secrets.
 		//
 		// We loop here in case the db isn't up yet (happens when using docker compose).
+		// (Looping doesn't seem to be needed for the pgx connection, for some reason.)
 		var gdb *gorm.DB
 		for try := 0; try < 5; try++ {
 			gdb, err = gorm.Open(postgres.Open(database.GetDSN(pgpwd)), &gorm.Config{
 				//	Logger: logger.Default.LogMode(logger.Info), // display SQL
 			})
-			if err != nil {
-				log.Info(ctx, "cannot-connect-to-postgres-yet")
-				time.Sleep(1 * time.Second)
+			if err == nil {
+				break
 			}
+			log.Info(ctx, "cannot-connect-to-postgres-yet")
+			time.Sleep(1 * time.Second)
 		}
 		if err != nil {
 			return nil, err
