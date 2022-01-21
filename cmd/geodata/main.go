@@ -15,7 +15,7 @@ import (
 func main() {
 	maxmetrics := flag.Int("maxmetrics", 0, "max number of rows to accept from db query (default 0 means no limit)")
 	flag.Usage = func() {
-		fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s [command-options] query|ckmeans [subcommand-options]\n", filepath.Base(os.Args[0]))
+		fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s [command-options] query|ckmeans|ckmeansratio [subcommand-options]\n", filepath.Base(os.Args[0]))
 		flag.PrintDefaults()
 	}
 	flag.Parse()
@@ -41,6 +41,8 @@ func main() {
 		query(ctx, app, flag.Args()[1:])
 	case "ckmeans":
 		ckmeans(ctx, app, flag.Args()[1:])
+	case "ckmeansratio":
+		ckmeansratio(ctx, app, flag.Args()[1:])
 	default:
 		flag.Usage()
 		os.Exit(2)
@@ -52,6 +54,7 @@ func query(ctx context.Context, app *geodata.Geodata, argv []string) {
 
 	flagset := flag.NewFlagSet("original", flag.ExitOnError)
 
+	year := flagset.Int("year", 2011, "census year")
 	bbox := flagset.String("bbox", "", "bounding box lon1,lat1,lon2,lat2 (any two opposite corners)")
 	location := flagset.String("location", "", "central point for radius queries")
 	radius := flagset.Int("radius", 0, "radius in meters")
@@ -62,7 +65,7 @@ func query(ctx context.Context, app *geodata.Geodata, argv []string) {
 	flagset.Var(&cols, "cols", "column name(s) to return")
 	flagset.Parse(argv)
 
-	body, err := app.Query(ctx, "census", *bbox, *location, *radius, *polygon, geotypes, rows, cols, *censustable)
+	body, err := app.Query(ctx, *year, *bbox, *location, *radius, *polygon, geotypes, rows, cols, *censustable)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -73,12 +76,33 @@ func query(ctx context.Context, app *geodata.Geodata, argv []string) {
 func ckmeans(ctx context.Context, app *geodata.Geodata, argv []string) {
 	flagset := flag.NewFlagSet("ckmeans", flag.ExitOnError)
 
+	year := flagset.Int("year", 2011, "census year")
 	cat := flagset.String("cat", "", "category code")
 	geotype := flagset.String("geotype", "", "geography type (LSOA,...)")
 	k := flagset.Int("k", 5, "number of clusters/bins")
 	flagset.Parse(argv)
 
-	breaks, err := app.CKmeans(ctx, *cat, *geotype, *k)
+	breaks, err := app.CKmeans(ctx, *year, *cat, *geotype, *k)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	for _, breakpoint := range breaks {
+		fmt.Printf("%0.13g\n", breakpoint)
+	}
+}
+
+func ckmeansratio(ctx context.Context, app *geodata.Geodata, argv []string) {
+	flagset := flag.NewFlagSet("ckmeansratio", flag.ExitOnError)
+
+	year := flagset.Int("year", 2011, "census year")
+	cat1 := flagset.String("cat1", "", "category code")
+	cat2 := flagset.String("cat2", "", "category code")
+	geotype := flagset.String("geotype", "", "geography type (LSOA,...)")
+	k := flagset.Int("k", 5, "number of clusters/bins")
+	flagset.Parse(argv)
+
+	fmt.Fprintf(os.Stderr, "year=%d cat1=%s cat2=%s geotype=%s k=%d\n", *year, *cat1, *cat2, *geotype, *k)
+	breaks, err := app.CKmeansRatio(ctx, *year, *cat1, *cat2, *geotype, *k)
 	if err != nil {
 		log.Fatalln(err)
 	}

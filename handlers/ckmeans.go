@@ -9,7 +9,7 @@ import (
 	"github.com/ONSdigital/dp-find-insights-poc-api/config"
 )
 
-func (svr *Server) GetDevCkmeans(w http.ResponseWriter, r *http.Request, params api.GetDevCkmeansParams) {
+func (svr *Server) GetCkmeansYear(w http.ResponseWriter, r *http.Request, year int, params api.GetCkmeansYearParams) {
 	if !svr.private {
 		sendError(w, http.StatusNotFound, "endpoint not enabled")
 		return
@@ -51,7 +51,7 @@ func (svr *Server) GetDevCkmeans(w http.ResponseWriter, r *http.Request, params 
 	}
 
 	ctx := r.Context()
-	breaks, err := svr.querygeodata.CKmeans(ctx, cat, geotype, k)
+	breaks, err := svr.querygeodata.CKmeans(ctx, year, cat, geotype, k)
 	if err != nil {
 		sendError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -64,7 +64,7 @@ func (svr *Server) GetDevCkmeans(w http.ResponseWriter, r *http.Request, params 
 	_ = encoder.Encode(breaks)
 }
 
-func (svr *Server) GetDevCkmeansratio(w http.ResponseWriter, r *http.Request, params api.GetDevCkmeansratioParams) {
+func (svr *Server) GetCkmeansratioYear(w http.ResponseWriter, r *http.Request, year int, params api.GetCkmeansratioYearParams) {
 	if !svr.private {
 		sendError(w, http.StatusNotFound, "endpoint not enabled")
 		return
@@ -109,7 +109,7 @@ func (svr *Server) GetDevCkmeansratio(w http.ResponseWriter, r *http.Request, pa
 	}
 
 	ctx := r.Context()
-	breaks, err := svr.querygeodata.CKmeansRatio(ctx, cat1, cat2, geotype, k)
+	breaks, err := svr.querygeodata.CKmeansRatio(ctx, year, cat1, cat2, geotype, k)
 	if err != nil {
 		sendError(w, http.StatusInternalServerError, err.Error())
 		return

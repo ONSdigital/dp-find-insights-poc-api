@@ -7,7 +7,7 @@ import (
 	"github.com/jtrim-ons/ckmeans/pkg/ckmeans"
 )
 
-func (app *Geodata) CKmeans(ctx context.Context, cat string, geotype string, k int) ([]float64, error) {
+func (app *Geodata) CKmeans(ctx context.Context, year int, cat string, geotype string, k int) ([]float64, error) {
 	sql := `
 SELECT
     geo_metric.metric
@@ -27,15 +27,15 @@ AND geo.valid
 
 -- the category we are interested in
 AND nomis_category.long_nomis_code = $2
-AND nomis_category.year = 2011
+AND nomis_category.year = $3
 
 -- metrics for these geocodes and category
 AND geo_metric.geo_id = geo.id
 AND geo_metric.category_id = nomis_category.id
 
--- only pick metrics for 2011/2.2
+-- only pick metrics for census year / version 2.2
 AND data_ver.id = geo_metric.data_ver_id
-AND data_ver.census_year = 2011
+AND data_ver.census_year = $4
 AND data_ver.ver_string = '2.2'
 `
 
@@ -46,6 +46,8 @@ AND data_ver.ver_string = '2.2'
 		sql,
 		geotype,
 		cat,
+		year,
+		year,
 	)
 	if err != nil {
 		return nil, err
@@ -106,7 +108,7 @@ func getBreaks(metrics []float64, k int) ([]float64, error) {
 	return breaks, nil
 }
 
-func (app *Geodata) CKmeansRatio(ctx context.Context, cat1 string, cat2 string, geotype string, k int) ([]float64, error) {
+func (app *Geodata) CKmeansRatio(ctx context.Context, year int, cat1 string, cat2 string, geotype string, k int) ([]float64, error) {
 	sql := `
 SELECT
     geo_metric.metric
@@ -128,15 +130,15 @@ AND geo.valid
 
 -- the category we are interested in
 AND nomis_category.long_nomis_code IN ($2, $3)
-AND nomis_category.year = 2011
+AND nomis_category.year = $4
 
 -- metrics for these geocodes and category
 AND geo_metric.geo_id = geo.id
 AND geo_metric.category_id = nomis_category.id
 
--- only pick metrics for 2011/2.2
+-- only pick metrics for census year / version2.2
 AND data_ver.id = geo_metric.data_ver_id
-AND data_ver.census_year = 2011
+AND data_ver.census_year = $5
 AND data_ver.ver_string = '2.2'
 `
 
@@ -148,6 +150,8 @@ AND data_ver.ver_string = '2.2'
 		geotype,
 		cat1,
 		cat2,
+		year,
+		year,
 	)
 
 	if err != nil {

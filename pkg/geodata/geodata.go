@@ -29,11 +29,8 @@ func New(db *database.Database, maxMetrics int) (*Geodata, error) {
 	}, nil
 }
 
-func (app *Geodata) Query(ctx context.Context, dataset, bbox, location string, radius int, polygon string, geotypes, rows, cols []string, censustable string) (string, error) {
-	if dataset != "census" {
-		return "", ErrInvalidParams
-	}
-	return app.censusQuery(ctx, rows, bbox, location, radius, polygon, geotypes, cols, censustable)
+func (app *Geodata) Query(ctx context.Context, year int, bbox, location string, radius int, polygon string, geotypes, rows, cols []string, censustable string) (string, error) {
+	return app.censusQuery(ctx, year, rows, bbox, location, radius, polygon, geotypes, cols, censustable)
 }
 
 // collectCells runs the query in sql and returns the results as a csv.
@@ -118,6 +115,7 @@ func (app *Geodata) collectCells(ctx context.Context, sql string, include []stri
 }
 
 type CensusQuerySQLArgs struct {
+	Year        int
 	Geos        []string
 	BBox        string
 	Location    string
@@ -136,11 +134,12 @@ type CensusQuerySQLArgs struct {
 // Although this query method is not complicated, it is too long.
 // Break it up in the fullness of time.
 //
-func (app *Geodata) censusQuery(ctx context.Context, geos []string, bbox, location string, radius int, polygon string, geotypes, cols []string, censustable string) (string, error) {
+func (app *Geodata) censusQuery(ctx context.Context, year int, geos []string, bbox, location string, radius int, polygon string, geotypes, cols []string, censustable string) (string, error) {
 
 	sql, include, err := CensusQuerySQL(
 		ctx,
 		CensusQuerySQLArgs{
+			Year:        year,
 			Geos:        geos,
 			BBox:        bbox,
 			Location:    location,
@@ -245,10 +244,10 @@ AND geo_type.id = geo.type_id
 %s
 AND geo_metric.geo_id = geo.id
 AND data_ver.id = geo_metric.data_ver_id
-AND data_ver.census_year = 2011
+AND data_ver.census_year = %d
 AND data_ver.ver_string = '2.2'
 AND nomis_category.id = geo_metric.category_id
-AND nomis_category.year = 2011
+AND nomis_category.year = %d
     -- category conditions:
 %s
 `
@@ -258,6 +257,8 @@ AND nomis_category.year = 2011
 		geotypeConditions,
 		geoConditions,
 		censustableAndSQL,
+		args.Year,
+		args.Year,
 		catConditions,
 	)
 	return sql, include, nil

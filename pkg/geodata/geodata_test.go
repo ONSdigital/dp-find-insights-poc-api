@@ -30,7 +30,10 @@ func TestGetCensusQuery(t *testing.T) {
 		// Rows
 		{
 			desc: "rows condition only",
-			args: geodata.CensusQuerySQLArgs{Geos: []string{"E01000001"}},
+			args: geodata.CensusQuerySQLArgs{
+				Year: 2011,
+				Geos: []string{"E01000001"},
+			},
 			wantSQL: `
 SELECT
  geo.code AS geography_code,
@@ -62,7 +65,10 @@ AND nomis_category.year = 2011
 		// Bounding Box
 		{
 			desc: "bbox condition only",
-			args: geodata.CensusQuerySQLArgs{BBox: "-0.370947083400182,51.3624781092781,0.17687729439413147,51.673778133460246"},
+			args: geodata.CensusQuerySQLArgs{
+				Year: 2011,
+				BBox: "-0.370947083400182,51.3624781092781,0.17687729439413147,51.673778133460246",
+			},
 			wantSQL: `
 SELECT
  geo.code AS geography_code,
@@ -113,6 +119,7 @@ AND nomis_category.year = 2011
 		{
 			desc: "single col condition",
 			args: geodata.CensusQuerySQLArgs{
+				Year: 2011,
 				Geos: []string{"E01000001"},
 				Cols: []string{"QS119EW0002"},
 			},
@@ -150,6 +157,7 @@ AND (
 		{
 			desc: "censustable condition with single geography",
 			args: geodata.CensusQuerySQLArgs{
+				Year:        2011,
 				Geos:        []string{"E01000001"},
 				Censustable: "QS101EW",
 			},
@@ -189,6 +197,7 @@ AND (
 		{
 			desc: "censustable condition with single col",
 			args: geodata.CensusQuerySQLArgs{
+				Year:        2011,
 				Geos:        []string{"E01000001"},
 				Censustable: "QS101EW",
 				Cols:        []string{"QS119EW0002"},
@@ -231,6 +240,7 @@ AND (
 		{
 			desc: "censustable condition with multiple col",
 			args: geodata.CensusQuerySQLArgs{
+				Year:        2011,
 				Geos:        []string{"E01000001"},
 				Censustable: "QS101EW",
 				Cols: []string{
@@ -277,6 +287,7 @@ AND (
 		{
 			desc: "censustable condition with ranged col",
 			args: geodata.CensusQuerySQLArgs{
+				Year:        2011,
 				Geos:        []string{"E01000001"},
 				Censustable: "QS101EW",
 				Cols:        []string{"QS119EW0001...QS119EW0004"},
@@ -319,6 +330,7 @@ AND (
 		{
 			desc: "censustable condition with multiple col and range col",
 			args: geodata.CensusQuerySQLArgs{
+				Year:        2011,
 				Geos:        []string{"E01000001"},
 				Censustable: "QS101EW",
 				Cols: []string{
@@ -372,7 +384,10 @@ AND (
 		},
 		{
 			desc: "all rows, all categories",
-			args: geodata.CensusQuerySQLArgs{Geos: []string{"all"}},
+			args: geodata.CensusQuerySQLArgs{
+				Year: 2011,
+				Geos: []string{"all"},
+			},
 			wantSQL: `
 SELECT
  geo.code AS geography_code,

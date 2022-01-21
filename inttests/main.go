@@ -23,9 +23,9 @@ type APITest = struct {
 
 const baseURL = `http://ec2-18-193-78-190.eu-central-1.compute.amazonaws.com:25252`
 const baseURLLocal = `http://localhost:25252`
-const censusEndpoint = `dev/hello/census`
+const censusEndpoint = `query/2011`
 const metadataEndpoint = `metadata`
-const ckmeansEndpoint = `dev/ckmeans`
+const ckmeansEndpoint = `ckmeans/2011`
 
 var Tests = []APITest{
 	// skinny is deprecated

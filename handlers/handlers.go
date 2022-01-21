@@ -70,7 +70,7 @@ func (svr *Server) GetMetadata(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 }
 
-func (svr *Server) GetDevHelloDataset(w http.ResponseWriter, r *http.Request, dataset string, params api.GetDevHelloDatasetParams) {
+func (svr *Server) GetQueryYear(w http.ResponseWriter, r *http.Request, year int, params api.GetQueryYearParams) {
 	if !svr.private {
 		sendError(w, http.StatusNotFound, "endpoint not enabled")
 		return
@@ -103,10 +103,6 @@ func (svr *Server) GetDevHelloDataset(w http.ResponseWriter, r *http.Request, da
 	var radius int
 	var polygon string
 	var censustable string
-	if dataset == "" {
-		sendError(w, http.StatusBadRequest, "dataset missing")
-		return
-	}
 	if params.Rows != nil {
 		rows = *params.Rows
 	}
@@ -133,7 +129,7 @@ func (svr *Server) GetDevHelloDataset(w http.ResponseWriter, r *http.Request, da
 	}
 
 	ctx := r.Context()
-	csv, err := svr.querygeodata.Query(ctx, dataset, bbox, location, radius, polygon, geotype, rows, cols, censustable)
+	csv, err := svr.querygeodata.Query(ctx, year, bbox, location, radius, polygon, geotype, rows, cols, censustable)
 	if err != nil {
 		status := http.StatusInternalServerError
 		if errors.Is(err, geodata.ErrNoContent) {

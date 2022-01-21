@@ -83,13 +83,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
-  /dev/ckmeans:
+  /ckmeans/{year}:
     get:
       tags:
         - public
       summary: calculate ckmeans over a given category and geography type
       descriptions: Returns a list of the maximum values in each ckmean cluster.
       parameters:
+        - in: path
+          name: year
+          description: census year
+          required: true
+          schema:
+            type: integer
         - in: query
           name: cat
           schema:
@@ -127,13 +133,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
-  /dev/ckmeansratio:
+  /ckmeansratio/{year}:
     get:
       tags:
         - public
       summary: calculate ckmeans for the ratio between two given categories (cat1 / cat2) for a given geography type
       descriptions: Returns a list of the maximum values in each ckmean cluster.
       parameters:
+        - in: path
+          name: year
+          description: census year
+          required: true
+          schema:
+            type: integer
         - in: query
           name: cat1
           schema:
@@ -175,18 +187,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
-  /dev/hello/{dataset}:
+  /query/{year}:
     get:
       tags:
         - public
       summary: query census
       parameters:
         - in: path
-          name: dataset
-          description: name of dataset to query, typically census
+          name: year
+          description: census year
           required: true
           schema:
-            type: string
+            type: integer
         - in: query
           name: rows
           schema:

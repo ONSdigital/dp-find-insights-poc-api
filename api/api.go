@@ -49,23 +49,23 @@ type Triplet struct {
 	Slug *string `json:"slug,omitempty"`
 }
 
-// GetDevCkmeansParams defines parameters for GetDevCkmeans.
-type GetDevCkmeansParams struct {
+// GetCkmeansYearParams defines parameters for GetCkmeansYear.
+type GetCkmeansYearParams struct {
 	Cat     *string `json:"cat,omitempty"`
 	Geotype *string `json:"geotype,omitempty"`
 	K       *int    `json:"k,omitempty"`
 }
 
-// GetDevCkmeansratioParams defines parameters for GetDevCkmeansratio.
-type GetDevCkmeansratioParams struct {
+// GetCkmeansratioYearParams defines parameters for GetCkmeansratioYear.
+type GetCkmeansratioYearParams struct {
 	Cat1    *string `json:"cat1,omitempty"`
 	Cat2    *string `json:"cat2,omitempty"`
 	Geotype *string `json:"geotype,omitempty"`
 	K       *int    `json:"k,omitempty"`
 }
 
-// GetDevHelloDatasetParams defines parameters for GetDevHelloDataset.
-type GetDevHelloDatasetParams struct {
+// GetQueryYearParams defines parameters for GetQueryYear.
+type GetQueryYearParams struct {
 	Rows        *[]string `json:"rows,omitempty"`
 	Cols        *[]string `json:"cols,omitempty"`
 	Bbox        *string   `json:"bbox,omitempty"`
@@ -79,17 +79,17 @@ type GetDevHelloDatasetParams struct {
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// calculate ckmeans over a given category and geography type
-	// (GET /dev/ckmeans)
-	GetDevCkmeans(w http.ResponseWriter, r *http.Request, params GetDevCkmeansParams)
+	// (GET /ckmeans/{year})
+	GetCkmeansYear(w http.ResponseWriter, r *http.Request, year int, params GetCkmeansYearParams)
 	// calculate ckmeans for the ratio between two given categories (cat1 / cat2) for a given geography type
-	// (GET /dev/ckmeansratio)
-	GetDevCkmeansratio(w http.ResponseWriter, r *http.Request, params GetDevCkmeansratioParams)
-	// query census
-	// (GET /dev/hello/{dataset})
-	GetDevHelloDataset(w http.ResponseWriter, r *http.Request, dataset string, params GetDevHelloDatasetParams)
+	// (GET /ckmeansratio/{year})
+	GetCkmeansratioYear(w http.ResponseWriter, r *http.Request, year int, params GetCkmeansratioYearParams)
 	// Get Metadata
 	// (GET /metadata)
 	GetMetadata(w http.ResponseWriter, r *http.Request)
+	// query census
+	// (GET /query/{year})
+	GetQueryYear(w http.ResponseWriter, r *http.Request, year int, params GetQueryYearParams)
 	// spec
 	// (GET /swagger)
 	GetSwagger(w http.ResponseWriter, r *http.Request)
@@ -106,14 +106,23 @@ type ServerInterfaceWrapper struct {
 
 type MiddlewareFunc func(http.HandlerFunc) http.HandlerFunc
 
-// GetDevCkmeans operation middleware
-func (siw *ServerInterfaceWrapper) GetDevCkmeans(w http.ResponseWriter, r *http.Request) {
+// GetCkmeansYear operation middleware
+func (siw *ServerInterfaceWrapper) GetCkmeansYear(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var err error
 
+	// ------------- Path parameter "year" -------------
+	var year int
+
+	err = runtime.BindStyledParameter("simple", false, "year", chi.URLParam(r, "year"), &year)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid format for parameter year: %s", err), http.StatusBadRequest)
+		return
+	}
+
 	// Parameter object where we will unmarshal all parameters from the context
-	var params GetDevCkmeansParams
+	var params GetCkmeansYearParams
 
 	// ------------- Optional query parameter "cat" -------------
 	if paramValue := r.URL.Query().Get("cat"); paramValue != "" {
@@ -149,7 +158,7 @@ func (siw *ServerInterfaceWrapper) GetDevCkmeans(w http.ResponseWriter, r *http.
 	}
 
 	var handler = func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetDevCkmeans(w, r, params)
+		siw.Handler.GetCkmeansYear(w, r, year, params)
 	}
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -159,14 +168,23 @@ func (siw *ServerInterfaceWrapper) GetDevCkmeans(w http.ResponseWriter, r *http.
 	handler(w, r.WithContext(ctx))
 }
 
-// GetDevCkmeansratio operation middleware
-func (siw *ServerInterfaceWrapper) GetDevCkmeansratio(w http.ResponseWriter, r *http.Request) {
+// GetCkmeansratioYear operation middleware
+func (siw *ServerInterfaceWrapper) GetCkmeansratioYear(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var err error
 
+	// ------------- Path parameter "year" -------------
+	var year int
+
+	err = runtime.BindStyledParameter("simple", false, "year", chi.URLParam(r, "year"), &year)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid format for parameter year: %s", err), http.StatusBadRequest)
+		return
+	}
+
 	// Parameter object where we will unmarshal all parameters from the context
-	var params GetDevCkmeansratioParams
+	var params GetCkmeansratioYearParams
 
 	// ------------- Optional query parameter "cat1" -------------
 	if paramValue := r.URL.Query().Get("cat1"); paramValue != "" {
@@ -213,7 +231,7 @@ func (siw *ServerInterfaceWrapper) GetDevCkmeansratio(w http.ResponseWriter, r *
 	}
 
 	var handler = func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetDevCkmeansratio(w, r, params)
+		siw.Handler.GetCkmeansratioYear(w, r, year, params)
 	}
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -223,23 +241,38 @@ func (siw *ServerInterfaceWrapper) GetDevCkmeansratio(w http.ResponseWriter, r *
 	handler(w, r.WithContext(ctx))
 }
 
-// GetDevHelloDataset operation middleware
-func (siw *ServerInterfaceWrapper) GetDevHelloDataset(w http.ResponseWriter, r *http.Request) {
+// GetMetadata operation middleware
+func (siw *ServerInterfaceWrapper) GetMetadata(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetMetadata(w, r)
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler(w, r.WithContext(ctx))
+}
+
+// GetQueryYear operation middleware
+func (siw *ServerInterfaceWrapper) GetQueryYear(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var err error
 
-	// ------------- Path parameter "dataset" -------------
-	var dataset string
+	// ------------- Path parameter "year" -------------
+	var year int
 
-	err = runtime.BindStyledParameter("simple", false, "dataset", chi.URLParam(r, "dataset"), &dataset)
+	err = runtime.BindStyledParameter("simple", false, "year", chi.URLParam(r, "year"), &year)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Invalid format for parameter dataset: %s", err), http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("Invalid format for parameter year: %s", err), http.StatusBadRequest)
 		return
 	}
 
 	// Parameter object where we will unmarshal all parameters from the context
-	var params GetDevHelloDatasetParams
+	var params GetQueryYearParams
 
 	// ------------- Optional query parameter "rows" -------------
 	if paramValue := r.URL.Query().Get("rows"); paramValue != "" {
@@ -330,22 +363,7 @@ func (siw *ServerInterfaceWrapper) GetDevHelloDataset(w http.ResponseWriter, r *
 	}
 
 	var handler = func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetDevHelloDataset(w, r, dataset, params)
-	}
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler(w, r.WithContext(ctx))
-}
-
-// GetMetadata operation middleware
-func (siw *ServerInterfaceWrapper) GetMetadata(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	var handler = func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetMetadata(w, r)
+		siw.Handler.GetQueryYear(w, r, year, params)
 	}
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -423,16 +441,16 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	}
 
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/dev/ckmeans", wrapper.GetDevCkmeans)
+		r.Get(options.BaseURL+"/ckmeans/{year}", wrapper.GetCkmeansYear)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/dev/ckmeansratio", wrapper.GetDevCkmeansratio)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/dev/hello/{dataset}", wrapper.GetDevHelloDataset)
+		r.Get(options.BaseURL+"/ckmeansratio/{year}", wrapper.GetCkmeansratioYear)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/metadata", wrapper.GetMetadata)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/query/{year}", wrapper.GetQueryYear)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/swagger", wrapper.GetSwagger)
