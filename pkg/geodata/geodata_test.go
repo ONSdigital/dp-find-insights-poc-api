@@ -58,7 +58,7 @@ AND data_ver.id = geo_metric.data_ver_id
 AND data_ver.census_year = 2011
 AND data_ver.ver_string = '2.2'
 AND nomis_category.id = geo_metric.category_id
-AND nomis_category.year = 2011
+AND nomis_category.year = data_ver.census_year
  -- category conditions:
 `,
 		},
@@ -96,7 +96,7 @@ AND data_ver.id = geo_metric.data_ver_id
 AND data_ver.census_year = 2011
 AND data_ver.ver_string = '2.2'
 AND nomis_category.id = geo_metric.category_id
-AND nomis_category.year = 2011
+AND nomis_category.year = data_ver.census_year
  -- category conditions:
 `,
 		},
@@ -147,7 +147,7 @@ AND data_ver.id = geo_metric.data_ver_id
 AND data_ver.census_year = 2011
 AND data_ver.ver_string = '2.2'
 AND nomis_category.id = geo_metric.category_id
-AND nomis_category.year = 2011
+AND nomis_category.year = data_ver.census_year
  -- category conditions:
 AND (
  nomis_category.long_nomis_code IN ( 'QS119EW0002' )
@@ -187,7 +187,7 @@ AND data_ver.id = geo_metric.data_ver_id
 AND data_ver.census_year = 2011
 AND data_ver.ver_string = '2.2'
 AND nomis_category.id = geo_metric.category_id
-AND nomis_category.year = 2011
+AND nomis_category.year = data_ver.census_year
  -- category conditions:
 AND (
  nomis_category.nomis_desc_id = nomis_desc.id
@@ -228,7 +228,7 @@ AND data_ver.id = geo_metric.data_ver_id
 AND data_ver.census_year = 2011
 AND data_ver.ver_string = '2.2'
 AND nomis_category.id = geo_metric.category_id
-AND nomis_category.year = 2011
+AND nomis_category.year = data_ver.census_year
  -- category conditions:
 AND (
  nomis_category.long_nomis_code IN ( 'QS119EW0002' )
@@ -275,7 +275,7 @@ AND data_ver.id = geo_metric.data_ver_id
 AND data_ver.census_year = 2011
 AND data_ver.ver_string = '2.2'
 AND nomis_category.id = geo_metric.category_id
-AND nomis_category.year = 2011
+AND nomis_category.year = data_ver.census_year
  -- category conditions:
 AND (
  nomis_category.long_nomis_code IN ( 'QS119EW0001', 'QS119EW0002', 'QS119EW0003' )
@@ -318,7 +318,7 @@ AND data_ver.id = geo_metric.data_ver_id
 AND data_ver.census_year = 2011
 AND data_ver.ver_string = '2.2'
 AND nomis_category.id = geo_metric.category_id
-AND nomis_category.year = 2011
+AND nomis_category.year = data_ver.census_year
  -- category conditions:
 AND (
  nomis_category.long_nomis_code BETWEEN 'QS119EW0001' AND 'QS119EW0004'
@@ -366,7 +366,7 @@ AND data_ver.id = geo_metric.data_ver_id
 AND data_ver.census_year = 2011
 AND data_ver.ver_string = '2.2'
 AND nomis_category.id = geo_metric.category_id
-AND nomis_category.year = 2011
+AND nomis_category.year = data_ver.census_year
  -- category conditions:
 AND (
  nomis_category.long_nomis_code IN ( 'QS119EW0001', 'QS119EW0002', 'QS119EW0003' )
@@ -409,7 +409,7 @@ AND data_ver.id = geo_metric.data_ver_id
 AND data_ver.census_year = 2011
 AND data_ver.ver_string = '2.2'
 AND nomis_category.id = geo_metric.category_id
-AND nomis_category.year = 2011
+AND nomis_category.year = data_ver.census_year
  -- category conditions:
 `,
 		},

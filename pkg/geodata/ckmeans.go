@@ -35,7 +35,7 @@ AND geo_metric.category_id = nomis_category.id
 
 -- only pick metrics for census year / version 2.2
 AND data_ver.id = geo_metric.data_ver_id
-AND data_ver.census_year = $4
+AND data_ver.census_year = nomis_category.year
 AND data_ver.ver_string = '2.2'
 `
 
@@ -46,7 +46,6 @@ AND data_ver.ver_string = '2.2'
 		sql,
 		geotype,
 		cat,
-		year,
 		year,
 	)
 	if err != nil {
@@ -138,7 +137,7 @@ AND geo_metric.category_id = nomis_category.id
 
 -- only pick metrics for census year / version2.2
 AND data_ver.id = geo_metric.data_ver_id
-AND data_ver.census_year = $5
+AND data_ver.census_year = nomis_category.year
 AND data_ver.ver_string = '2.2'
 `
 
@@ -150,7 +149,6 @@ AND data_ver.ver_string = '2.2'
 		geotype,
 		cat1,
 		cat2,
-		year,
 		year,
 	)
 

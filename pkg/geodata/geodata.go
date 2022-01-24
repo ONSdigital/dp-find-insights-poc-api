@@ -247,7 +247,7 @@ AND data_ver.id = geo_metric.data_ver_id
 AND data_ver.census_year = %d
 AND data_ver.ver_string = '2.2'
 AND nomis_category.id = geo_metric.category_id
-AND nomis_category.year = %d
+AND nomis_category.year = data_ver.census_year
     -- category conditions:
 %s
 `
@@ -257,7 +257,6 @@ AND nomis_category.year = %d
 		geotypeConditions,
 		geoConditions,
 		censustableAndSQL,
-		args.Year,
 		args.Year,
 		catConditions,
 	)
