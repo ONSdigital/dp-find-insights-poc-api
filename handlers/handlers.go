@@ -56,7 +56,7 @@ func (svr *Server) GetSwaggerui(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 }
 
-func (svr *Server) GetMetadata(w http.ResponseWriter, r *http.Request, params api.GetMetadataParams) {
+func (svr *Server) GetMetadataYear(w http.ResponseWriter, r *http.Request, year int, params api.GetMetadataYearParams) {
 	// add CORS header
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.WriteHeader(http.StatusOK)
@@ -68,7 +68,7 @@ func (svr *Server) GetMetadata(w http.ResponseWriter, r *http.Request, params ap
 		filtertotals = false
 	}
 
-	b, err := svr.md.Get(filtertotals)
+	b, err := svr.md.Get(year, filtertotals)
 	if err != nil {
 		sendError(w, http.StatusInternalServerError, err.Error())
 		return

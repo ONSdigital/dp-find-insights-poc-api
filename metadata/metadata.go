@@ -34,10 +34,15 @@ func New(dbs ...*gorm.DB) (*Metadata, error) {
 	return &Metadata{gdb: dbs[0]}, err
 }
 
-func (md *Metadata) Get(filterTotals bool) ([]byte, error) {
+func (md *Metadata) Get(year int, filterTotals bool) ([]byte, error) {
 	var topics []model.NomisTopic
 
-	md.gdb.Preload("NomisDescs", func(gdb *gorm.DB) *gorm.DB { return gdb.Order("short_nomis_code") }).Find(&topics)
+	md.gdb.Preload(
+		"NomisDescs",
+		func(gdb *gorm.DB) *gorm.DB {
+			return gdb.Order("short_nomis_code").Where("year = ?", year)
+		},
+	).Find(&topics)
 
 	var mdr api.MetadataResponse
 
@@ -52,7 +57,12 @@ func (md *Metadata) Get(filterTotals bool) ([]byte, error) {
 		var nd model.NomisDesc
 
 		for _, nd = range topic.NomisDescs {
-			md.gdb.Preload("NomisCategories", func(gdb *gorm.DB) *gorm.DB { return gdb.Order("long_nomis_code") }).Find(&nd)
+			md.gdb.Preload(
+				"NomisCategories",
+				func(gdb *gorm.DB) *gorm.DB {
+					return gdb.Order("long_nomis_code").Where("year = ?", year)
+				},
+			).Find(&nd)
 
 			// partially populate table here to allow optional inclusion of Total if filterTotals == true
 			table := api.Table{

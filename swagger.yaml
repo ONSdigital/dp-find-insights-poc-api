@@ -12,13 +12,19 @@ info:
     url: "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
 
 paths:
-  /metadata:
+  /metadata/{year}:
     get:
       tags:
         - public
       summary: Get Metadata
       description: Returns simple TopicTable Category Data
       parameters:
+        - in: path
+          name: year
+          description: census year
+          required: true
+          schema:
+            type: integer
         - in: query
           name: filtertotals
           schema:

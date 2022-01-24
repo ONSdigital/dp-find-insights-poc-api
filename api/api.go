@@ -65,8 +65,8 @@ type GetCkmeansratioYearParams struct {
 	K       *int    `json:"k,omitempty"`
 }
 
-// GetMetadataParams defines parameters for GetMetadata.
-type GetMetadataParams struct {
+// GetMetadataYearParams defines parameters for GetMetadataYear.
+type GetMetadataYearParams struct {
 	Filtertotals *bool `json:"filtertotals,omitempty"`
 }
 
@@ -91,8 +91,8 @@ type ServerInterface interface {
 	// (GET /ckmeansratio/{year})
 	GetCkmeansratioYear(w http.ResponseWriter, r *http.Request, year int, params GetCkmeansratioYearParams)
 	// Get Metadata
-	// (GET /metadata)
-	GetMetadata(w http.ResponseWriter, r *http.Request, params GetMetadataParams)
+	// (GET /metadata/{year})
+	GetMetadataYear(w http.ResponseWriter, r *http.Request, year int, params GetMetadataYearParams)
 	// query census
 	// (GET /query/{year})
 	GetQueryYear(w http.ResponseWriter, r *http.Request, year int, params GetQueryYearParams)
@@ -247,14 +247,23 @@ func (siw *ServerInterfaceWrapper) GetCkmeansratioYear(w http.ResponseWriter, r 
 	handler(w, r.WithContext(ctx))
 }
 
-// GetMetadata operation middleware
-func (siw *ServerInterfaceWrapper) GetMetadata(w http.ResponseWriter, r *http.Request) {
+// GetMetadataYear operation middleware
+func (siw *ServerInterfaceWrapper) GetMetadataYear(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var err error
 
+	// ------------- Path parameter "year" -------------
+	var year int
+
+	err = runtime.BindStyledParameter("simple", false, "year", chi.URLParam(r, "year"), &year)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid format for parameter year: %s", err), http.StatusBadRequest)
+		return
+	}
+
 	// Parameter object where we will unmarshal all parameters from the context
-	var params GetMetadataParams
+	var params GetMetadataYearParams
 
 	// ------------- Optional query parameter "filtertotals" -------------
 	if paramValue := r.URL.Query().Get("filtertotals"); paramValue != "" {
@@ -268,7 +277,7 @@ func (siw *ServerInterfaceWrapper) GetMetadata(w http.ResponseWriter, r *http.Re
 	}
 
 	var handler = func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetMetadata(w, r, params)
+		siw.Handler.GetMetadataYear(w, r, year, params)
 	}
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -469,7 +478,7 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/ckmeansratio/{year}", wrapper.GetCkmeansratioYear)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/metadata", wrapper.GetMetadata)
+		r.Get(options.BaseURL+"/metadata/{year}", wrapper.GetMetadataYear)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/query/{year}", wrapper.GetQueryYear)
