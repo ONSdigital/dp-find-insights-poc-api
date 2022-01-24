@@ -3,6 +3,7 @@ package metadata
 import (
 	"context"
 	"encoding/json"
+	"strings"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/api"
 	"github.com/ONSdigital/dp-find-insights-poc-api/model"
@@ -33,7 +34,7 @@ func New(dbs ...*gorm.DB) (*Metadata, error) {
 	return &Metadata{gdb: dbs[0]}, err
 }
 
-func (md *Metadata) Get() (b []byte, err error) {
+func (md *Metadata) Get(filterTotals bool) ([]byte, error) {
 	var topics []model.NomisTopic
 
 	md.gdb.Preload("NomisDescs", func(gdb *gorm.DB) *gorm.DB { return gdb.Order("short_nomis_code") }).Find(&topics)
@@ -53,18 +54,24 @@ func (md *Metadata) Get() (b []byte, err error) {
 		for _, nd = range topic.NomisDescs {
 			md.gdb.Preload("NomisCategories", func(gdb *gorm.DB) *gorm.DB { return gdb.Order("long_nomis_code") }).Find(&nd)
 
-			var cats api.Categories
-			for _, trip := range nd.NomisCategories {
-				cats = append(cats, api.Triplet{Code: spointer(trip.LongNomisCode), Name: spointer(trip.CategoryName), Slug: spointer(slug.Make(trip.CategoryName))})
+			// partially populate table here to allow optional inclusion of Total if filterTotals == true
+			table := api.Table{
+				Name: spointer(nd.Name),
+				Slug: spointer(slug.Make(nd.Name)),
+				Code: spointer(nd.ShortNomisCode),
 			}
 
-			newTabs = append(newTabs,
-				api.Table{
-					Name:       spointer(nd.Name),
-					Slug:       spointer(slug.Make(nd.Name)),
-					Code:       spointer(nd.ShortNomisCode),
-					Categories: &cats,
-				})
+			var cats api.Categories
+			for _, trip := range nd.NomisCategories {
+				cat := api.Triplet{Code: spointer(trip.LongNomisCode), Name: spointer(trip.CategoryName), Slug: spointer(slug.Make(trip.CategoryName))}
+				if filterTotals && isTotalCat(trip.LongNomisCode) {
+					table.Total = &cat
+				} else {
+					cats = append(cats, cat)
+				}
+			}
+			table.Categories = &cats
+			newTabs = append(newTabs, table)
 		}
 
 		mdr = append(mdr, api.Metadata{
@@ -76,7 +83,7 @@ func (md *Metadata) Get() (b []byte, err error) {
 
 	}
 
-	b, err = json.Marshal(&mdr)
+	b, err := json.Marshal(&mdr)
 
 	if err != nil {
 		log.Error(context.Background(), err.Error(), err)
@@ -104,4 +111,8 @@ func (md *Metadata) Checker(ctx context.Context, state *healthcheck.CheckState) 
 	state.Update(healthcheck.StatusOK, "gorm healthy", 0)
 	conn.Close()
 	return nil
+}
+
+func isTotalCat(catName string) bool {
+	return strings.HasSuffix(catName, "0001")
 }

@@ -18,6 +18,11 @@ paths:
         - public
       summary: Get Metadata
       description: Returns simple TopicTable Category Data
+      parameters:
+        - in: query
+          name: filtertotals
+          schema:
+            type: boolean
       responses:
         200:
           description: OK
@@ -369,4 +374,9 @@ components:
           type: string
         categories: 
           $ref: '#/components/schemas/Categories'
+        total:
+          description: |
+            Optional. If filtertotals=true, totals column for each table will be removed from 'categories' array and returned seperately here.
+            Otherwise totals column is included in 'categories' array, and 'total' will not be included in response.
+          $ref: '#/components/schemas/Triplet'
 
