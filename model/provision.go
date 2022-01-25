@@ -118,8 +118,9 @@ func DataPopulate(db *gorm.DB) {
 	// we need this when we import data before FK set up as default value
 	// in "nomis-bulk-to-postgres/add_to_db.py" function "add_meta_tables"
 
+	// suppress error on multiple insert
 	execSQL(db, []string{
-		"INSERT INTO NOMIS_TOPIC (id) VALUES (0)",
+		"INSERT INTO NOMIS_TOPIC (id) VALUES (0) ON CONFLICT (id) DO NOTHING",
 	})
 
 	// populate topic -- top level metadata
