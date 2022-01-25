@@ -1,3 +1,4 @@
+//go:build comptest
 // +build comptest
 
 package metadata
@@ -46,7 +47,7 @@ func TestMetaDataTest(t *testing.T) {
 		md, _ := New(db)
 
 		filterTotals := false
-		b, err := md.Get(filterTotals)
+		b, err := md.Get(2011, filterTotals)
 		if err != nil {
 			t.Error(err)
 		}
@@ -59,7 +60,7 @@ func TestMetaDataTest(t *testing.T) {
 }
 
 func result() string {
-	return `[{"code":"QS1","name":"Population Basics","slug":"population-basics","tables":[{"categories":[{"code":"QS118EW0001","name":"All categories: Dependent children in family","slug":"all-categories-dependent-children-in-family"}],"code":"QS118EW","name":"Families with dependent children","slug":"families-with-dependent-children"}]}]`
+	return `[{"code":"QS1","name":"Population Basics","slug":"population-basics","tables":[{"categories":[{"code":"QS118EW0001","name":"All categories: Dependent children in family","slug":"all-categories-dependent-children-in-family"},{"code":"QS118EW0002","name":"foo blah etc","slug":"foo-blah-etc"}],"code":"QS118EW","name":"Families with dependent children","slug":"families-with-dependent-children"}]}]`
 }
 
 func TestMetaDataFiltertotals(t *testing.T) {
@@ -79,7 +80,7 @@ func TestMetaDataFiltertotals(t *testing.T) {
 		md, _ := New(db)
 
 		filterTotals := true
-		b, err := md.Get(filterTotals)
+		b, err := md.Get(2011, filterTotals)
 		if err != nil {
 			t.Error(err)
 		}
