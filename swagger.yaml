@@ -5,7 +5,7 @@
 openapi: "3.0.0"
 info:
   title: "dp-find-insights-poc-api"
-  description: "Experimental application for developing CI/CD pipeline"
+  description: "Find Insights Geodata API is a service for querying census data/metadata by geography (named geographies or various coordinate-based queries)."
   version: 1.0.0
   license:
     name: "Open Government Licence v3.0"
