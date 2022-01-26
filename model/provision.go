@@ -135,6 +135,7 @@ func DataPopulate(db *gorm.DB) {
 
 	db.Save(&NomisTopic{ID: 100, TopNomisCode: "KS1", Name: "Population Basics"})
 	db.Save(&NomisTopic{ID: 200, TopNomisCode: "KS2", Name: "Origins & Beliefs"})
+	db.Save(&NomisTopic{ID: 400, TopNomisCode: "KS4", Name: "Housing"})
 
 	// XXX DC6 "Population Basics"
 	// FK relationship for topic
