@@ -150,6 +150,7 @@ func DataPopulate(db *gorm.DB) {
 		"UPDATE nomis_desc SET nomis_topic_id=8 WHERE short_nomis_code LIKE 'QS8%'",
 		"UPDATE nomis_desc SET nomis_topic_id=100 WHERE short_nomis_code LIKE 'KS1%'",
 		"UPDATE nomis_desc SET nomis_topic_id=200 WHERE short_nomis_code LIKE 'KS2%'",
+		"UPDATE nomis_desc SET nomis_topic_id=400 WHERE short_nomis_code LIKE 'KS4%'",
 	})
 
 }
