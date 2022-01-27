@@ -1,4 +1,5 @@
 https://www.nomisweb.co.uk/output/census/2011/ks102ew_2011_oa.zip
+https://www.nomisweb.co.uk/output/census/2011/ks103ew_2011_oa.zip
 https://www.nomisweb.co.uk/output/census/2011/ks202ew_2011_oa.zip
 https://www.nomisweb.co.uk/output/census/2011/ks206ew_2011_oa.zip
 https://www.nomisweb.co.uk/output/census/2011/ks207wa_2011_oa.zip
@@ -9,6 +10,7 @@ https://www.nomisweb.co.uk/output/census/2011/qs104ew_2011_oa.zip
 https://www.nomisweb.co.uk/output/census/2011/qs106ew_2011_oa.zip
 https://www.nomisweb.co.uk/output/census/2011/qs112ew_2011_oa.zip
 https://www.nomisweb.co.uk/output/census/2011/qs113ew_2011_oa.zip
+https://www.nomisweb.co.uk/output/census/2011/qs119ew_2011_oa.zip
 https://www.nomisweb.co.uk/output/census/2011/qs201ew_2011_oa.zip
 https://www.nomisweb.co.uk/output/census/2011/qs202ew_2011_oa.zip
 https://www.nomisweb.co.uk/output/census/2011/qs203ew_2011_oa.zip
