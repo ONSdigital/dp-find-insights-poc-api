@@ -27,4 +27,6 @@ jobs:
           go-version: 1.17.3 # ToDo - can you use 'latest' here?
 
       - name: Run Go Component Tests
+        env:
+          POSTGRES_PASSWORD: insights
         run: make test-comptestv
