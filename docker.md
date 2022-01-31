@@ -1,145 +1,253 @@
-# Running API in local docker
+# Docker Stack Goals
 
-You can run a a local instance of the API for development.
-The Go compiler does not need to be installed locally.
+* let front end developers run a local API and database without Go or postgres installed
+* let backend developers work on the API and ingest processes locally
+* minimise differences between the API running locally and in EC2
+* minimise the differences between postgres running locally and in RDS
 
-The docker image is configured to talk to our AWS RDS instance as the backend database.
+# Environment
 
-## Build the image
+Everything is controlled with environment variables.
+You should be able to set a handful of environment variables and treat
+components the same no matter where they are running.
 
-```shell
-make image
-```
+## Variables
 
-You need to rebuild the image if you change any of the Go code in the project.
+The normal postgres variables are used by clients.
+These variables are used if you run utilities like `psql` locally, and when
+you run ingest scripts.
 
-## Decrypt the database password
+These variables are also passed on to containers.
+So when you run the API in a container, it picks up these variables from your
+current environment.
 
-The RDS password is encrypted in `secrets/PGPASSWORD.env.asc`.
-Decrypt this:
+* `PGHOST`
+* `PGPORT`
+* `PGDATABASE`
+* `PGUSER`
+* `PGPASSWORD`
 
-```shell
-cd secrets
-gpg -d PGPASSWORD.env.asc > PGPASSWORD.env
-```
-You need to have the `ons-develop` key in your keychain.
+In addition, `POSTGRES_PASSWORD` holds the postgres superuser password.
+This is used in two ways:
+* The postgis image uses it when initialising a new database.
+* Ingest scripts use it when they need `postgres` credentials.
 
-## Start the container
+Two other variables are used by processes running in containers who want to
+talk to a postgres also running in a container.
+These are necessary because of the way docker does networking.
+* `PGHOST_INTERNAL`
+* `PGPORT_INTERNAL`
 
-In a dedicated terminal:
+Usually `PGHOST_INTERNAL=host.docker.internal` works.
 
-```shell
-make run-api
-```
+## RDS Password
 
-This will leave the container running in the foreground so you can see logs.
+The password for the RDS `insights` user is in `secrets/PGPASSWORD.env.asc`.
 
-To stop the container, hit ^C in the terminal running the container.
+You need to decrypt this file if you are going to point the API at RDS:
 
-## Test
+    cd secrets
+    gpg -d PGPASSWORD.env.asc > PGPASSWORD.env
 
-```shell
-curl http://localhost:12550/health
-```
+Since docker `.env` files look almost like shell scripts, in most cases you
+can do this:
+
+    . secrets/PGPASSWORD.env
+    export PGPASSWORD
+
+## Environment Files
+
+Two example files can be sourced to set environment variables for common cases.
+These are used in the examples below.
+
+* `api-docker.env` -- use when you are using postgis in a container
+* `api-rds.env` -- use when you are talking to RDS
+
+# Building Images and Binaries
+
+You can build the API image without a local Go compiler:
+
+    make image
+
+The image is named `dp-find-insights-poc-api:latest`.
+
+You can also build an API binary to run as a local process.
+This requires a Go compiler.
+
+    make build
+
+The binary is `build/dp-find-insights-poc-api`.
+
+# Running the API
+
+You can run the api as a local process or within a container.
+In both cases they will stay in the foreground so you can see logs.
+
+Hit '^C' to stop.
+
+As a local process:
+
+    . api-rds.env
+    make debug
+
+In a container:
+
+    . api-rds.env
+    docker compose up api
+
+The API listens on port 25252.
+
+If you use `api-docker.env` instead of `api-rds.env`, you can access a local
+postgres instance that has been populated by a dump file or through the
+ingest process.
+
+# Sanity Checking the API
+
+You can run a quick sanity check on the API you just started:
+
+    curl http://localhost:25252/health
+
+    curl http://localhost:25252/metadata/2011
 
 You should get JSON back.
-
-# Running API and Postgres in local docker
-
-You can run a local instance of the API along with a local instance of Postgres (postgis).
-You do not need to install Go or Postgres locally.
-
-## Build the image
-
-As above, remember to build a new image if the Go sources change.
+If you pipe the healthcheck output through `jq` you can clearly see if it is ok.
 
 ```
-make image
+$ curl -s http://localhost:25252/health | jq
+{
+  "status": "OK",
+  "version": {
+    "build_time": "2022-01-28T07:20:58Z",
+    "git_commit": "73f0856c9b8e9d7e2e5dd1dfa00f4f86997d54c7",
+    "language": "go",
+    "language_version": "go1.17.6",
+    "version": ""
+  },
+  "uptime": 49303,
+  "start_time": "2022-01-28T11:46:38.110117Z",
+  "checks": [
+    {
+      "name": "postgres",
+      "status": "OK",
+      "message": "pgx healthy",
+      "last_checked": "2022-01-28T11:47:07.961363Z",
+      "last_success": "2022-01-28T11:47:07.961363Z",
+      "last_failure": null
+    },
+    {
+      "name": "gorm",
+      "status": "OK",
+      "message": "gorm healthy",
+      "last_checked": "2022-01-28T11:47:08.212101Z",
+      "last_success": "2022-01-28T11:47:08.212101Z",
+      "last_failure": null
+    }
+  ]
+}
 ```
 
-## Download data
+# Running postgis in a container
 
-A compressed database dump is held in S3.
-Download the gzip into `docker-entrypoint-initdb.d` and uncompress.
+To start a local database:
 
-```
-cd docker-entrypoint-initdb.d
-aws --profile development --region eu-central-1 s3 cp s3://find-insights-db-dumps/census2i-20220112.sql.gz .
-gunzip census2i-20220112.sql.gz
-```
+    . api-docker.env
+    docker compose up db
 
-The file unzips to >500MB.
+Persistent data is held in `./dbdata`.
+This directory will be created if it doesn't exist.
+Zap this directory when you want to start completey from scratch.
 
-(The files in `docker-entrypoint-initdb.d` are run in alphabetical order.
-There is currently a single sql script that creates the `insight` user, and this must be run before the dump is run.
-So the user script starts with a number so it sorts earlier.)
+When a database is created from scratch, the superuser password is set to the
+current value of `POSTGRES_PASSWORD`.
 
-## Clear postgres data directory
+Postgres will listen on `PGPORT` on the host's locahost interface.
+But it always listens on 5432 internally.
 
-Postgres holds its data files in a persistent volume mounted from `dbdata`.
-This directory will be created the first time docker compose is run.
+# Running psql from a container
 
-If `dbdata` empty when postgres starts up, sql files and shell scripts in `docker-entrypoint-initdb.d` are run.
+You can run `psql` without installing postgres locally with the `psql.sh`
+wrapper.
+This scripts invokes `psql` from within a postgres container with the following
+settings:
 
-If `dbdata` is not empty when postgres starts, postgres will simply start the database as-is.
+* The normal `PG*` variables are passed along to the container
+* `PGHOST_INTERNAL` and `PGPORT_INTERNAL` are used if they are present
+* The current working directory is mapped to /tmp in the container, and the
+  container starts with workdir set to /tmp.
 
-So when you want to setup a database from the dump file, make sure `dbdata` is empty or gone:
+So in most cases you an pass `-f ./file.sql` and it will work right.
 
-```
-rm -rf dbdata
-```
+# Running update-schema from a container
 
-## Start the containers
+You can run `update-schema` against a database without a local Go compiler.
 
-```
-docker compose up
-```
-or
-```
-docker-compose up
-```
+1. Build the update-schema image
 
-It will take several minutes for postgres to import the db dump the first time.
-But subsequent restarts will not have to reload, and postgres will come up right away.
+        make update-schema-image
 
-The API and postgres containers will be left running in the foreground so you can follow logs.
-Hit ^C to stop both containers.
+2. Setup environment
 
-## Test
+        . api-docker.env
 
-Run a test query and watch the container logs:
+3. Run the update-schema image
 
-```
-curl --include http://localhost:12550/dev/hello/census?rows=K04000001\&cols=geography_code,geotype,QS208EW0001
-```
+        make run-update-schema
 
-## psql
+# Importing a DB dump
 
-You can use psql to connect to the containserised postgres.
-If you are using `docker compose`, you can do this:
+You can set up a local database with a dump taken from another database.
+This is a "quick" way to setup a local stack for front end development.
 
-```
-docker exec -it dp-find-insights-poc-api-db-1 psql -U postgres
-```
+1. Download the dump file
 
-If you are using `docker-compose`, you can do this:
+    A compressed database dump is held in S3.
+    Download the gzip and uncompress.
 
-```
-docker exec -it dp-find-insights-poc-api_db_1 psql -U postgres
-```
+        aws --profile development --region eu-central-1 s3 cp s3://find-insights-db-dumps/census-20220118.sql.gz .
+        gunzip census-20220118.sql.gz
 
-(Looks like `docker-compose` will use underscores in some places where `docker compose` uses dashes.)
+    The file unzips to >500MB.
 
-## Update Schema
+2. Shutdown any locally running postgres and remove the `./dbdata` directory
 
-The `update-schema` Makefile target runs Go code to handle database schema migrations.
-This should be run against your local containerised postgres instance whenever there are schema changes.
+3. Set up the environment
 
-You can run this without a local Go compiler by building an image with the required binaries:
+        . api-docker.env
 
-    make update-schema-image
+4. Start postgis
 
-And then run it against your local postgres instance.
-Your local postgres instance must be up for this to work.
+        docker compose up db
 
-    make run-update-schema
+5. In another terminal, create the `insights` user and `census` database
+
+        . api-docker.env
+        PGPASSWORD=$POSTGRES_PASSWORD ./psql.sh --dbname postgres -U postgres -f sql/pre-restore.sql
+
+6. Import the dump
+
+    Run the restore as the superuser because object ownership is set within
+    the dump file.
+
+        PGPASSWORD=$POSTGRES_PASSWORD ./psql.sh -U postgres -f census-20220118.sql
+
+Smoke test the database by starting an API and running the sanity tests.
+
+# Running the ingest processes
+
+The full ingest process can be run against a local postgis instance.
+
+
+1. Shutdown any locally running postgres and remove the `./dbdata` directory
+
+2. Set up the environment
+
+        . api-docker.env
+
+3. Start postgis
+
+        docker compose up db
+
+4. Follow the normal [dataingest](dataingest/README.md) instructions.
+
+Once the database is imported, you should be able start an API container or
+local API process using the same environment variables.

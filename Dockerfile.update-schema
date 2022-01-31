@@ -12,8 +12,9 @@ RUN go get -d -v ./...
 
 ENV PGHOST=db
 ENV PGPORT=5432
-ENV PGDATABASE=postgres
+ENV PGDATABASE=census
 ENV PGUSER=insights
 ENV PGPASSWORD=insights
+ENV POSTGRES_PASSWORD=mylocalsecret
 
 CMD ["make", "update-schema"]

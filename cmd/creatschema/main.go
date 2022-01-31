@@ -63,12 +63,12 @@ func main() {
 		log.Print("'pg_dump' not detected in PATH not doing schema dumps")
 	}
 
+	model.SetupUpdateDB(dsn)
+
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Print(err)
 	}
-
-	model.SetupUpdateDB(dsn)
 
 	if haveDump {
 		ndump, _ := pgDump()

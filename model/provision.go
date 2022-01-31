@@ -3,6 +3,7 @@ package model
 import (
 	"fmt"
 	"log"
+	"os"
 	"regexp"
 
 	"gorm.io/driver/postgres"
@@ -16,10 +17,10 @@ import (
 // It's OK to call this more than once on the same DB
 func SetupUpdateDB(dsn string) {
 
-	_, pw, host, port, db := ParseDSN(dsn)
+	_, _, host, port, db := ParseDSN(dsn)
 
 	{
-		gdb, err := gorm.Open(postgres.Open(CreatDSN("postgres", pw, host, port, "postgres")), &gorm.Config{})
+		gdb, err := gorm.Open(postgres.Open(CreatDSN("postgres", os.Getenv("POSTGRES_PASSWORD"), host, port, "postgres")), &gorm.Config{})
 		if err != nil {
 			log.Print(err)
 		}
@@ -31,7 +32,7 @@ func SetupUpdateDB(dsn string) {
 	}
 
 	{
-		gdb, err := gorm.Open(postgres.Open(CreatDSN("postgres", pw, host, port, db)), &gorm.Config{})
+		gdb, err := gorm.Open(postgres.Open(CreatDSN("postgres", os.Getenv("POSTGRES_PASSWORD"), host, port, db)), &gorm.Config{})
 		if err != nil {
 			log.Print(err)
 		}
@@ -62,10 +63,10 @@ func SetupUpdateDB(dsn string) {
 // special case for use in comptests - only setup db if it has not already been set up. This is safe to call multiple times against the same db.
 func SetupDBOnceOnly(dsn string) {
 	// assume if censustest db exists, the work is done
-	_, pw, host, port, _ := ParseDSN(dsn)
+	_, _, host, port, _ := ParseDSN(dsn)
 
 	{
-		db, err := gorm.Open(postgres.Open(CreatDSN("postgres", pw, host, port, "postgres")), &gorm.Config{})
+		db, err := gorm.Open(postgres.Open(CreatDSN("postgres", os.Getenv("POSTGRES_PASSWORD"), host, port, "postgres")), &gorm.Config{})
 		if err != nil {
 			log.Print(err)
 		}

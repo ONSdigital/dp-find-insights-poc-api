@@ -118,20 +118,20 @@ check-generate: generate	## check no manual commits to auto-generated files on a
 image:	## create docker image for local api
 	docker build -t dp-find-insights-poc-api -f Dockerfile.api .
 
-.PHONY: run-image
-run-api:	## run api in local docker
-	docker run \
-		-it \
-		--rm \
-		--publish 127.0.0.1:12550:12550 \
-		--env-file secrets/PGPASSWORD.env \
-		--name dp-find-insights-poc-api \
-		dp-find-insights-poc-api
-
 .PHONY: update-schema-image
 update-schema-image:	## build the update-schema image
 	docker build -t update-schema -f Dockerfile.update-schema .
 
 .PHONY: run-update-schema
 run-update-schema:	## run update-schema in a local container
-	docker run -it --rm --network dp-find-insights-poc-api_default update-schema
+	docker run \
+		-it \
+		--env PGHOST="$${PGHOST_INTERNAL:-$$PGHOST}" \
+		--env PGPORT="$${PGPORT_INTERNAL:-$$PGPORT}" \
+		--env PGDATABASE \
+		--env PGUSER \
+		--env PGPASSWORD \
+		--env POSTGRES_PASSWORD \
+		--rm \
+		update-schema
+

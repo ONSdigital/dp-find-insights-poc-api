@@ -18,6 +18,12 @@ PGPASSWORD=insights
 PGHOST=localhost
 PGPORT=5432
 PGDATABASE=census
+POSTGRES_PASSWORD=superuser-passwd
+```
+
+```
+PGHOST_INTERNAL=host.docker.internal
+PGPORT_INTERNAL=5432
 ```
 
 Confirm with 
@@ -102,9 +108,19 @@ $ go run .
 ```
 $ cd ../spatial
 $ aws --region eu-central-1 s3 sync s3://find-insights-input-data-files/geojson/ .
-$ ./import.sh linux-localhost
-
 ```
+
+On linux:
+```
+$ ./import.sh
+```
+
+On mac:
+```
+$ /usr/local/bin/bash import.sh
+```
+(`/bin/bash` on mac is too old, so use `brew install bash` or equivalent to get a bash 4+.)
+
 * Populate geo.wkb_long_lat_geom with long, lat POINT
 
 ```

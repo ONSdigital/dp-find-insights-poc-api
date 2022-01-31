@@ -6,22 +6,33 @@ services:
       dockerfile: Dockerfile.api
       context: .
     image: dp-find-insights-poc-api:latest
+
+    # These defaults are for the local container postgres.
+    # To use a different postgres instance, either set PG
+    # environment variables before running compose, or
+    # create docker-compose.override.yml.
     environment:
-      - PGHOST=db
-      - PGPORT=5432
-      - PGDATABASE=postgres
-      - PGPASSWORD=insights
+      PGHOST: ${PGHOST_INTERNAL:-$PGHOST}
+      PGPORT: ${PGPORT_INTERNAL:-$PGPORT}
+      PGDATABASE: ${PGDATABASE:-census}
+      PGUSER: ${PGUSER:-insights}
+      PGPASSWORD: ${PGPASSWORD:-insights}
+
+    # We started using port 25252 before we claimed the
+    # 'official' 12550.
+    # Additional ports can be specified in a docker-compose.override.yml
+    # file.
+    # Explicit localhost here.
     ports:
-      - "12550:12550"
-    env_file:
-      - secrets/PGPASSWORD.env
+      - "127.0.0.1:25252:12550"
 
   db:
     image: postgis/postgis
     environment:
-      POSTGRES_PASSWORD: mylocalsecret
+      # This is the initial postgres user password.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mylocalsecret}
     ports:
-      - "5432:5432"
+      - "127.0.0.1:${PGPORT:-5432}:5432"
     volumes:
       - "./dbdata:/var/lib/postgresql/data"
-      - "./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d"
+      - "./docker-entrypoint-initdb:/docker-entrypoint-initdb.d"
