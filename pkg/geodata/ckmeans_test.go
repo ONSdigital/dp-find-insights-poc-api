@@ -1,3 +1,4 @@
+//go:build comptest
 // +build comptest
 
 package geodata
@@ -71,6 +72,7 @@ func TestCkmeansHappyPath(t *testing.T) {
 
 		result, err := app.CKmeans(
 			context.Background(),
+			2011,
 			testCat,
 			testGeotype,
 			testK,
@@ -125,6 +127,7 @@ func TestCkmeansNoData(t *testing.T) {
 
 		result, err := app.CKmeans(
 			context.Background(),
+			2011,
 			testCat,
 			testGeotype,
 			testK,
@@ -215,6 +218,7 @@ func TestCkmeansRatiosHappyPath(t *testing.T) {
 
 		result, err := app.CKmeansRatio(
 			context.Background(),
+			2011,
 			testCat1,
 			testCat2,
 			testGeotype,
@@ -298,6 +302,7 @@ func TestCkmeansRatiosPartialDataOneCategoryMissing(t *testing.T) {
 
 		result, err := app.CKmeansRatio(
 			context.Background(),
+			2011,
 			testCat1,
 			testCat2,
 			testGeotype,
@@ -393,6 +398,7 @@ func TestCkmeansRatiosPartialDataOneCategoryPartialDataOnly(t *testing.T) {
 
 		result, err := app.CKmeansRatio(
 			context.Background(),
+			2011,
 			testCat1,
 			testCat2,
 			testGeotype,
@@ -446,6 +452,7 @@ func TestCkmeansRatiosNoData(t *testing.T) {
 
 		result, err := app.CKmeansRatio(
 			context.Background(),
+			2011,
 			testCat1,
 			testCat2,
 			testGeotype,

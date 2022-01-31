@@ -40,7 +40,7 @@ func SetupDockerDB(dsn string) {
 			time.Sleep(time.Second)
 			_, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 			if err == nil {
-				log.Println("connected")
+				log.Printf("connected to %s", dsn)
 				break
 			}
 			log.Println("polling for started docker...")

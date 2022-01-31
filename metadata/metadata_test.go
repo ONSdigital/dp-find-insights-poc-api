@@ -1,3 +1,4 @@
+//go:build comptest
 // +build comptest
 
 package metadata
@@ -37,16 +38,16 @@ func TestMetaDataTest(t *testing.T) {
 		defer tx.Rollback()
 
 		// this is prepopulated so make the result much smaller!
-		db.Exec("DELETE FROM nomis_topic WHERE id>1")
+		tx.Exec("DELETE FROM nomis_topic WHERE id>1")
 
-		db.Exec("INSERT INTO NOMIS_DESC (id,name,pop_stat,short_nomis_code,year,nomis_topic_id) VALUES (15,'Families with dependent children','All families in households; All dependent children in households','QS118EW',2011,1)")
+		tx.Exec("INSERT INTO NOMIS_DESC (id,name,pop_stat,short_nomis_code,year,nomis_topic_id) VALUES (15,'Families with dependent children','All families in households; All dependent children in households','QS118EW',2011,1)")
 
-		db.Exec("INSERT INTO NOMIS_CATEGORY (id,nomis_desc_id,category_name,measurement_unit,stat_unit,long_nomis_code,year) VALUES (211,15,'All categories: Dependent children in family','Count','Family','QS118EW0001',2011)")
+		tx.Exec("INSERT INTO NOMIS_CATEGORY (id,nomis_desc_id,category_name,measurement_unit,stat_unit,long_nomis_code,year) VALUES (211,15,'All categories: Dependent children in family','Count','Family','QS118EW0001',2011)")
 
-		md, _ := New(db)
+		md, _ := New(tx)
 
 		filterTotals := false
-		b, err := md.Get(filterTotals)
+		b, err := md.Get(2011, filterTotals)
 		if err != nil {
 			t.Error(err)
 		}
@@ -69,17 +70,17 @@ func TestMetaDataFiltertotals(t *testing.T) {
 		defer tx.Rollback()
 
 		// this is prepopulated so make the result much smaller!
-		db.Exec("DELETE FROM nomis_topic WHERE id>1")
+		tx.Exec("DELETE FROM nomis_topic WHERE id>1")
 
-		db.Exec("INSERT INTO NOMIS_DESC (id,name,pop_stat,short_nomis_code,year,nomis_topic_id) VALUES (15,'Families with dependent children','All families in households; All dependent children in households','QS118EW',2011,1)")
+		tx.Exec("INSERT INTO NOMIS_DESC (id,name,pop_stat,short_nomis_code,year,nomis_topic_id) VALUES (15,'Families with dependent children','All families in households; All dependent children in households','QS118EW',2011,1)")
 
-		db.Exec("INSERT INTO NOMIS_CATEGORY (id,nomis_desc_id,category_name,measurement_unit,stat_unit,long_nomis_code,year) VALUES (211,15,'All categories: Dependent children in family','Count','Family','QS118EW0001',2011)")
-		db.Exec("INSERT INTO NOMIS_CATEGORY (id,nomis_desc_id,category_name,measurement_unit,stat_unit,long_nomis_code,year) VALUES (212,15,'foo blah etc','Count','Family','QS118EW0002',2011)")
+		tx.Exec("INSERT INTO NOMIS_CATEGORY (id,nomis_desc_id,category_name,measurement_unit,stat_unit,long_nomis_code,year) VALUES (211,15,'All categories: Dependent children in family','Count','Family','QS118EW0001',2011)")
+		tx.Exec("INSERT INTO NOMIS_CATEGORY (id,nomis_desc_id,category_name,measurement_unit,stat_unit,long_nomis_code,year) VALUES (212,15,'foo blah etc','Count','Family','QS118EW0002',2011)")
 
-		md, _ := New(db)
+		md, _ := New(tx)
 
 		filterTotals := true
-		b, err := md.Get(filterTotals)
+		b, err := md.Get(2011, filterTotals)
 		if err != nil {
 			t.Error(err)
 		}

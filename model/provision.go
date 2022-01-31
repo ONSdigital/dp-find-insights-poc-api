@@ -119,8 +119,9 @@ func DataPopulate(db *gorm.DB) {
 	// we need this when we import data before FK set up as default value
 	// in "nomis-bulk-to-postgres/add_to_db.py" function "add_meta_tables"
 
+	// suppress error on multiple insert
 	execSQL(db, []string{
-		"INSERT INTO NOMIS_TOPIC (id) VALUES (0)",
+		"INSERT INTO NOMIS_TOPIC (id) VALUES (0) ON CONFLICT (id) DO NOTHING",
 	})
 
 	// populate topic -- top level metadata
@@ -135,6 +136,7 @@ func DataPopulate(db *gorm.DB) {
 
 	db.Save(&NomisTopic{ID: 100, TopNomisCode: "KS1", Name: "Population Basics"})
 	db.Save(&NomisTopic{ID: 200, TopNomisCode: "KS2", Name: "Origins & Beliefs"})
+	db.Save(&NomisTopic{ID: 400, TopNomisCode: "KS4", Name: "Housing"})
 
 	// XXX DC6 "Population Basics"
 	// FK relationship for topic
@@ -150,6 +152,7 @@ func DataPopulate(db *gorm.DB) {
 		"UPDATE nomis_desc SET nomis_topic_id=8 WHERE short_nomis_code LIKE 'QS8%'",
 		"UPDATE nomis_desc SET nomis_topic_id=100 WHERE short_nomis_code LIKE 'KS1%'",
 		"UPDATE nomis_desc SET nomis_topic_id=200 WHERE short_nomis_code LIKE 'KS2%'",
+		"UPDATE nomis_desc SET nomis_topic_id=400 WHERE short_nomis_code LIKE 'KS4%'",
 	})
 
 }
