@@ -60,7 +60,7 @@ func main() {
 		}
 		tf.WriteString(odump)
 	} else {
-		log.Print("'pg_dump' not detected in PATH not doing schema dumps")
+		log.Print("not doing schema dumps: 'pg_dump' not detected in PATH or no 'insights' user yet")
 	}
 
 	model.SetupUpdateDB(dsn)

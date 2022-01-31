@@ -3,6 +3,7 @@ package comptests
 import (
 	"log"
 	"net"
+	"os"
 	"os/exec"
 	"time"
 
@@ -16,9 +17,10 @@ const DefaultDSN = "postgres://insights:insights@localhost:54322/censustest"
 func SetupDockerDB(dsn string) {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
-	user, pw, host, port, db := model.ParseDSN(dsn)
-	user = "postgres"
-	db = "postgres"
+	_, _, host, port, _ := model.ParseDSN(dsn)
+	user := "postgres"
+	db := "postgres"
+	pw := os.Getenv("POSTGRES_PASSWORD")
 	dsn = model.CreatDSN(user, pw, host, port, db)
 
 	// is docker postgres+postgis running?
@@ -27,7 +29,7 @@ func SetupDockerDB(dsn string) {
 		log.Println("starting postgres docker")
 
 		go func() {
-			cmd := exec.Command("docker", "run", "--rm", "--name", "postgis", "--publish", port+":5432", "-e", "POSTGRES_PASSWORD=insights", "postgis/postgis")
+			cmd := exec.Command("docker", "run", "--rm", "--name", "postgis", "--publish", port+":5432", "-e", "POSTGRES_PASSWORD="+pw, "postgis/postgis")
 			if err := cmd.Run(); err != nil {
 				log.Fatalf("is docker installed and running? %v", err)
 			}
