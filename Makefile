@@ -57,15 +57,15 @@ test-datasanity:	## this needs a DB and postgres env vars set
 
 .PHONY: test-comptest
 test-comptest:	## this provisions a docker DB automatically
-	go test -count=1 ./...  -tags=comptest
+	go test -p 1 -count=1 ./...  -tags=comptest
 
 .PHONY: test-comptestv
 test-comptestv:	## this provisions a docker DB automatically
-	go test -v -count=1 ./...  -tags=comptest
+	go test -v -p 1 -count=1 ./...  -tags=comptest
 
 .PHONY: test-comptest-kill
 test-comptest-kill:	## this provisions a docker DB automatically & kills it
-	go test -count=1 ./...  -tags=comptest -args -kill=true
+	go test -p 1 -count=1 ./...  -tags=comptest -args -kill=true
 
 .PHONY: convey
 convey:	## run goconvey
