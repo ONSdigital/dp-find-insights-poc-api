@@ -22,7 +22,7 @@ func SetupUpdateDB(dsn string) {
 	{
 		gdb, err := gorm.Open(postgres.Open(CreatDSN("postgres", os.Getenv("POSTGRES_PASSWORD"), host, port, "postgres")), &gorm.Config{})
 		if err != nil {
-			log.Print(err)
+			log.Fatal(err)
 		}
 
 		execSQL(gdb, []string{
@@ -34,7 +34,7 @@ func SetupUpdateDB(dsn string) {
 	{
 		gdb, err := gorm.Open(postgres.Open(CreatDSN("postgres", os.Getenv("POSTGRES_PASSWORD"), host, port, db)), &gorm.Config{})
 		if err != nil {
-			log.Print(err)
+			log.Fatal(err)
 		}
 
 		execSQL(gdb, []string{"CREATE EXTENSION IF NOT EXISTS postgis"})
@@ -46,7 +46,7 @@ func SetupUpdateDB(dsn string) {
 		})
 
 		if err != nil {
-			log.Print(err)
+			log.Fatal(err)
 		}
 
 		Migrate(gdb)
@@ -68,7 +68,7 @@ func SetupDBOnceOnly(dsn string) {
 	{
 		db, err := gorm.Open(postgres.Open(CreatDSN("postgres", os.Getenv("POSTGRES_PASSWORD"), host, port, "postgres")), &gorm.Config{})
 		if err != nil {
-			log.Print(err)
+			log.Fatal(err)
 		}
 
 		// check if db exists already, return if so
@@ -102,7 +102,7 @@ func Migrate(db *gorm.DB) {
 		&GeoMetric{},
 		&YearMapping{},
 	); err != nil {
-		log.Print(err)
+		log.Fatal(err)
 	}
 
 	execSQL(db, []string{
