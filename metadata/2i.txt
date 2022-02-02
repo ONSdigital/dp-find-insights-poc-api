@@ -18,6 +18,7 @@ https://www.nomisweb.co.uk/output/census/2011/qs208ew_2011_oa.zip
 https://www.nomisweb.co.uk/output/census/2011/qs301ew_2011_oa.zip
 https://www.nomisweb.co.uk/output/census/2011/qs302ew_2011_oa.zip
 https://www.nomisweb.co.uk/output/census/2011/qs303ew_2011_oa.zip
+https://www.nomisweb.co.uk/output/census/2011/qs402ew_2011_oa.zip
 https://www.nomisweb.co.uk/output/census/2011/qs406ew_2011_oa.zip
 https://www.nomisweb.co.uk/output/census/2011/qs411ew_2011_oa.zip
 https://www.nomisweb.co.uk/output/census/2011/qs415ew_2011_oa.zip
