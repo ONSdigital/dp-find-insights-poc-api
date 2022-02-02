@@ -5,13 +5,64 @@
 * minimise differences between the API running locally and in EC2
 * minimise the differences between postgres running locally and in RDS
 
-# Environment
+# Table of Contents
+
+* [Quick Starts](#quick-starts)
+  * [Local API + Live DB](#local-api-live-db)
+  * [Local API + Local DB](#local-api-local-db)
+* [Environment](#environment)
+  * [Variables](#environment-variables)
+  * [RDS Password](#environment-rds-password)
+  * [Environment Files](#environment-files)
+* [Building Images and Binaries](#building-images-and-binaries)
+* [Running the API](#running-the-api)
+* [Sanity checking the API](#sanity-checking-the-api)
+* [Running postgis in a container](#running-postgis-in-a-container)
+* [Running psql from a container](#running-psql-from-a-container)
+* [Running update-schema from a container](#running-update-schema-from-a-container)
+* [Importing a DB dump](#importing-a-db-dump)
+* [Running the ingest process](#running-the-ingest-process)
+
+# <a id="quick-starts"></a> Quick Starts #
+
+## <a id="local-api-live-db"></a> Local API + Live DB ##
+
+To run a local API in a container against the live RDS database, do this:
+
+    make image
+    . api-rds.env
+    docker compose up api
+
+Test the API is running by going to [swaggerui](http://localhost:25252/swaggerui).
+
+You can point your client to http://localhost:25252.
+
+See also [Running the API](#running-the-api) and [Sanity checking the API](#sanity-checking-the-api).
+
+## <a id="local-api-local-db"></a> Local API + Local DB ##
+
+The easiest way to get a local database up and running is to follow the steps in [Importing a DB dump](#importing-a-db-dump).
+
+Alternatively, you could run the full ingest at [Running the ingest process](#running-the-ingest-process).
+
+Either way, you will end up with a local db.
+
+Now bring up an API against your local db:
+
+    make image
+    . api-docker.env
+    docker compose up
+
+If all went well, you should be able to point your client at http://localhost:25252.
+Everything is local, no need for RDS.
+
+# <a id="environment"></a> Environment #
 
 Everything is controlled with environment variables.
 You should be able to set a handful of environment variables and treat
 components the same no matter where they are running.
 
-## Variables
+## <a id="environment-variables"></a> Variables ##
 
 The normal postgres variables are used by clients.
 These variables are used if you run utilities like `psql` locally, and when
@@ -21,26 +72,30 @@ These variables are also passed on to containers.
 So when you run the API in a container, it picks up these variables from your
 current environment.
 
-* `PGHOST`
-* `PGPORT`
-* `PGDATABASE`
-* `PGUSER`
-* `PGPASSWORD`
+Environment Variable | Description
+--|--
+`PGHOST` | database hostname used by processes running outside containers
+`PGHOST_INTERNAL` | database hostname used by processes running inside containers (defaults to `PGHOST`)
+`PGPORT` | database port used by processes running outside containers
+`PGPORT_INTERNAL` | database port used by processes running inside containers (defaults to `PGPORT`)
+`PGDATABASE` | name of the database holding census tables
+`PGUSER` | name of the database user owning census tables
+`PGPASSWORD` | password of `PGUSER`
+`POSTGRES_PASSWORD` | the postgres superuser (`postgres`) password 
 
-In addition, `POSTGRES_PASSWORD` holds the postgres superuser password.
-This is used in two ways:
+`POSTGRES_PASSWORD` is used in two ways:
 * The postgis image uses it when initialising a new database.
 * Ingest scripts use it when they need `postgres` credentials.
 
-Two other variables are used by processes running in containers who want to
-talk to a postgres also running in a container.
-These are necessary because of the way docker does networking.
-* `PGHOST_INTERNAL`
-* `PGPORT_INTERNAL`
+`PGHOST_INTERNAL` and `PGPORT_INTERNAL` are used when you need database processes that run in containers to use a different host and port than processes running outside containers.
 
-Usually `PGHOST_INTERNAL=host.docker.internal` works.
+A specific use case for `PGHOST_INTERNAL` and `PGPORT_INTERNAL` is when you have a database running in one container, and the API is running in another.
+If you set `PGHOST=localhost` so that `psql` works, then the API will not work because the container's idea of `localhost` is not the same as that of a process runninig outside the container.
+So you set `PGHOST_INTERNAL=host.docker.internal` to cause in-container database clients to use a hostname that will reach the database.
 
-## RDS Password
+In other cases you may want to set `PGHOST_INTERNAL=db`, for example, if you are running the API and database from a docker compose setup.
+
+## <a id="environment-rds-password"></a> RDS Password ##
 
 The password for the RDS `insights` user is in `secrets/PGPASSWORD.env.asc`.
 
@@ -55,7 +110,7 @@ can do this:
     . secrets/PGPASSWORD.env
     export PGPASSWORD
 
-## Environment Files
+## <a id="environment-files"></a> Environment Files ##
 
 Two example files can be sourced to set environment variables for common cases.
 These are used in the examples below.
@@ -63,7 +118,7 @@ These are used in the examples below.
 * `api-docker.env` -- use when you are using postgis in a container
 * `api-rds.env` -- use when you are talking to RDS
 
-# Building Images and Binaries
+# <a id="building-images-and-binaries"></a> Building Images and Binaries #
 
 You can build the API image without a local Go compiler:
 
@@ -78,7 +133,7 @@ This requires a Go compiler.
 
 The binary is `build/dp-find-insights-poc-api`.
 
-# Running the API
+# <a id="running-the-api"></a> Running the API #
 
 You can run the api as a local process or within a container.
 In both cases they will stay in the foreground so you can see logs.
@@ -92,6 +147,7 @@ As a local process:
 
 In a container:
 
+    make image
     . api-rds.env
     docker compose up api
 
@@ -101,7 +157,7 @@ If you use `api-docker.env` instead of `api-rds.env`, you can access a local
 postgres instance that has been populated by a dump file or through the
 ingest process.
 
-# Sanity Checking the API
+# <a id="sanity-checking-the-api"></a> Sanity Checking the API #
 
 You can run a quick sanity check on the API you just started:
 
@@ -146,7 +202,7 @@ $ curl -s http://localhost:25252/health | jq
 }
 ```
 
-# Running postgis in a container
+# <a id="running-postgis-in-a-container"></a> Running postgis in a container #
 
 To start a local database:
 
@@ -163,7 +219,7 @@ current value of `POSTGRES_PASSWORD`.
 Postgres will listen on `PGPORT` on the host's locahost interface.
 But it always listens on 5432 internally.
 
-# Running psql from a container
+# <a id="running-psql-from-a-container"></a> Running psql from a container #
 
 You can run `psql` without installing postgres locally with the `psql.sh`
 wrapper.
@@ -177,7 +233,7 @@ settings:
 
 So in most cases you an pass `-f ./file.sql` and it will work right.
 
-# Running update-schema from a container
+# <a id="running-update-schema-from-a-container"></a> Running update-schema from a container #
 
 You can run `update-schema` against a database without a local Go compiler.
 
@@ -193,7 +249,7 @@ You can run `update-schema` against a database without a local Go compiler.
 
         make run-update-schema
 
-# Importing a DB dump
+# <a id="importing-a-db-dump"></a> Importing a DB dump #
 
 You can set up a local database with a dump taken from another database.
 This is a "quick" way to setup a local stack for front end development.
@@ -232,7 +288,7 @@ This is a "quick" way to setup a local stack for front end development.
 
 Smoke test the database by starting an API and running the sanity tests.
 
-# Running the ingest processes
+# <a id="running-the-ingest-process"></a> Running the ingest processes #
 
 The full ingest process can be run against a local postgis instance.
 
