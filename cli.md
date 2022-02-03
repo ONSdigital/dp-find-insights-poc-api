@@ -1,33 +1,47 @@
-## CLI
+# geodata CLI
 
-To use the cli, you need to set the following environment variables, and provide `--dataset` on the command line.
-`--rows` and `--cols` are optional:
+The `geodata` cli is a thin layer over the `geodata` and `metadata` packages.
+It does everything the API does, but takes query parameters on the command line instead of through an http interface, and exits after printing results. It works against a census database like curl works against the API.
 
-| Environment Variable | Example Value |
-|---|---|
-| `AWS_REGION` | `eu-central-1` |
-| `PGHOST` | `fi-database-1.cbhpmcuqy9vo.eu-central-1.rds.amazonaws.com` |
-| `PGPORT` | `54322` |
-| `PGUSER` | `insights` |
-| `PASSWORD` | the insights password |
-| `PGDATABASE` | `insights` |
+The cli can be used to test the `geodata` and `metadata` packages without building and firing up an API somewhere.
+Results are printed exactly as they are returned from the library functions.
+
+To use the cli, you must set the standard postgres environment variables to point to your target database.
+The files `api-rds.env` and `api-docker.env` are good starting points.
 
 To build the cli:
 
-```
-$ make build-cli
-```
+    $ make build-cli
 
 And it ends up as `build/geodata`
 
-So you can do this:
+So you can do this, for example:
 
-```
-$ build/geodata --dataset atlas2011.qs119ew
-```
+    $ build/geodata metadata -year 2011
 
-Or:
+cli subcommands access different methods within the `geodata` and `metadata` packages.
+subcommand arguments more or less correspond to method arguments.
 
-```
-$ build/geodata --dataset atlas2011.qs119ew --rows geography_code:E01000001 --cols geography_code
-```
+subcommand | method
+--|--
+`ckmeans` | `geodata.CKmeans`
+`ckmeansratio` | `geodata.CKmeansRatio`
+`metadata` | `metadata.Get`
+`query` | `geodata.Query`
+
+You can get help for each subcommand with `-h`, eg:
+
+    $ build/geodata query -h
+    
+## Examples
+
+    $ geodata query -year 2011 \
+        -rows K04000001 \
+        -cols geography_code,geotype,QS208EW0001
+
+    $ geodata ckmeans -year 2011 -cat QS101EW0001 -geotype LSOA -k 5
+
+    $ geodata ckmeansratio -year 2011 \
+        -cat1 QS101EW0002 -cat2 QS101EW0001 \
+        -geotype LSOA \
+        -k 5
