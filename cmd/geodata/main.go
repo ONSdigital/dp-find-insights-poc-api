@@ -8,14 +8,17 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/ONSdigital/dp-find-insights-poc-api/metadata"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/database"
 	geodata "github.com/ONSdigital/dp-find-insights-poc-api/pkg/geodata"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 func main() {
 	maxmetrics := flag.Int("maxmetrics", 0, "max number of rows to accept from db query (default 0 means no limit)")
 	flag.Usage = func() {
-		fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s [command-options] query|ckmeans|ckmeansratio [subcommand-options]\n", filepath.Base(os.Args[0]))
+		fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s [command-options] query|ckmeans|ckmeansratio|metadata [subcommand-options]\n", filepath.Base(os.Args[0]))
 		flag.PrintDefaults()
 	}
 	flag.Parse()
@@ -29,8 +32,16 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-
 	app, err := geodata.New(db, *maxmetrics)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	gdb, err := gorm.Open(postgres.Open(database.GetDSN()), &gorm.Config{})
+	if err != nil {
+		log.Fatalln(err)
+	}
+	md, err := metadata.New(gdb)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -43,6 +54,8 @@ func main() {
 		ckmeans(ctx, app, flag.Args()[1:])
 	case "ckmeansratio":
 		ckmeansratio(ctx, app, flag.Args()[1:])
+	case "metadata":
+		mdquery(ctx, md, flag.Args()[1:])
 	default:
 		flag.Usage()
 		os.Exit(2)
@@ -108,5 +121,21 @@ func ckmeansratio(ctx context.Context, app *geodata.Geodata, argv []string) {
 	}
 	for _, breakpoint := range breaks {
 		fmt.Printf("%0.13g\n", breakpoint)
+	}
+}
+
+func mdquery(ctx context.Context, md *metadata.Metadata, argv []string) {
+	flagset := flag.NewFlagSet("metadata", flag.ExitOnError)
+
+	year := flagset.Int("year", 2011, "census year")
+	filtertotals := flagset.Bool("filtertotals", false, "include totals")
+	flagset.Parse(argv)
+
+	result, err := md.Get(*year, *filtertotals)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	if _, err = os.Stdout.Write(result); err != nil {
+		log.Fatalln(err)
 	}
 }
