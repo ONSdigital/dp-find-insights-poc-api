@@ -337,8 +337,11 @@ func (di *dataIngest) popTopics() {
 	di.gdb.Save(&model.NomisTopic{ID: 400, TopNomisCode: "KS4", Name: "Housing"})
 }
 
-func main() {
+func (di *dataIngest) putVersion() {
+	di.gdb.Save(&model.DataVer{ID: 1, CensusYear: 2011, VerString: "2.2", Public: true, Source: "Nomis Bulk API", Notes: "20220204 2i using go addtodb"})
+}
 
+func main() {
 	t0 := time.Now()
 
 	di := New("2011") // XXX
@@ -348,7 +351,7 @@ func main() {
 	di.addMetaTables()
 	longToCatid := di.addDiscTables()
 	di.addDataTables(longToCatid)
+	di.putVersion()
 
 	fmt.Printf("%#v\n", time.Since(t0).Seconds())
-
 }
