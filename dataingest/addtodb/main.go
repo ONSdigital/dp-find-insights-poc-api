@@ -14,7 +14,6 @@ import (
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/model"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/database"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/jackc/pgx/v4"
 	"github.com/jszwec/csvutil"
 	"github.com/spf13/cast"
@@ -107,7 +106,6 @@ func (di *dataIngest) addDiscTables() map[string]int32 {
 
 	m := make(map[string]int32)
 	for _, fn := range di.files.desc {
-		spew.Dump(fn)
 		f, err := os.Open(fn)
 		if err != nil {
 			log.Print(err)
@@ -133,8 +131,6 @@ func (di *dataIngest) addDiscTables() map[string]int32 {
 
 			longNomisCode := dt.ColumnVariableCode
 			shortNomisCode := longNomisCode[0:7]
-
-			spew.Dump(longNomisCode)
 
 			var desc model.NomisDesc
 			// should be unique! XXX
@@ -286,7 +282,7 @@ func (di *dataIngest) addMetaTables() {
 		*/
 
 		// skip some duff data in Nomis Bulk 2011
-		if m["DatasetTitle"] != "Cyfradd" && di.dataVer == "2011" {
+		if m["DatasetTitle"] != "Cyfradd" && m["DatasetTitle"] == "Pellter teithio i'r gwaith " && m["DatasetTitle"] != "" && di.dataVer == "2011" {
 
 			di.gdb.Save(&model.NomisDesc{
 				Name:           m["DatasetTitle"],
