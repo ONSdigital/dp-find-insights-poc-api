@@ -282,7 +282,7 @@ func (di *dataIngest) addMetaTables() {
 		*/
 
 		// skip some duff data in Nomis Bulk 2011
-		if m["DatasetTitle"] != "Cyfradd" && m["DatasetTitle"] == "Pellter teithio i'r gwaith " && m["DatasetTitle"] != "" && di.dataVer == "2011" {
+		if m["DatasetTitle"] != "Cyfradd" && m["DatasetTitle"] != "Pellter teithio i'r gwaith " && m["DatasetTitle"] != "" && di.dataVer == "2011" {
 
 			di.gdb.Save(&model.NomisDesc{
 				Name:           m["DatasetTitle"],
