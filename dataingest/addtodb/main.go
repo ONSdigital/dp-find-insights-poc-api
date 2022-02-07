@@ -186,6 +186,11 @@ func (di *dataIngest) addDataTables(longToCatid map[string]int32) {
 
 		geoType := cast.ToInt32(match[1])
 
+		if geoType == 5 {
+			log.Println("skipping MSOA...")
+			continue
+		}
+
 		recs := readCsvFile(fn)
 
 		headers := recs[0]
