@@ -1,11 +1,14 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -eu -o pipefail
 
 mkdir -p data
 
-cat 2i.txt | while read f; do
-    b=$(basename $f)
-    curl "$f" > data/$b
-    (cd data && unzip $b)
-done
+while read -r f; do
+    if [[ $f =~ ^# ]]; then
+        continue
+    fi
+    b=$(basename "$f")
+    curl "$f" > data/"$b"
+    (cd data && unzip "$b")
+done < 2i.txt
