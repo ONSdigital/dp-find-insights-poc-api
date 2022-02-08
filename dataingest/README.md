@@ -110,6 +110,10 @@ $ cd ../spatial
 $ aws --region eu-central-1 s3 sync s3://find-insights-input-data-files/geojson/ .
 ```
 
+```
+go build ./geo2sql.go
+```
+
 On linux:
 ```
 $ ./import.sh

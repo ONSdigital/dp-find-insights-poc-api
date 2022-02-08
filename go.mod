@@ -32,6 +32,8 @@ require (
 	gorm.io/gorm v1.22.2
 )
 
+require github.com/twpayne/go-geom v1.4.1
+
 require (
 	github.com/ONSdigital/dp-mongodb-in-memory v1.1.0 // indirect
 	github.com/cucumber/gherkin-go/v19 v19.0.3 // indirect
