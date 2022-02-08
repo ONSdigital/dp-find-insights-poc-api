@@ -17,16 +17,17 @@ paths:
       tags:
         - public
       summary: Get Metadata
-      description: Returns simple TopicTable Category Data
+      description: Returns json describing census data available from the API - names, descriptive text, and structure (into topics, tables etc).
       parameters:
         - in: path
           name: year
-          description: census year
+          description: Census year (currently only 2011 available).
           required: true
           schema:
             type: integer
         - in: query
           name: filtertotals
+          description: Use filtertotals=true if you want to have 'totals' categories seperated from other categories in the response (see Examples).
           schema:
             type: boolean
       responses:
@@ -99,24 +100,32 @@ paths:
       tags:
         - public
       summary: calculate ckmeans over a given category and geography type
-      descriptions: Returns a list of the maximum values in each ckmean cluster.
+      description: |
+        Uses ckmeans algorithm to estimate natural breakpoints in the given census data category (*cat* parameter), 
+        filtered to only rows for the specified geography type (*geotype* parameter). Returns a list of the maximum 
+        values (i.e. the upper breakpoint) in each ckmean cluster.
       parameters:
         - in: path
           name: year
-          description: census year
+          description: Census year (currently only 2011 available).
           required: true
           schema:
             type: integer
         - in: query
           name: cat
+          description: |
+            The census data category to calculate data breaks for. 
+            (NB - use metadata endpoint to see list of currently available census data).
           schema:
             type: string
         - in: query
           name: geotype
+          description: The type of geography to calculate data breaks for.
           schema:
             type: string
         - in: query
           name: k
+          description: The number of data breaks to estimate.
           schema:
             type: integer
       responses:
@@ -129,6 +138,15 @@ paths:
                 items:
                   type: number
                   format: double
+                example: |
+                  [
+                    0.5433526011560693,
+                    0.7609518658734451,
+                    0.9072164948453608,
+                    0.9783929777177582,
+                    1
+                  ]
+
         204:
           descriptions: no results found
         400:
@@ -149,28 +167,39 @@ paths:
       tags:
         - public
       summary: calculate ckmeans for the ratio between two given categories (cat1 / cat2) for a given geography type
-      descriptions: Returns a list of the maximum values in each ckmean cluster.
+      description: |
+        Uses ckmeans algorithm to estimate natural breakpoints in the ratio between two given census data category 
+        (*cat1* paramter / *cat2* parameter), filtered to only rows for the specified geography type (*geotype* parameter). 
+        Returns a list of the maximum values (i.e. the upper breakpoint) in each ckmean cluster.
       parameters:
         - in: path
           name: year
-          description: census year
+          description: Census year (currently only 2011 available).
           required: true
           schema:
             type: integer
         - in: query
           name: cat1
+          description: |
+            The census data category to use as numerator (cat1/cat2) when producing the ratio to calculate data breaks for 
+            (NB - use metadata endpoint to see list of currently available census data).
           schema:
             type: string
         - in: query
           name: cat2
+          description: |
+            The census data category to use as denominator (cat1/cat2) when producing the ratio to calculate data breaks for 
+            (NB - use metadata endpoint to see list of currently available census data).
           schema:
             type: string
         - in: query
           name: geotype
+          description: The type of geography to calculate data breaks for.
           schema:
             type: string
         - in: query
           name: k
+          description: The number of data breaks to estimate.
           schema:
             type: integer
       responses:
@@ -183,6 +212,14 @@ paths:
                 items:
                   type: number
                   format: double
+                example: |
+                  [
+                    0.5433526011560693,
+                    0.7609518658734451,
+                    0.9072164948453608,
+                    0.9783929777177582,
+                    1
+                  ]
         204:
           descriptions: no results found
         400:
@@ -206,42 +243,73 @@ paths:
       parameters:
         - in: path
           name: year
-          description: census year
+          description: Census year (currently only 2011 available).
           required: true
           schema:
             type: integer
         - in: query
           name: rows
+          description: |
+            [ONS codes](https://en.wikipedia.org/wiki/ONS_coding_system) for the geographies that you
+            want data for. Can be: 
+            - single values (e.g. E01000001)
+            - comma-seperated array of values (e.g E01000001,E01000002,E01000003)
+            - ellipsis-seperated contiguous range of values (e.g. E01000001...E01000010)
           schema:
             type: array
             items:
               type: string
         - in: query
           name: cols
+          description: |
+            The census data that you want (NB - use metadata endpoint to see list of currently available census data). Can be:
+            - single values (e.g. QS101EW0001)
+            - comma-seperated array of values (e.g QS101EW0001,QS101EW0002,QS101EW0003)
+            - ellipsis-seperated contiguous range of values (e.g. QS101EW0001...QS101EW0010)
           schema:
             type: array
             items:
               type: string
         - in: query
           name: bbox
+          description: |
+           Two long, lat coordinate pairs representing the opposite corners of a bounding box (e.g. bbox=0.1338,51.4635,0.1017,51.4647). 
+           This will select all geographies that lie within this bounding box. Bbox can be used instead of, or in combination with the 
+           rows parameter as a way of selecting geography.
           schema:
             type: string
         - in: query
           name: geotype
+          description: |
+            Geotype filters API results to a specific geography type. Can be single values or comma-seperated array. 
+            At the moment these options are supported:
+            - LAD
+            - LSOA
           schema:
             type: array
             items:
               type: string
         - in: query
           name: location
+          description: |
+            Radius and location (both are required) will select all geographies with radius of the long,lat pair location, 
+            e.g. location=0.1338,51.4635&radius=1000. Radius and location can be used instead of, or in combination with the rows parameter as a way of selecting geography.
           schema:
             type: string
         - in: query
           name: radius
+          description: |
+            Radius and location (both are required) will select all geographies with radius of the long,lat pair location, 
+            e.g. location=0.1338,51.4635&radius=1000. Radius and location can be used instead of, or in combination with the rows parameter as a way of selecting geography.
           schema:
             type: integer
         - in: query
           name: polygon
+          description: |
+            A sequence of long, lat coordinate pairs representing a closed polygon (NB - 'closed' means the first and last coordinate pair 
+            must be the same), e.g. polygon=0.0844,51.4897,0.1214,51.4910,0.1338,51.4635,0.1017,51.4647,0.0844,51.4897. This will select 
+            all geographies that lie within this polygon. polygon can be used instead of, or in combination with the rows parameter as a 
+            way of selecting geography.
           schema:
             type: string
         - in: query
@@ -397,4 +465,3 @@ components:
             Optional. If filtertotals=true, totals column for each table will be removed from 'categories' array and returned seperately here.
             Otherwise totals column is included in 'categories' array, and 'total' will not be included in response.
           $ref: '#/components/schemas/Triplet'
-

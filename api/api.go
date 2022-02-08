@@ -52,34 +52,80 @@ type Triplet struct {
 
 // GetCkmeansYearParams defines parameters for GetCkmeansYear.
 type GetCkmeansYearParams struct {
-	Cat     *string `json:"cat,omitempty"`
+	// The census data category to calculate data breaks for.
+	// (NB - use metadata endpoint to see list of currently available census data).
+	Cat *string `json:"cat,omitempty"`
+
+	// The type of geography to calculate data breaks for.
 	Geotype *string `json:"geotype,omitempty"`
-	K       *int    `json:"k,omitempty"`
+
+	// The number of data breaks to estimate.
+	K *int `json:"k,omitempty"`
 }
 
 // GetCkmeansratioYearParams defines parameters for GetCkmeansratioYear.
 type GetCkmeansratioYearParams struct {
-	Cat1    *string `json:"cat1,omitempty"`
-	Cat2    *string `json:"cat2,omitempty"`
+	// The census data category to use as numerator (cat1/cat2) when producing the ratio to calculate data breaks for
+	// (NB - use metadata endpoint to see list of currently available census data).
+	Cat1 *string `json:"cat1,omitempty"`
+
+	// The census data category to use as denominator (cat1/cat2) when producing the ratio to calculate data breaks for
+	// (NB - use metadata endpoint to see list of currently available census data).
+	Cat2 *string `json:"cat2,omitempty"`
+
+	// The type of geography to calculate data breaks for.
 	Geotype *string `json:"geotype,omitempty"`
-	K       *int    `json:"k,omitempty"`
+
+	// The number of data breaks to estimate.
+	K *int `json:"k,omitempty"`
 }
 
 // GetMetadataYearParams defines parameters for GetMetadataYear.
 type GetMetadataYearParams struct {
+	// Use filtertotals=true if you want to have 'totals' categories seperated from other categories in the response (see Examples).
 	Filtertotals *bool `json:"filtertotals,omitempty"`
 }
 
 // GetQueryYearParams defines parameters for GetQueryYear.
 type GetQueryYearParams struct {
-	Rows        *[]string `json:"rows,omitempty"`
-	Cols        *[]string `json:"cols,omitempty"`
-	Bbox        *string   `json:"bbox,omitempty"`
-	Geotype     *[]string `json:"geotype,omitempty"`
-	Location    *string   `json:"location,omitempty"`
-	Radius      *int      `json:"radius,omitempty"`
-	Polygon     *string   `json:"polygon,omitempty"`
-	Censustable *string   `json:"censustable,omitempty"`
+	// [ONS codes](https://en.wikipedia.org/wiki/ONS_coding_system) for the geographies that you
+	// want data for. Can be:
+	// - single values (e.g. E01000001)
+	// - comma-seperated array of values (e.g E01000001,E01000002,E01000003)
+	// - ellipsis-seperated contiguous range of values (e.g. E01000001...E01000010)
+	Rows *[]string `json:"rows,omitempty"`
+
+	// The census data that you want (NB - use metadata endpoint to see list of currently available census data). Can be:
+	// - single values (e.g. QS101EW0001)
+	// - comma-seperated array of values (e.g QS101EW0001,QS101EW0002,QS101EW0003)
+	// - ellipsis-seperated contiguous range of values (e.g. QS101EW0001...QS101EW0010)
+	Cols *[]string `json:"cols,omitempty"`
+
+	// Two long, lat coordinate pairs representing the opposite corners of a bounding box (e.g. bbox=0.1338,51.4635,0.1017,51.4647).
+	// This will select all geographies that lie within this bounding box. Bbox can be used instead of, or in combination with the
+	// rows parameter as a way of selecting geography.
+	Bbox *string `json:"bbox,omitempty"`
+
+	// Geotype filters API results to a specific geography type. Can be single values or comma-seperated array.
+	// At the moment these options are supported:
+	// - LAD
+	// - LSOA
+	Geotype *[]string `json:"geotype,omitempty"`
+
+	// Radius and location (both are required) will select all geographies with radius of the long,lat pair location,
+	// e.g. location=0.1338,51.4635&radius=1000. Radius and location can be used instead of, or in combination with the rows parameter as a way of selecting geography.
+	Location *string `json:"location,omitempty"`
+
+	// Radius and location (both are required) will select all geographies with radius of the long,lat pair location,
+	// e.g. location=0.1338,51.4635&radius=1000. Radius and location can be used instead of, or in combination with the rows parameter as a way of selecting geography.
+	Radius *int `json:"radius,omitempty"`
+
+	// A sequence of long, lat coordinate pairs representing a closed polygon (NB - 'closed' means the first and last coordinate pair
+	// must be the same), e.g. polygon=0.0844,51.4897,0.1214,51.4910,0.1338,51.4635,0.1017,51.4647,0.0844,51.4897. This will select
+	// all geographies that lie within this polygon. polygon can be used instead of, or in combination with the rows parameter as a
+	// way of selecting geography.
+	Polygon     *string `json:"polygon,omitempty"`
+	Censustable *string `json:"censustable,omitempty"`
 }
 
 // ServerInterface represents all server handlers.
