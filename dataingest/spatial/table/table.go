@@ -144,7 +144,7 @@ INSERT INTO %s (
 			wktstring,
 		)
 		if err != nil {
-			return nil
+			return err
 		}
 	}
 
