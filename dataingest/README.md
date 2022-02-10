@@ -110,16 +110,10 @@ $ cd ../spatial
 $ aws --region eu-central-1 s3 sync s3://find-insights-input-data-files/geojson/ .
 ```
 
-On linux:
 ```
-$ ./import.sh
+go build ./geo2sql.go
+./import.sh
 ```
-
-On mac:
-```
-$ /usr/local/bin/bash import.sh
-```
-(`/bin/bash` on mac is too old, so use `brew install bash` or equivalent to get a bash 4+.)
 
 * Populate geo.wkb_long_lat_geom with long, lat POINT
 

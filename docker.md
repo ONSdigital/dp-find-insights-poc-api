@@ -30,7 +30,7 @@
 To run a local API in a container against the live RDS database, do this:
 
     make image
-    . api-rds.env
+    . ./api-rds.env
     docker compose up api
 
 Test the API is running by going to [swaggerui](http://localhost:25252/swaggerui).
@@ -50,7 +50,7 @@ Either way, you will end up with a local db.
 Now bring up an API against your local db:
 
     make image
-    . api-docker.env
+    . ./api-docker.env
     docker compose up
 
 If all went well, you should be able to point your client at http://localhost:25252.
@@ -142,13 +142,13 @@ Hit '^C' to stop.
 
 As a local process:
 
-    . api-rds.env
+    . ./api-rds.env
     make debug
 
 In a container:
 
     make image
-    . api-rds.env
+    . ./api-rds.env
     docker compose up api
 
 The API listens on port 25252.
@@ -206,7 +206,7 @@ $ curl -s http://localhost:25252/health | jq
 
 To start a local database:
 
-    . api-docker.env
+    . ./api-docker.env
     docker compose up db
 
 Persistent data is held in `./dbdata`.
@@ -243,7 +243,7 @@ You can run `update-schema` against a database without a local Go compiler.
 
 2. Setup environment
 
-        . api-docker.env
+        . ./api-docker.env
 
 3. Run the update-schema image
 
@@ -268,7 +268,7 @@ This is a "quick" way to setup a local stack for front end development.
 
 3. Set up the environment
 
-        . api-docker.env
+        . ./api-docker.env
 
 4. Start postgis
 
@@ -276,7 +276,7 @@ This is a "quick" way to setup a local stack for front end development.
 
 5. In another terminal, create the `insights` user and `census` database
 
-        . api-docker.env
+        . ./api-docker.env
         PGPASSWORD=$POSTGRES_PASSWORD ./psql.sh --dbname postgres -U postgres -f sql/pre-restore.sql
 
 6. Import the dump
@@ -297,7 +297,7 @@ The full ingest process can be run against a local postgis instance.
 
 2. Set up the environment
 
-        . api-docker.env
+        . ./api-docker.env
 
 3. Start postgis
 

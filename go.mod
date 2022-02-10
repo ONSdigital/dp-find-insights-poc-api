@@ -31,6 +31,8 @@ require (
 	gorm.io/gorm v1.22.2
 )
 
+require github.com/twpayne/go-geom v1.4.1
+
 require (
 	github.com/allegro/bigcache/v3 v3.0.1
 	github.com/eko/gocache/v2 v2.2.0
