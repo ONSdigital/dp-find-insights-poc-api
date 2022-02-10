@@ -50,7 +50,7 @@ func TestGetFiles(t *testing.T) {
 	}
 }
 
-func TestAddMetaTables(t *testing.T) {
+func TestAddClassificationData(t *testing.T) {
 
 	func() {
 		var nd model.NomisDesc
@@ -65,7 +65,7 @@ func TestAddMetaTables(t *testing.T) {
 			t.Errorf("Data wrongly present")
 		}
 
-		di.addMetaTables()
+		di.addClassificationData()
 
 		tx.First(&nd)
 
@@ -76,7 +76,7 @@ func TestAddMetaTables(t *testing.T) {
 
 }
 
-func TestAddDiscTables(t *testing.T) {
+func TestAddCategoryData(t *testing.T) {
 
 	func() {
 		tx := db.Begin()
@@ -85,9 +85,9 @@ func TestAddDiscTables(t *testing.T) {
 		di := New("2011")
 		di.gdb = tx
 		di.files.meta = []string{"testdata/QS104EWMETA0.CSV"}
-		di.addMetaTables()
+		di.addClassificationData()
 		di.files.desc = []string{"testdata/QS104EWDESC0.CSV"}
-		longToCatid := di.addDiscTables()
+		longToCatid := di.addCategoryData()
 
 		if longToCatid["QS104EW0001"] == 0 || longToCatid["QS104EW0002"] == 0 {
 			t.Error("data not there")
@@ -97,7 +97,7 @@ func TestAddDiscTables(t *testing.T) {
 	}()
 }
 
-func TestAddDataTables(t *testing.T) {
+func TestAddGeoGeoMetricData(t *testing.T) {
 	ctx := context.Background()
 
 	config, err := pgx.ParseConfig(dsn)
@@ -127,7 +127,7 @@ func TestAddDataTables(t *testing.T) {
 		conn.Exec(ctx, "INSERT INTO NOMIS_CATEGORY (id,nomis_desc_id,category_name,measurement_unit,stat_unit,long_nomis_code,year) VALUES (4,66,'All categories: Sex','Count','Person','QS104EW0002',2011)")
 
 		di.files.data = []string{"testdata/QS104EWDATA04.CSV"}
-		di.addDataTables(map[string]int32{"QS104EW0001": 3, "QS104EW0002": 4})
+		di.addGeoGeoMetricData(map[string]int32{"QS104EW0001": 3, "QS104EW0002": 4})
 
 		var metric float64
 		if err := conn.QueryRow(ctx, "SELECT metric FROM geo_metric WHERE category_id=3").Scan(&metric); err != nil {

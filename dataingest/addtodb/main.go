@@ -58,7 +58,7 @@ func New(v string) dataIngest {
 	return dataIngest{gdb: dbg, conn: con, dataVer: v}
 }
 
-func (di *dataIngest) createGeoTypes() {
+func (di *dataIngest) addGeoTypes() {
 
 	if tx := di.gdb.Save(&model.GeoType{ID: 1, Name: "EW"}); tx.Error != nil {
 		log.Fatal(tx.Error)
@@ -67,7 +67,7 @@ func (di *dataIngest) createGeoTypes() {
 	di.gdb.Save(&model.GeoType{ID: 2, Name: "Country"})
 	di.gdb.Save(&model.GeoType{ID: 3, Name: "Region"})
 	di.gdb.Save(&model.GeoType{ID: 4, Name: "LAD"})
-	di.gdb.Save(&model.GeoType{ID: 5, Name: "MSOA"}) // not currently used
+	di.gdb.Save(&model.GeoType{ID: 5, Name: "MSOA"})
 	di.gdb.Save(&model.GeoType{ID: 6, Name: "LSOA"})
 }
 
@@ -101,8 +101,7 @@ func (di *dataIngest) getFiles(pref string) {
 	}
 }
 
-// NomisCategory not desc
-func (di *dataIngest) addDiscTables() map[string]int32 {
+func (di *dataIngest) addCategoryData() map[string]int32 {
 
 	m := make(map[string]int32)
 	for _, fn := range di.files.desc {
@@ -156,7 +155,9 @@ func (di *dataIngest) addDiscTables() map[string]int32 {
 	return m
 }
 
-func (di *dataIngest) addDataTables(longToCatid map[string]int32) {
+// adds to "geo" tables (but without geo.name!)
+// adds to "geo_metric"
+func (di *dataIngest) addGeoGeoMetricData(longToCatid map[string]int32) {
 	geoCodeToID := make(map[string]int64)
 
 	con := di.conn
@@ -264,7 +265,8 @@ func (di *dataIngest) addDataTables(longToCatid map[string]int32) {
 	} // end files
 }
 
-func (di *dataIngest) addMetaTables() {
+// TODO v4 rename Classification
+func (di *dataIngest) addClassificationData() {
 
 	for _, f := range di.files.meta {
 
@@ -336,10 +338,10 @@ func main() {
 	di := New("2011") // TODO get from command line
 	di.getFiles(dataPref)
 	di.popTopics()
-	di.createGeoTypes()
-	di.addMetaTables()
-	longToCatid := di.addDiscTables()
-	di.addDataTables(longToCatid)
+	di.addGeoTypes()
+	di.addClassificationData()
+	longToCatid := di.addCategoryData()
+	di.addGeoGeoMetricData(longToCatid)
 	di.putVersion()
 
 	fmt.Printf("%#v\n", time.Since(t0).Seconds())
