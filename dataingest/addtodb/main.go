@@ -133,7 +133,6 @@ func (di *dataIngest) addDiscTables() map[string]int32 {
 			shortNomisCode := longNomisCode[0:7]
 
 			var desc model.NomisDesc
-			// should be unique! XXX
 			di.gdb.Where("short_nomis_code = ?", shortNomisCode).First(&desc)
 
 			nc := model.NomisCategory{
@@ -175,17 +174,17 @@ func (di *dataIngest) addDataTables(longToCatid map[string]int32) {
 
 	for _, fn := range di.files.data {
 
-		// XXX get type
 		match := re.FindStringSubmatch(fn)
 
 		if len(match) == 0 {
 			continue
 		}
 
-		println("FN=" + fn)
+		fmt.Println("FN=" + fn)
 
 		geoType := cast.ToInt32(match[1])
 
+		// XXX we do need MSOA see Trello #282
 		if geoType == 5 {
 			log.Println("skipping MSOA...")
 			continue
@@ -247,7 +246,7 @@ func (di *dataIngest) addDataTables(longToCatid map[string]int32) {
 
 		} // end rows
 
-		println("Bulk copy...")
+		fmt.Println("Bulk copy...")
 
 		var count int64
 		count, err = con.CopyFrom(ctx,
@@ -271,20 +270,10 @@ func (di *dataIngest) addMetaTables() {
 
 		recs := readCsvFile(f)
 
-		// Struct better?
 		m := make(map[string]string)
 		for i, v := range recs[0] {
 			m[v] = recs[1][i]
 		}
-
-		fmt.Printf("%#v\n", m)
-
-		// temp
-		/*
-			if strings.Contains(m["DatasetId"], "WA") {
-				continue
-			}
-		*/
 
 		// skip some duff data in Nomis Bulk 2011
 		if m["DatasetTitle"] != "Cyfradd" && m["DatasetTitle"] != "Pellter teithio i'r gwaith " && m["DatasetTitle"] != "" && di.dataVer == "2011" {
@@ -305,8 +294,7 @@ func readCsvFile(filePath string) (records [][]string) {
 	func() {
 		f, err := os.Open(filePath)
 		if err != nil {
-			log.Fatal("Unable to read input file "+filePath,
-				err)
+			log.Fatal("Unable to read input file "+filePath, err)
 		}
 		defer f.Close()
 
@@ -314,14 +302,14 @@ func readCsvFile(filePath string) (records [][]string) {
 		records, err = csvReader.ReadAll()
 
 		if err != nil {
-			log.Fatal("Unable to parse file as CSV for "+
-				filePath, err)
+			log.Fatal("Unable to parse file as CSV for "+filePath, err)
 		}
 	}()
 
 	return records
 }
 
+// probably means this can be removed from model/provision
 func (di *dataIngest) popTopics() {
 	di.gdb.Save(&model.NomisTopic{ID: 1, TopNomisCode: "QS1", Name: "Population Basics"})
 	di.gdb.Save(&model.NomisTopic{ID: 2, TopNomisCode: "QS2", Name: "Origins & Beliefs"})
@@ -345,7 +333,7 @@ func (di *dataIngest) putVersion() {
 func main() {
 	t0 := time.Now()
 
-	di := New("2011") // XXX
+	di := New("2011") // TODO get from command line
 	di.getFiles(dataPref)
 	di.popTopics()
 	di.createGeoTypes()

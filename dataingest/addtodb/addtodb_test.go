@@ -1,3 +1,6 @@
+//go:build comptest
+// +build comptest
+
 package main
 
 import (
@@ -20,7 +23,7 @@ var db *gorm.DB
 
 func init() {
 	comptests.SetupDockerDB(dsn)
-	model.SetupDBOnceOnly(dsn)
+	model.SetupUpdateDB(dsn)
 	var err error
 	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
@@ -33,10 +36,8 @@ type qLogger struct {
 }
 
 func (l *qLogger) Log(ctx context.Context, level pgx.LogLevel, msg string, data map[string]interface{}) {
-	//spew.Dump(data)
-	//if level == pgx.LogLevelInfo && msg == "Query" {
-	fmt.Printf("SQL:\n%s\nARGS:%v\n", data["sql"], data["args"])
-	//}
+	// uncomment me for logs
+	//fmt.Printf("SQL:\n%s\nARGS:%v\n", data["sql"], data["args"])
 }
 
 func TestGetFiles(t *testing.T) {
@@ -96,7 +97,6 @@ func TestAddDiscTables(t *testing.T) {
 	}()
 }
 
-/*
 func TestAddDataTables(t *testing.T) {
 	ctx := context.Background()
 
@@ -106,45 +106,38 @@ func TestAddDataTables(t *testing.T) {
 	}
 
 	config.Logger = &qLogger{}
-
-	con, err := pgx.ConnectConfig(ctx, config)
-
-	//	con, err := pgx.Connect(ctx, dsn)
+	conn, err := pgx.ConnectConfig(ctx, config)
 	if err != nil {
 		t.Error(err)
 	}
 
 	func() {
-		tx, err := con.Begin(ctx)
-		defer tx.Rollback(ctx)
+		tx, err := conn.Begin(ctx)
 		if err != nil {
 			t.Error(err)
 		}
+		defer tx.Rollback(ctx)
 
 		di := New("2011")
-		di.conn = con
-		di.gdb = db // none rolling
+		di.conn = conn
+
+		conn.Exec(ctx, "INSERT INTO geo_type VALUES(4,'LAD')")
+		conn.Exec(ctx, "INSERT INTO NOMIS_DESC (id,name,pop_stat,short_nomis_code,year,nomis_topic_id) VALUES (66,'Sex','All usual residents','QS104EW',2011,1)")
+		conn.Exec(ctx, "INSERT INTO NOMIS_CATEGORY (id,nomis_desc_id,category_name,measurement_unit,stat_unit,long_nomis_code,year) VALUES (3,66,'All categories: Sex','Count','Person','QS104EW0001',2011)")
+		conn.Exec(ctx, "INSERT INTO NOMIS_CATEGORY (id,nomis_desc_id,category_name,measurement_unit,stat_unit,long_nomis_code,year) VALUES (4,66,'All categories: Sex','Count','Person','QS104EW0002',2011)")
+
 		di.files.data = []string{"testdata/QS104EWDATA04.CSV"}
+		di.addDataTables(map[string]int32{"QS104EW0001": 3, "QS104EW0002": 4})
 
-		di.createGeoTypes() // need to check this rolls back XXX
-		var longToCatid map[string]int32
-		di.addDataTables(longToCatid)
+		var metric float64
+		if err := conn.QueryRow(ctx, "SELECT metric FROM geo_metric WHERE category_id=3").Scan(&metric); err != nil {
+			log.Print(err)
+		}
 
-		// geo & geo_metric
+		if metric != 92028 {
+			t.Fail()
+		}
 
-		/*
-			if foo := tx.First(&nd); !errors.Is(foo.Error, gorm.ErrRecordNotFound) {
-				t.Errorf("Data wrongly present")
-			}
-
-			di.addMetaTables()
-
-			tx.First(&nd)
-
-			if nd.Name != "Sex" || nd.PopStat != "All usual residents" || nd.ShortNomisCode != "QS104EW" {
-				t.Errorf(fmt.Sprintf("wrongly got : %#v", nd))
-			}
 	}()
 
 }
-*/
