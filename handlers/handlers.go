@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 	"net/http"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/api"
+	"github.com/ONSdigital/dp-find-insights-poc-api/cache"
 	"github.com/ONSdigital/dp-find-insights-poc-api/config"
 	"github.com/ONSdigital/dp-find-insights-poc-api/metadata"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/geodata"
@@ -18,13 +20,15 @@ type Server struct {
 	private      bool             // true if private endpoint feature flag is enabled
 	querygeodata *geodata.Geodata // if nil, database not available
 	md           *metadata.Metadata
+	cache        *cache.Cache
 }
 
-func New(private bool, querygeodata *geodata.Geodata, md *metadata.Metadata) *Server {
+func New(private bool, querygeodata *geodata.Geodata, md *metadata.Metadata, cache *cache.Cache) *Server {
 	return &Server{
 		private:      private,
 		querygeodata: querygeodata,
 		md:           md,
+		cache:        cache,
 	}
 }
 
@@ -59,7 +63,13 @@ func (svr *Server) GetSwaggerui(w http.ResponseWriter, r *http.Request) {
 func (svr *Server) GetMetadataYear(w http.ResponseWriter, r *http.Request, year int, params api.GetMetadataYearParams) {
 	// add CORS header
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.WriteHeader(http.StatusOK)
+
+	ctx := context.Background()
+	b, err := svr.cache.Get(ctx, r)
+	if err == nil {
+		w.Write(b)
+		return
+	}
 
 	var filtertotals bool
 	if params.Filtertotals != nil {
@@ -68,7 +78,13 @@ func (svr *Server) GetMetadataYear(w http.ResponseWriter, r *http.Request, year 
 		filtertotals = false
 	}
 
-	b, err := svr.md.Get(year, filtertotals)
+	b, err = svr.md.Get(year, filtertotals)
+	if err != nil {
+		sendError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	err = svr.cache.Set(ctx, r, b)
 	if err != nil {
 		sendError(w, http.StatusInternalServerError, err.Error())
 		return
