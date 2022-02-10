@@ -78,6 +78,7 @@ func (tab *Table) CreateTable() error {
 		fragments = append(fragments, fmt.Sprintf("%s %s", pq.QuoteIdentifier(name), sqltype))
 	}
 
+	// The column name wkb_geometry name is for compatibility with previous ogr2ogr usage.
 	const template = `
 CREATE EXTENSION IF NOT EXISTS postgis;
 DROP TABLE IF EXISTS %s;

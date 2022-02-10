@@ -22,7 +22,7 @@ func main() {
 	filename := flag.String("f", "", "geojson file to import")
 	tablename := flag.String("t", "", "name of table to create")
 	mode := flag.String("m", "copy", "SQL copy or insert")
-	keepcase := flag.Bool("k", false, "preserve case of property (column) names in features")
+	keepcase := flag.Bool("k", false, "preserve case of property (column) names in features (default is to force lowercase)")
 	flag.Parse()
 
 	if *filename == "" || *tablename == "" {

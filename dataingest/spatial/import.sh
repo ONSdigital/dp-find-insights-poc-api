@@ -1,17 +1,32 @@
-#!/bin/bash
+#! /usr/bin/env bash
 
 set -e
 
-declare -A tables
-tables["lsoa_gis"]="Lower_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.geojson"
-tables["lad_gis"]="Local_Authority_Districts_(December_2017)_Boundaries_in_the_UK_(WGS84).geojson"
+tables='
+lsoa_gis|Lower_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.geojson
+lad_gis|Local_Authority_Districts_(December_2017)_Boundaries_in_the_UK_(WGS84).geojson
+'
 
-for TABLE in "${!tables[@]}"; do
-    GEOJSON="${tables[$TABLE]}"
+while read line
+do
+    if test -z "$line"
+    then
+        continue
+    fi
+    oIFS=$IFS
+    IFS='|'
+    set -- $line
+    IFS=$oIFS
+
+    TABLE=$1
+    GEOJSON=$2
+
     echo "creating '$TABLE' in '$PGDATABASE' on '$PGHOST'"
     ./geo2sql -t "$TABLE" -f "$GEOJSON" | psql -f -
     psql -c "VACUUM ANALYZE $TABLE"
-done
+done <<-EOF
+$tables
+EOF
 
 psql -c "ALTER TABLE lad_gis ADD CONSTRAINT uq_lad17cd UNIQUE(lad17cd)"
 psql -c "ALTER TABLE lsoa_gis ADD CONSTRAINT uq_lsoa11cd UNIQUE(lsoa11cd)"
