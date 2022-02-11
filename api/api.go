@@ -82,7 +82,7 @@ type GetCkmeansratioYearParams struct {
 
 // GetMetadataYearParams defines parameters for GetMetadataYear.
 type GetMetadataYearParams struct {
-	// Use filtertotals=true if you want to have 'totals' categories seperated from other categories in the response (see Examples).
+	// Use filtertotals=true if you want to have 'totals' categories separated from other categories in the response (see Examples).
 	Filtertotals *bool `json:"filtertotals,omitempty"`
 }
 
@@ -91,14 +91,14 @@ type GetQueryYearParams struct {
 	// [ONS codes](https://en.wikipedia.org/wiki/ONS_coding_system) for the geographies that you
 	// want data for. Can be:
 	// - single values (e.g. E01000001)
-	// - comma-seperated array of values (e.g E01000001,E01000002,E01000003)
-	// - ellipsis-seperated contiguous range of values (e.g. E01000001...E01000010)
+	// - comma-separated array of values (e.g E01000001,E01000002,E01000003)
+	// - ellipsis-separated contiguous range of values (e.g. E01000001...E01000010)
 	Rows *[]string `json:"rows,omitempty"`
 
 	// The census data that you want (NB - use metadata endpoint to see list of currently available census data). Can be:
 	// - single values (e.g. QS101EW0001)
-	// - comma-seperated array of values (e.g QS101EW0001,QS101EW0002,QS101EW0003)
-	// - ellipsis-seperated contiguous range of values (e.g. QS101EW0001...QS101EW0010)
+	// - comma-separated array of values (e.g QS101EW0001,QS101EW0002,QS101EW0003)
+	// - ellipsis-separated contiguous range of values (e.g. QS101EW0001...QS101EW0010)
 	Cols *[]string `json:"cols,omitempty"`
 
 	// Two long, lat coordinate pairs representing the opposite corners of a bounding box (e.g. bbox=0.1338,51.4635,0.1017,51.4647).
@@ -106,7 +106,7 @@ type GetQueryYearParams struct {
 	// rows parameter as a way of selecting geography.
 	Bbox *string `json:"bbox,omitempty"`
 
-	// Geotype filters API results to a specific geography type. Can be single values or comma-seperated array.
+	// Geotype filters API results to a specific geography type. Can be single values or comma-separated array.
 	// At the moment these options are supported:
 	// - LAD
 	// - LSOA
