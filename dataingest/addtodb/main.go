@@ -312,6 +312,8 @@ func readCsvFile(filePath string) (records [][]string) {
 }
 
 // probably means this can be removed from model/provision
+// This should be refactored into a config file
+
 func (di *dataIngest) popTopics() {
 	di.gdb.Save(&model.NomisTopic{ID: 1, TopNomisCode: "QS1", Name: "Population Basics"})
 	di.gdb.Save(&model.NomisTopic{ID: 2, TopNomisCode: "QS2", Name: "Origins & Beliefs"})
