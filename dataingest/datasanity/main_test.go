@@ -167,12 +167,14 @@ func TestLatLongGeom(t *testing.T) {
 func TestSomeValues(t *testing.T) {
 	metric := model.GeoMetric{}
 	db.First(&metric)
+
 	if metric.Metric != 45496780.0 {
 		t.Errorf("got %f", metric.Metric)
 	}
 
 	geo := model.Geo{}
 	db.First(&geo)
+
 	if geo.Name != "England and Wales" {
 		t.Errorf("got %s", geo.Name)
 	}
@@ -206,9 +208,8 @@ func TestShortNomisCode(t *testing.T) {
 	`).Scan(&got).Error; err != nil {
 		t.Error(err)
 	}
-	// from Viv's v4 google spreadsheet at time of modification
 
-	expected := []string{"KS103EW", "KS202EW", "KS206EW", "KS207WA", "KS608EW", "QS101EW", "QS103EW", "QS104EW", "QS113EW", "QS119EW", "QS201EW", "QS202EW", "QS203EW", "QS208EW", "QS301EW", "QS302EW", "QS303EW", "QS402EW", "QS403EW", "QS406EW", "QS411EW", "QS415EW", "QS416EW", "QS501EW", "QS601EW", "QS604EW", "QS605EW", "QS701EW", "QS702EW", "QS803EW"}
+	expected := expectedCodes()
 
 	// these exist in addtodb/2i.txt but not a recent snapshot of v4 sheet
 	for _, e := range got {
@@ -231,5 +232,42 @@ func elemInSlice(e string, ss []string) (in bool) {
 			return true
 		}
 	}
+
 	return false
+}
+
+// from Viv's v4 google spreadsheet at time of modification
+func expectedCodes() []string {
+	return []string{
+		"KS103EW",
+		"KS202EW",
+		"KS206EW",
+		"KS207WA",
+		"KS608EW",
+		"QS101EW",
+		"QS103EW",
+		"QS104EW",
+		"QS113EW",
+		"QS119EW",
+		"QS201EW",
+		"QS202EW",
+		"QS203EW",
+		"QS208EW",
+		"QS301EW",
+		"QS302EW",
+		"QS303EW",
+		"QS402EW",
+		"QS403EW",
+		"QS406EW",
+		"QS411EW",
+		"QS415EW",
+		"QS416EW",
+		"QS501EW",
+		"QS601EW",
+		"QS604EW",
+		"QS605EW",
+		"QS701EW",
+		"QS702EW",
+		"QS803EW"}
+
 }
