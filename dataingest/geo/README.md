@@ -11,3 +11,7 @@ Javascript download to 'Code_History_Database_(June_2021)_UK'
 Extract and use ChangeHistory.csv & Equivalents.csv
 
 Or use versions s3://find-insights-input-data-files/geoname (see other docs)
+
+# populate geo with MSOA geo codes
+
+Uses https://houseofcommonslibrary.github.io/msoanames/MSOA-Names-1.16.csv

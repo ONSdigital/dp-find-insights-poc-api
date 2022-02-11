@@ -45,6 +45,7 @@ func main() {
 
 	parseCVS(db, "Equivalents.csv")
 	parseCVS(db, "ChangeHistory.csv")
+	parseMsoaCSV(db, "MSOA-Names-1.16.csv")
 }
 
 func parseCVS(db *gorm.DB, file string) {
@@ -61,6 +62,35 @@ func parseCVS(db *gorm.DB, file string) {
 	var geos []model.Geo
 
 	db.Find(&geos)
+
+	for i := range geos {
+		g := geos[i]
+
+		if m[g.Code] != "" {
+			fmt.Print(g.Code)
+			fmt.Print(" ")
+			fmt.Println(m[g.Code])
+			g.Name = m[g.Code]
+			db.Save(&g)
+		}
+
+	}
+}
+
+func parseMsoaCSV(db *gorm.DB, file string) {
+
+	records := readCsvFile(file)
+	m := make(map[string]string)
+
+	for _, r := range records {
+		if r[1] != "" {
+			m[r[0]] = r[3] // RHS field 4 msoa11hclnm
+		}
+	}
+
+	var geos []model.Geo
+
+	db.Where("type_id = 5").Find(&geos) // limit by MSOA
 
 	for i := range geos {
 		g := geos[i]
