@@ -173,7 +173,11 @@ func (di *dataIngest) addGeoGeoMetricData(longToCatid map[string]int32) {
 		log.Print(err)
 	}
 
-	for _, fn := range di.files.data {
+	num := len(di.files.data)
+
+	t0 := time.Now()
+
+	for i, fn := range di.files.data {
 
 		match := re.FindStringSubmatch(fn)
 
@@ -181,7 +185,7 @@ func (di *dataIngest) addGeoGeoMetricData(longToCatid map[string]int32) {
 			continue
 		}
 
-		fmt.Println("FN=" + fn)
+		fmt.Printf("file %d of %d, %.2f step min(s), name=%s\n", i, num, time.Since(t0).Minutes(), fn)
 
 		geoType := cast.ToInt32(match[1])
 
