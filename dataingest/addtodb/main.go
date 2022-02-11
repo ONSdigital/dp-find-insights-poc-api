@@ -192,12 +192,6 @@ func (di *dataIngest) addGeoGeoMetricData(longToCatid map[string]int32) {
 
 		geoType := cast.ToInt32(match[1])
 
-		// XXX we do need MSOA see Trello #282
-		if geoType == 5 {
-			log.Println("skipping MSOA...")
-			continue
-		}
-
 		recs := readCsvFile(fn)
 
 		headers := recs[0]
