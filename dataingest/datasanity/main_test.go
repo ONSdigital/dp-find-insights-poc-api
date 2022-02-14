@@ -99,7 +99,7 @@ func TestWelshAbsent(t *testing.T) {
 	}
 }
 
-func TestMsoaDataAbsent(t *testing.T) {
+func TestMsoaDataPresent(t *testing.T) {
 	var count int
 	if err := db.Raw(`
 	SELECT count(*) 
@@ -112,12 +112,12 @@ func TestMsoaDataAbsent(t *testing.T) {
 
 	fmt.Printf("%#v\n", count)
 
-	if count != 0 {
-		t.Error("got unexpected row(s)")
+	if count == 0 {
+		t.Error("MSOA data not there")
 	}
 }
 
-func TestMsoaCodesAbsent(t *testing.T) {
+func TestMsoaCodesPresent(t *testing.T) {
 	var count int
 	if err := db.Raw(`
 	SELECT count(*) 
@@ -129,8 +129,8 @@ func TestMsoaCodesAbsent(t *testing.T) {
 
 	fmt.Printf("%#v\n", count)
 
-	if count != 0 {
-		t.Error("got unexpected row(s)")
+	if count == 0 {
+		t.Error("MSOA codes not there")
 	}
 }
 
