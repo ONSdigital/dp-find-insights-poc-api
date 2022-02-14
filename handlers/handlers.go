@@ -20,15 +20,15 @@ type Server struct {
 	private      bool             // true if private endpoint feature flag is enabled
 	querygeodata *geodata.Geodata // if nil, database not available
 	md           *metadata.Metadata
-	cache        *cache.Cache
+	cm           *cache.Manager
 }
 
-func New(private bool, querygeodata *geodata.Geodata, md *metadata.Metadata, cache *cache.Cache) *Server {
+func New(private bool, querygeodata *geodata.Geodata, md *metadata.Metadata, cm *cache.Manager) *Server {
 	return &Server{
 		private:      private,
 		querygeodata: querygeodata,
 		md:           md,
-		cache:        cache,
+		cm:           cm,
 	}
 }
 
@@ -64,33 +64,49 @@ func (svr *Server) GetMetadataYear(w http.ResponseWriter, r *http.Request, year 
 	// add CORS header
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
-	ctx := context.Background()
-	b, err := svr.cache.Get(ctx, r)
-	if err == nil {
-		w.Write(b)
-		return
-	}
+	key := cache.CacheKey(r)
 
-	var filtertotals bool
-	if params.Filtertotals != nil {
-		filtertotals = *params.Filtertotals
+	// allocate a serialiser for this cache key
+	ser := svr.cm.AllocateEntry(key)
+	defer ser.Free()
+
+	var err error
+	var body []byte
+	func() {
+		ctx := context.Background()
+
+		// lock cache key before doing any cache operations
+		ser.Lock()
+		defer ser.Unlock()
+
+		body, err = ser.Get(ctx)
+		if err == nil {
+			return
+		}
+
+		var filtertotals bool
+		if params.Filtertotals != nil {
+			filtertotals = *params.Filtertotals
+		} else {
+			filtertotals = false
+		}
+
+		body, err = svr.md.Get(year, filtertotals)
+		if err != nil {
+			return
+		}
+
+		err = ser.Set(ctx, body)
+		if err != nil {
+			return
+		}
+	}()
+
+	if err != nil {
+		sendError(w, http.StatusInternalServerError, err.Error())
 	} else {
-		filtertotals = false
+		w.Write(body)
 	}
-
-	b, err = svr.md.Get(year, filtertotals)
-	if err != nil {
-		sendError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	err = svr.cache.Set(ctx, r, b)
-	if err != nil {
-		sendError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	w.Write(b)
 }
 
 func (svr *Server) GetQueryYear(w http.ResponseWriter, r *http.Request, year int, params api.GetQueryYearParams) {
