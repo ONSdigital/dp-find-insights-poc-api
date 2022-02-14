@@ -17,6 +17,8 @@ type Config struct {
 	WriteTimeout               time.Duration `envconfig:"WRITE_TIMEOUT"`
 	APIToken                   string        `envconfig:"API_TOKEN"`
 	EnableHeaderAuth           bool          `envconfig:"ENABLE_HEADER_AUTH"`
+	CacheSize                  int           `envconfig:"CACHE_SIZE"`
+	CacheTTL                   time.Duration `envconfig:"CACHE_TTL"`
 }
 
 var cfg *Config
@@ -37,6 +39,8 @@ func Get() (*Config, error) {
 		WriteTimeout:               30 * time.Second, // http WriteTimeout
 		APIToken:                   "",
 		EnableHeaderAuth:           false,
+		CacheSize:                  200,            // memory cache size in MB
+		CacheTTL:                   12 * time.Hour, // cache entry TTL
 	}
 
 	return cfg, envconfig.Process("", cfg)

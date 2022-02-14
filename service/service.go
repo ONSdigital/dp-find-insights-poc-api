@@ -92,7 +92,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		}
 	}
 
-	cm, err := cache.New(5*time.Minute, 100) // example settings for now
+	cm, err := cache.New(cfg.CacheTTL, cfg.CacheSize)
 	if err != nil {
 		return nil, err
 	}

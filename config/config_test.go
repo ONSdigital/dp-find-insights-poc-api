@@ -29,6 +29,8 @@ func TestConfig(t *testing.T) {
 					EnableDatabase:             false,
 					MaxMetrics:                 200000,
 					WriteTimeout:               30 * time.Second,
+					CacheSize:                  200,
+					CacheTTL:                   12 * time.Hour,
 				})
 			})
 
