@@ -57,7 +57,7 @@ func TestAddClassificationData(t *testing.T) {
 		tx := db.Begin()
 		defer tx.Rollback()
 
-		di := New("2011")
+		di := New("2011", dsn)
 		di.gdb = tx
 		di.files.meta = []string{"testdata/QS104EWMETA0.CSV"}
 
@@ -82,7 +82,7 @@ func TestAddCategoryData(t *testing.T) {
 		tx := db.Begin()
 		defer tx.Rollback()
 
-		di := New("2011")
+		di := New("2011", dsn)
 		di.gdb = tx
 		di.files.meta = []string{"testdata/QS104EWMETA0.CSV"}
 		di.addClassificationData()
@@ -118,7 +118,7 @@ func TestAddGeoGeoMetricData(t *testing.T) {
 		}
 		defer tx.Rollback(ctx)
 
-		di := New("2011")
+		di := New("2011", dsn)
 		di.conn = conn
 
 		conn.Exec(ctx, "INSERT INTO geo_type VALUES(4,'LAD')")
