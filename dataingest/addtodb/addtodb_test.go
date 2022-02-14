@@ -41,7 +41,7 @@ func (l *qLogger) Log(ctx context.Context, level pgx.LogLevel, msg string, data 
 }
 
 func TestGetFiles(t *testing.T) {
-	di := New("2011")
+	di := New("2011", dsn)
 
 	di.getFiles("testdata/")
 

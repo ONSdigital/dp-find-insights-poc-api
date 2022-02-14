@@ -38,10 +38,18 @@ type files struct {
 	desc []string
 }
 
-func New(v string) dataIngest {
+// New takes optimal optimal dsn arg for testing override
+func New(v string, dsns ...string) dataIngest {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	dsn := database.GetDSN()
-	fmt.Printf("%#v\n", dsn)
+
+	var dsn string
+	if len(dsns) == 0 {
+		dsn = database.GetDSN()
+	} else {
+		dsn = dsns[0]
+	}
+
+	log.Printf("dsn=%s\n", dsn)
 
 	// be nice to share same handle but I can't see how to do this!
 
