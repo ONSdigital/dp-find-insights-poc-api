@@ -21,13 +21,15 @@ paths:
       parameters:
         - in: path
           name: year
-          description: Census year (currently only 2011 available).
+          description: |
+            Census year. Currently available:
+            - 2011
           required: true
           schema:
             type: integer
         - in: query
           name: filtertotals
-          description: Use filtertotals=true if you want to have 'totals' categories seperated from other categories in the response (see Examples).
+          description: Use filtertotals=true if you want to have 'totals' categories separated from other categories in the response (see Examples).
           schema:
             type: boolean
       responses:
@@ -107,7 +109,9 @@ paths:
       parameters:
         - in: path
           name: year
-          description: Census year (currently only 2011 available).
+          description: |
+            Census year. Currently available:
+            - 2011
           required: true
           schema:
             type: integer
@@ -174,7 +178,9 @@ paths:
       parameters:
         - in: path
           name: year
-          description: Census year (currently only 2011 available).
+          description: |
+            Census year. Currently available:
+            - 2011
           required: true
           schema:
             type: integer
@@ -243,7 +249,9 @@ paths:
       parameters:
         - in: path
           name: year
-          description: Census year (currently only 2011 available).
+          description: |
+            Census year. Currently available:
+            - 2011
           required: true
           schema:
             type: integer
@@ -253,8 +261,8 @@ paths:
             [ONS codes](https://en.wikipedia.org/wiki/ONS_coding_system) for the geographies that you
             want data for. Can be: 
             - single values (e.g. E01000001)
-            - comma-seperated array of values (e.g E01000001,E01000002,E01000003)
-            - ellipsis-seperated contiguous range of values (e.g. E01000001...E01000010)
+            - comma-separated array of values (e.g E01000001,E01000002,E01000003)
+            - ellipsis-separated contiguous range of values (e.g. E01000001...E01000010)
           schema:
             type: array
             items:
@@ -264,8 +272,8 @@ paths:
           description: |
             The census data that you want (NB - use metadata endpoint to see list of currently available census data). Can be:
             - single values (e.g. QS101EW0001)
-            - comma-seperated array of values (e.g QS101EW0001,QS101EW0002,QS101EW0003)
-            - ellipsis-seperated contiguous range of values (e.g. QS101EW0001...QS101EW0010)
+            - comma-separated array of values (e.g QS101EW0001,QS101EW0002,QS101EW0003)
+            - ellipsis-separated contiguous range of values (e.g. QS101EW0001...QS101EW0010)
           schema:
             type: array
             items:
@@ -281,7 +289,7 @@ paths:
         - in: query
           name: geotype
           description: |
-            Geotype filters API results to a specific geography type. Can be single values or comma-seperated array. 
+            Geotype filters API results to a specific geography type. Can be single values or comma-separated array. 
             At the moment these options are supported:
             - LAD
             - LSOA

@@ -115,6 +115,8 @@ func Migrate(db *gorm.DB) {
 
 func DataPopulate(db *gorm.DB) {
 
+	// XXX This should be replaced by "addtodb"
+
 	// id=0 is undefined topic, can't see how to do this with gorm!
 	// we need this when we import data before FK set up as default value
 	// in "nomis-bulk-to-postgres/add_to_db.py" function "add_meta_tables"

@@ -88,13 +88,13 @@ func (GeoMetric) TableName() string {
 }
 
 type NomisCategory struct {
-	// why do we need uniqueIndex?
+	// why do we need uniqueIndex? composite key!
 	ID              int32 `gorm:"uniqueIndex;primaryKey"`
 	NomisDescID     int32 `gorm:"primaryKey"`
 	CategoryName    string
 	MeasurementUnit string
 	StatUnit        string
-	LongNomisCode   string // made unique in cleandb.sh
+	LongNomisCode   string `gorm:"uniqueIndex"`
 	Year            int32
 	GoMetrics       []GeoMetric `gorm:"foreignKey:CategoryID;references:ID"`
 }
@@ -109,7 +109,7 @@ type NomisDesc struct {
 	NomisTopicID    int32 `gorm:"primaryKey"`
 	Name            string
 	PopStat         string
-	ShortNomisCode  string // made unique in cleandb.sh
+	ShortNomisCode  string `gorm:"uniqueIndex"`
 	Year            int32
 	NomisCategories []NomisCategory `gorm:"foreignKey:NomisDescID;references:ID"`
 }
