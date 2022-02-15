@@ -71,7 +71,7 @@ func (svr *Server) GetMetadataYear(w http.ResponseWriter, r *http.Request, year 
 		return svr.md.Get(year, filtertotals)
 	}
 
-	svr.respond(w, r, generate)
+	svr.respond(w, r, mimeCSV, generate)
 }
 
 func (svr *Server) GetQueryYear(w http.ResponseWriter, r *http.Request, year int, params api.GetQueryYearParams) {
@@ -164,4 +164,12 @@ func sendCSV(w http.ResponseWriter, code int, message string) {
 	w.Header().Add("Content-Type", "text/csv")
 	w.WriteHeader(code)
 	w.Write([]byte(message))
+}
+
+func toJSON(v interface{}) ([]byte, error) {
+	buf, err := json.MarshalIndent(v, "", "    ")
+	if err != nil {
+		return nil, err
+	}
+	return append(buf, "\n"...), nil
 }
