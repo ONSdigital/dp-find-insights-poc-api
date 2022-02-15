@@ -134,6 +134,23 @@ func TestMsoaCodesPresent(t *testing.T) {
 	}
 }
 
+func TestAllGeoNamed(t *testing.T ) {
+	var count int
+	if err := db.Raw(`
+	SELECT count(*) 
+	FROM geo
+	WHERE name='NA'
+	`).Scan(&count).Error; err != nil {
+		t.Error(err)
+	}
+
+	fmt.Printf("%#v\n", count)
+
+	if count != 0 {
+		t.Error("not all geo named")
+	}
+}
+
 func TestGeomUKBbox(t *testing.T) {
 	var codes []string
 	// UK like bbox
