@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -61,29 +60,7 @@ func (svr *Server) GetSwaggerui(w http.ResponseWriter, r *http.Request) {
 }
 
 func (svr *Server) GetMetadataYear(w http.ResponseWriter, r *http.Request, year int, params api.GetMetadataYearParams) {
-	// add CORS header
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-
-	key := cache.CacheKey(r)
-
-	// allocate a serialiser for this cache key
-	ser := svr.cm.AllocateEntry(key)
-	defer ser.Free()
-
-	var err error
-	var body []byte
-	func() {
-		ctx := context.Background()
-
-		// lock cache key before doing any cache operations
-		ser.Lock()
-		defer ser.Unlock()
-
-		body, err = ser.Get(ctx)
-		if err == nil {
-			return
-		}
-
+	generate := func() ([]byte, error) {
 		var filtertotals bool
 		if params.Filtertotals != nil {
 			filtertotals = *params.Filtertotals
@@ -91,24 +68,10 @@ func (svr *Server) GetMetadataYear(w http.ResponseWriter, r *http.Request, year 
 			filtertotals = false
 		}
 
-		body, err = svr.md.Get(year, filtertotals)
-		if err != nil {
-			return
-		}
-
-		// if there is a problem saving response in cache, log it, but still send to client
-		err = ser.Set(ctx, body)
-		if err != nil {
-			log.Printf("could not cache %d bytes of metadata response: %v\n", len(body), err)
-			err = nil
-		}
-	}()
-
-	if err != nil {
-		sendError(w, http.StatusInternalServerError, err.Error())
-	} else {
-		w.Write(body)
+		return svr.md.Get(year, filtertotals)
 	}
+
+	svr.respond(w, r, generate)
 }
 
 func (svr *Server) GetQueryYear(w http.ResponseWriter, r *http.Request, year int, params api.GetQueryYearParams) {
