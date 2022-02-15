@@ -96,9 +96,11 @@ func (svr *Server) GetMetadataYear(w http.ResponseWriter, r *http.Request, year 
 			return
 		}
 
+		// if there is a problem saving response in cache, log it, but still send to client
 		err = ser.Set(ctx, body)
 		if err != nil {
-			return
+			log.Printf("could not cache %d bytes of metadata response: %v\n", len(body), err)
+			err = nil
 		}
 	}()
 
