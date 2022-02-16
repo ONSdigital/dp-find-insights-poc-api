@@ -150,6 +150,7 @@ func (svr *Server) GetQueryYear(w http.ResponseWriter, r *http.Request, year int
 }
 
 func sendError(w http.ResponseWriter, code int, message string) {
+	log.Printf("request error: %s", message)
 	e := api.Error{
 		Error: message,
 	}
