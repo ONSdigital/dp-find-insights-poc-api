@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -31,37 +30,31 @@ func (svr *Server) GetCkmeansYear(w http.ResponseWriter, r *http.Request, year i
 		return
 	}
 
-	// add CORS header
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	generate := func() ([]byte, error) {
+		var cat, geotype string
+		var k int
+		if params.Cat != nil {
+			cat = *params.Cat
+		}
+		if params.Geotype != nil {
+			geotype = *params.Geotype
+		}
+		if params.K != nil {
+			k = *params.K
+		}
+		if cat == "" || geotype == "" || k == 0 {
+			return nil, fmt.Errorf("%w: cat, geotype and k required", ErrBadRequest)
+		}
 
-	var cat, geotype string
-	var k int
-	if params.Cat != nil {
-		cat = *params.Cat
-	}
-	if params.Geotype != nil {
-		geotype = *params.Geotype
-	}
-	if params.K != nil {
-		k = *params.K
-	}
-	if cat == "" || geotype == "" || k == 0 {
-		sendError(w, http.StatusBadRequest, "cat, geotype and k required")
-		return
-	}
-
-	ctx := r.Context()
-	breaks, err := svr.querygeodata.CKmeans(ctx, year, cat, geotype, k)
-	if err != nil {
-		sendError(w, http.StatusInternalServerError, err.Error())
-		return
+		ctx := r.Context()
+		breaks, err := svr.querygeodata.CKmeans(ctx, year, cat, geotype, k)
+		if err != nil {
+			return nil, err
+		}
+		return toJSON(breaks)
 	}
 
-	w.Header().Add("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	encoder := json.NewEncoder(w)
-	encoder.SetIndent("", "    ")
-	_ = encoder.Encode(breaks)
+	svr.respond(w, r, mimeJSON, generate)
 }
 
 func (svr *Server) GetCkmeansratioYear(w http.ResponseWriter, r *http.Request, year int, params api.GetCkmeansratioYearParams) {
@@ -86,38 +79,32 @@ func (svr *Server) GetCkmeansratioYear(w http.ResponseWriter, r *http.Request, y
 		return
 	}
 
-	// add CORS header
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	generate := func() ([]byte, error) {
+		var cat1, cat2, geotype string
+		var k int
+		if params.Cat1 != nil {
+			cat1 = *params.Cat1
+		}
+		if params.Cat2 != nil {
+			cat2 = *params.Cat2
+		}
+		if params.Geotype != nil {
+			geotype = *params.Geotype
+		}
+		if params.K != nil {
+			k = *params.K
+		}
+		if cat1 == "" || cat2 == "" || geotype == "" || k == 0 {
+			return nil, fmt.Errorf("%w: cat1, cat2, geotype and k required", ErrBadRequest)
+		}
 
-	var cat1, cat2, geotype string
-	var k int
-	if params.Cat1 != nil {
-		cat1 = *params.Cat1
-	}
-	if params.Cat2 != nil {
-		cat2 = *params.Cat2
-	}
-	if params.Geotype != nil {
-		geotype = *params.Geotype
-	}
-	if params.K != nil {
-		k = *params.K
-	}
-	if cat1 == "" || cat2 == "" || geotype == "" || k == 0 {
-		sendError(w, http.StatusBadRequest, "cat1, cat2, geotype and k required")
-		return
-	}
-
-	ctx := r.Context()
-	breaks, err := svr.querygeodata.CKmeansRatio(ctx, year, cat1, cat2, geotype, k)
-	if err != nil {
-		sendError(w, http.StatusInternalServerError, err.Error())
-		return
+		ctx := r.Context()
+		breaks, err := svr.querygeodata.CKmeansRatio(ctx, year, cat1, cat2, geotype, k)
+		if err != nil {
+			return nil, err
+		}
+		return toJSON(breaks)
 	}
 
-	w.Header().Add("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	encoder := json.NewEncoder(w)
-	encoder.SetIndent("", "    ")
-	_ = encoder.Encode(breaks)
+	svr.respond(w, r, mimeJSON, generate)
 }

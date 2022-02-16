@@ -1,18 +1,29 @@
 package handlers
 
 import (
-	"context"
+	"errors"
 	"log"
 	"net/http"
 	"strings"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/cache"
+	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/geodata"
+)
+
+const (
+	mimeCSV  = "text/csv"
+	mimeJSON = "application/json"
+)
+
+const (
+	ErrBadRequest          = geodata.Sentinel("Bad Request")
+	ErrInternalServerError = geodata.Sentinel("Internal Server Error")
 )
 
 type generateFunc func() ([]byte, error)
 
 // respond returns cached data if it is available, or generates and caches new data.
-func (svr *Server) respond(w http.ResponseWriter, r *http.Request, generate generateFunc) {
+func (svr *Server) respond(w http.ResponseWriter, r *http.Request, contentType string, generate generateFunc) {
 
 	// add CORS header
 	w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -27,7 +38,7 @@ func (svr *Server) respond(w http.ResponseWriter, r *http.Request, generate gene
 	defer ser.Free()
 
 	func() {
-		ctx := context.Background()
+		ctx := r.Context()
 
 		// lock cache key before doing any cache operations
 		ser.Lock()
@@ -53,11 +64,17 @@ func (svr *Server) respond(w http.ResponseWriter, r *http.Request, generate gene
 		}
 	}()
 
-	if err != nil {
-		sendError(w, http.StatusInternalServerError, err.Error())
-	} else {
+	if err == nil {
+		w.Header().Add("Content-Type", contentType)
 		w.Write(body)
+		return
 	}
+
+	code := http.StatusInternalServerError
+	if errors.Is(err, ErrBadRequest) {
+		code = http.StatusBadRequest
+	}
+	sendError(w, code, err.Error())
 }
 
 // noCache is true if a Cache-Control header contains "no-cache"
