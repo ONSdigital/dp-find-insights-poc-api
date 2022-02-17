@@ -67,16 +67,11 @@ func New(v string, dsns ...string) dataIngest {
 }
 
 func (di *dataIngest) addGeoTypes() {
-
-	if tx := di.gdb.Save(&model.GeoType{ID: 1, Name: "EW"}); tx.Error != nil {
-		log.Fatal(tx.Error)
+	for i, name := range model.GetGeoTypeValues() {
+		if tx := di.gdb.Save(&model.GeoType{ID: int32(i + 1), Name: name}); tx.Error != nil {
+			log.Fatal(tx.Error)
+		}
 	}
-
-	di.gdb.Save(&model.GeoType{ID: 2, Name: "Country"})
-	di.gdb.Save(&model.GeoType{ID: 3, Name: "Region"})
-	di.gdb.Save(&model.GeoType{ID: 4, Name: "LAD"})
-	di.gdb.Save(&model.GeoType{ID: 5, Name: "MSOA"})
-	di.gdb.Save(&model.GeoType{ID: 6, Name: "LSOA"})
 }
 
 func (di *dataIngest) getFiles(pref string) {
