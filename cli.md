@@ -25,7 +25,6 @@ subcommand arguments more or less correspond to method arguments.
 subcommand | method
 --|--
 `ckmeans` | `geodata.CKmeans`
-`ckmeansratio` | `geodata.CKmeansRatio`
 `metadata` | `metadata.Get`
 `query` | `geodata.Query`
 

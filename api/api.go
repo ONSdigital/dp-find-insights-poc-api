@@ -54,30 +54,28 @@ type Triplet struct {
 type GetCkmeansYearParams struct {
 	// The census data category to calculate data breaks for.
 	// (NB - use metadata endpoint to see list of currently available census data).
+	// Can be:
+	//   - single values (e.g. QS202EW0002)
+	//   - comma-separated array of values (e.g QS202EW0003,QS202EW0003,QS202EW0004)
 	Cat *string `json:"cat,omitempty"`
 
 	// The type of geography to calculate data breaks for.
+	// At the moment these options are supported:
+	//   - LAD
+	//   - LSOA
+	//
+	// Can be:
+	//   - single values (e.g. LAD)
+	//   - comma-separated array of values (e.g LAD,LSOA)
 	Geotype *string `json:"geotype,omitempty"`
 
 	// The number of data breaks to estimate.
 	K *int `json:"k,omitempty"`
-}
 
-// GetCkmeansratioYearParams defines parameters for GetCkmeansratioYear.
-type GetCkmeansratioYearParams struct {
-	// The census data category to use as numerator (cat1/cat2) when producing the ratio to calculate data breaks for
-	// (NB - use metadata endpoint to see list of currently available census data).
-	Cat1 *string `json:"cat1,omitempty"`
-
-	// The census data category to use as denominator (cat1/cat2) when producing the ratio to calculate data breaks for
-	// (NB - use metadata endpoint to see list of currently available census data).
-	Cat2 *string `json:"cat2,omitempty"`
-
-	// The type of geography to calculate data breaks for.
-	Geotype *string `json:"geotype,omitempty"`
-
-	// The number of data breaks to estimate.
-	K *int `json:"k,omitempty"`
+	// (OPTIONAL) - census data category to use as denominator (cat/divide_by) to ratios for calculating data
+	// breaks, instead of raw data (NB if multiple cat are supplied, each cat will be divided by divide_by). Only
+	// single values for divide_by are supported.
+	DivideBy *string `json:"divide_by,omitempty"`
 }
 
 // GetMetadataYearParams defines parameters for GetMetadataYear.
@@ -133,9 +131,6 @@ type ServerInterface interface {
 	// calculate ckmeans over a given category and geography type
 	// (GET /ckmeans/{year})
 	GetCkmeansYear(w http.ResponseWriter, r *http.Request, year int, params GetCkmeansYearParams)
-	// calculate ckmeans for the ratio between two given categories (cat1 / cat2) for a given geography type
-	// (GET /ckmeansratio/{year})
-	GetCkmeansratioYear(w http.ResponseWriter, r *http.Request, year int, params GetCkmeansratioYearParams)
 	// remove all entries from request cache
 	// (GET /clear-cache)
 	GetClearCache(w http.ResponseWriter, r *http.Request)
@@ -212,81 +207,19 @@ func (siw *ServerInterfaceWrapper) GetCkmeansYear(w http.ResponseWriter, r *http
 		return
 	}
 
+	// ------------- Optional query parameter "divide_by" -------------
+	if paramValue := r.URL.Query().Get("divide_by"); paramValue != "" {
+
+	}
+
+	err = runtime.BindQueryParameter("form", true, false, "divide_by", r.URL.Query(), &params.DivideBy)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid format for parameter divide_by: %s", err), http.StatusBadRequest)
+		return
+	}
+
 	var handler = func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetCkmeansYear(w, r, year, params)
-	}
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler(w, r.WithContext(ctx))
-}
-
-// GetCkmeansratioYear operation middleware
-func (siw *ServerInterfaceWrapper) GetCkmeansratioYear(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	var err error
-
-	// ------------- Path parameter "year" -------------
-	var year int
-
-	err = runtime.BindStyledParameter("simple", false, "year", chi.URLParam(r, "year"), &year)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Invalid format for parameter year: %s", err), http.StatusBadRequest)
-		return
-	}
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params GetCkmeansratioYearParams
-
-	// ------------- Optional query parameter "cat1" -------------
-	if paramValue := r.URL.Query().Get("cat1"); paramValue != "" {
-
-	}
-
-	err = runtime.BindQueryParameter("form", true, false, "cat1", r.URL.Query(), &params.Cat1)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Invalid format for parameter cat1: %s", err), http.StatusBadRequest)
-		return
-	}
-
-	// ------------- Optional query parameter "cat2" -------------
-	if paramValue := r.URL.Query().Get("cat2"); paramValue != "" {
-
-	}
-
-	err = runtime.BindQueryParameter("form", true, false, "cat2", r.URL.Query(), &params.Cat2)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Invalid format for parameter cat2: %s", err), http.StatusBadRequest)
-		return
-	}
-
-	// ------------- Optional query parameter "geotype" -------------
-	if paramValue := r.URL.Query().Get("geotype"); paramValue != "" {
-
-	}
-
-	err = runtime.BindQueryParameter("form", true, false, "geotype", r.URL.Query(), &params.Geotype)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Invalid format for parameter geotype: %s", err), http.StatusBadRequest)
-		return
-	}
-
-	// ------------- Optional query parameter "k" -------------
-	if paramValue := r.URL.Query().Get("k"); paramValue != "" {
-
-	}
-
-	err = runtime.BindQueryParameter("form", true, false, "k", r.URL.Query(), &params.K)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Invalid format for parameter k: %s", err), http.StatusBadRequest)
-		return
-	}
-
-	var handler = func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetCkmeansratioYear(w, r, year, params)
 	}
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -537,9 +470,6 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/ckmeans/{year}", wrapper.GetCkmeansYear)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/ckmeansratio/{year}", wrapper.GetCkmeansratioYear)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/clear-cache", wrapper.GetClearCache)
