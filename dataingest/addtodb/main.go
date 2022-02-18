@@ -331,6 +331,16 @@ func (di *dataIngest) popTopics() {
 	di.gdb.Save(&model.NomisTopic{ID: 400, TopNomisCode: "KS4", Name: "Housing"})
 }
 
+// popTopLevelGeoNames populates names for geo_types 1-3 (EW, Country and Region)
+func (di *dataIngest) popTopLevelGeoNames() {
+	for k, v := range model.GetTopLevelGeoNames() {
+		var g model.Geo
+		di.gdb.Where("code=?", k).First(&g)
+		g.Name = v
+		di.gdb.Save(g)
+	}
+}
+
 func (di *dataIngest) putVersion() {
 	di.gdb.Save(&model.DataVer{ID: 1, CensusYear: 2011, VerString: "2.2", Public: true, Source: "Nomis Bulk API", Notes: "20220204 2i using go addtodb"})
 }
@@ -345,6 +355,7 @@ func main() {
 	di.addClassificationData()
 	longToCatid := di.addCategoryData()
 	di.addGeoGeoMetricData(longToCatid)
+	di.popTopLevelGeoNames()
 	di.putVersion()
 
 	fmt.Printf("%#v\n", time.Since(t0).Seconds())
