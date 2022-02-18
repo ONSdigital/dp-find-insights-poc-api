@@ -139,7 +139,7 @@ func TestAllGeoNamed(t *testing.T ) {
 	if err := db.Raw(`
 	SELECT count(*) 
 	FROM geo
-	WHERE name='NA'
+	WHERE name='NA' AND valid=true
 	`).Scan(&count).Error; err != nil {
 		t.Error(err)
 	}
