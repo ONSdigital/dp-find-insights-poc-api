@@ -25,7 +25,7 @@ func TestGetCensusQuery(t *testing.T) {
 		{
 			desc:    "no arguments",
 			args:    geodata.CensusQuerySQLArgs{},
-			wantErr: errors.New("must specify a condition (rows, bbox, location/radius, and/or polygon)"),
+			wantErr: geodata.ErrMissingParams,
 		},
 		// Rows
 		{
@@ -103,17 +103,17 @@ AND nomis_category.year = data_ver.census_year
 		{
 			desc:    "bbox error - non-numeric data",
 			args:    geodata.CensusQuerySQLArgs{BBox: "X,51.3624781092781,0.17687729439413147,51.673778133460246"},
-			wantErr: errors.New("error parsing bbox \"X,51.3624781092781,0.17687729439413147,51.673778133460246\": strconv.ParseFloat: parsing \"X\": invalid syntax"),
+			wantErr: geodata.ErrInvalidParams,
 		},
 		{
 			desc:    "bbox error - too few coords",
 			args:    geodata.CensusQuerySQLArgs{BBox: "-0.370947083400182,51.3624781092781"},
-			wantErr: errors.New("valid bbox is 'lon,lat,lon,lat', received \"-0.370947083400182,51.3624781092781\": invalid parameter"),
+			wantErr: geodata.ErrInvalidParams,
 		},
 		{
 			desc:    "bbox error - too many coords",
 			args:    geodata.CensusQuerySQLArgs{BBox: "-0.370947083400182,51.3624781092781,0.17687729439413147,51.673778133460246,-0.370947083400182,0.17687729439413147,51.673778133460246"},
-			wantErr: errors.New("valid bbox is 'lon,lat,lon,lat', received \"-0.370947083400182,51.3624781092781,0.17687729439413147,51.673778133460246,-0.370947083400182,0.17687729439413147,51.673778133460246\": invalid parameter"),
+			wantErr: geodata.ErrInvalidParams,
 		},
 		// Columns
 		{
@@ -380,7 +380,7 @@ AND (
 		{
 			desc:    "all rows, too many tokens",
 			args:    geodata.CensusQuerySQLArgs{Geos: []string{"x", "all"}},
-			wantErr: errors.New("if used, ALL must be first and only rows= token"),
+			wantErr: geodata.ErrInvalidParams,
 		},
 		{
 			desc: "all rows, all categories",
@@ -426,7 +426,7 @@ AND nomis_category.year = data_ver.census_year
 			t.Errorf("%s: got these geography column values - '%s', wanted '%s'", test.desc, gotInclude, test.wantInclude)
 		}
 		if test.wantErr != nil {
-			if !reflect.DeepEqual(gotErr.Error(), test.wantErr.Error()) {
+			if !errors.Is(gotErr, test.wantErr) {
 				t.Errorf("%s: got this error = '%s', wanted '%s'", test.desc, gotErr, test.wantErr)
 			}
 		} else if gotErr != nil {

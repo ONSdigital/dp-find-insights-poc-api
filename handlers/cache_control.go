@@ -15,11 +15,6 @@ const (
 	mimeJSON = "application/json"
 )
 
-const (
-	ErrBadRequest          = geodata.Sentinel("Bad Request")
-	ErrInternalServerError = geodata.Sentinel("Internal Server Error")
-)
-
 type generateFunc func() ([]byte, error)
 
 // respond returns cached data if it is available, or generates and caches new data.
@@ -71,8 +66,13 @@ func (svr *Server) respond(w http.ResponseWriter, r *http.Request, contentType s
 	}
 
 	code := http.StatusInternalServerError
-	if errors.Is(err, ErrBadRequest) {
+	switch {
+	case errors.Is(err, geodata.ErrMissingParams) || errors.Is(err, geodata.ErrInvalidParams):
 		code = http.StatusBadRequest
+	case errors.Is(err, geodata.ErrNoContent):
+		code = http.StatusNoContent
+	case errors.Is(err, geodata.ErrTooManyMetrics):
+		code = http.StatusForbidden
 	}
 	sendError(w, code, err.Error())
 }

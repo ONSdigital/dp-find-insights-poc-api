@@ -2,7 +2,6 @@ package geodata
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -270,17 +269,26 @@ func validateCensusQuery(args CensusQuerySQLArgs) error {
 		args.Location == "" &&
 		args.Radius == 0 &&
 		args.Polygon == "" {
-		return errors.New("must specify a condition (rows, bbox, location/radius, and/or polygon)")
+		return fmt.Errorf("%w: must specify a condition (rows, bbox, location/radius, and/or polygon)", ErrMissingParams)
 	}
 	// if ALL is in Geos, it must be first and only Geos token
-	if len(args.Geos) > 1 {
-		for i := 1; i < len(args.Geos); i++ {
-			if isAll(args.Geos[i]) {
-				return errors.New("if used, ALL must be first and only rows= token")
+	var tokens = 0
+	var all = 0
+	for _, geo := range args.Geos {
+		for _, token := range strings.Split(geo, ",") {
+			tokens++
+			if isAll(token) {
+				all++
 			}
 		}
 	}
-	return nil
+	if all == 0 {
+		return nil
+	}
+	if all == 1 && tokens == 1 {
+		return nil
+	}
+	return fmt.Errorf("%w: if used, ALL must be first and only rows= token", ErrInvalidParams)
 }
 
 // wantAllRows is true if rows=ALL
@@ -306,12 +314,12 @@ func bboxSQL(bbox string) (string, error) {
 		for _, coordStr := range strings.Split(bbox, ",") {
 			coord, err := strconv.ParseFloat(coordStr, 64)
 			if err != nil {
-				return "", fmt.Errorf("error parsing bbox %q: %w", bbox, err)
+				return "", fmt.Errorf("%w: error parsing bbox %q: %s", ErrInvalidParams, bbox, err)
 			}
 			coords = append(coords, coord)
 		}
 		if len(coords) != 4 {
-			return "", fmt.Errorf("valid bbox is 'lon,lat,lon,lat', received %q: %w", bbox, ErrInvalidParams)
+			return "", fmt.Errorf("%w: valid bbox is 'lon,lat,lon,lat', received %q", ErrInvalidParams, bbox)
 		}
 		sql := fmt.Sprintf(`
 geo.wkb_geometry && ST_GeomFromText(
@@ -332,18 +340,18 @@ geo.wkb_geometry && ST_GeomFromText(
 func radiusSQL(location string, radius int) (string, error) {
 	if location != "" || radius > 0 {
 		if location == "" || radius == 0 {
-			return "", fmt.Errorf("radius queries require both location (%s) and radius (%d)", location, radius)
+			return "", fmt.Errorf("%w: radius queries require both location (%s) and radius (%d)", ErrInvalidParams, location, radius)
 		}
 		var lon, lat float64
 		fields, err := fmt.Sscanf(location, "%f,%f", &lon, &lat)
 		if err != nil {
-			return "", fmt.Errorf("scanning location %q: %w", location, err)
+			return "", fmt.Errorf("%w: scanning location %q: %s", ErrInvalidParams, location, err)
 		}
 		if fields != 2 {
-			return "", fmt.Errorf("location missing a number: %w", ErrMissingParams)
+			return "", fmt.Errorf("%w: location missing a number", ErrMissingParams)
 		}
 		if radius < 1 {
-			return "", fmt.Errorf("radius must be >0: %q: %w", radius, err)
+			return "", fmt.Errorf("%w: radius must be >0: %q", ErrInvalidParams, radius)
 		}
 		sql := fmt.Sprintf(`
 ST_DWithin(
@@ -368,7 +376,7 @@ func polygonSQL(polygon string) (string, error) {
 	if polygon != "" {
 		points, err := ParsePolygon(polygon)
 		if err != nil {
-			return "", fmt.Errorf("parsing polygon: %q: %w", polygon, err)
+			return "", fmt.Errorf("%w: parsing polygon: %q", err, polygon)
 		}
 		// convert the slice of Points to a slice of strings holding coordinates like "lon lat"
 		var coords []string

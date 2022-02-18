@@ -6,7 +6,6 @@ const (
 	ErrMissingParams  = Sentinel("missing parameter")
 	ErrInvalidParams  = Sentinel("invalid parameter")
 	ErrTooManyMetrics = Sentinel("too many metrics")
-	ErrInvalidTable   = Sentinel("invalid table")
 	ErrNoContent      = Sentinel("no data found")
 	ErrPartialContent = Sentinel("insufficient data found")
 )

@@ -3,7 +3,6 @@ package steps
 import (
 	"context"
 	"net/http"
-	"time"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/config"
 	"github.com/ONSdigital/dp-find-insights-poc-api/service"
@@ -83,9 +82,8 @@ func (c *Component) DoGetHealthcheckOk(cfg *config.Config, buildTime string, git
 	}, nil
 }
 
-func (c *Component) DoGetHTTPServer(bindAddr string, router http.Handler, writeTimeout time.Duration) service.HTTPServer {
+func (c *Component) DoGetHTTPServer(bindAddr string, router http.Handler) service.HTTPServer {
 	c.HTTPServer.Addr = bindAddr
 	c.HTTPServer.Handler = router
-	c.HTTPServer.WriteTimeout = writeTimeout
 	return c.HTTPServer
 }

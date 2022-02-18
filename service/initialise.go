@@ -2,7 +2,6 @@ package service
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/config"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/aws"
@@ -30,8 +29,8 @@ func NewServiceList(initialiser Initialiser) *ExternalServiceList {
 type Init struct{}
 
 // GetHTTPServer creates an http server
-func (e *ExternalServiceList) GetHTTPServer(bindAddr string, router http.Handler, writeTimeout time.Duration) HTTPServer {
-	s := e.Init.DoGetHTTPServer(bindAddr, router, writeTimeout)
+func (e *ExternalServiceList) GetHTTPServer(bindAddr string, router http.Handler) HTTPServer {
+	s := e.Init.DoGetHTTPServer(bindAddr, router)
 	return s
 }
 
@@ -54,10 +53,13 @@ func (e *ExternalServiceList) GetHealthCheck(cfg *config.Config, buildTime, gitC
 }
 
 // DoGetHTTPServer creates an HTTP Server with the provided bind address and router
-func (e *Init) DoGetHTTPServer(bindAddr string, router http.Handler, writeTimeout time.Duration) HTTPServer {
+func (e *Init) DoGetHTTPServer(bindAddr string, router http.Handler) HTTPServer {
 	s := dphttp.NewServer(bindAddr, router)
 	s.HandleOSSignals = false
-	s.Server.WriteTimeout = writeTimeout
+	// dhttp.NewServer sets up the server with default timeouts, but we are using the TimeoutHandler,
+	// so reset these values to avoid interference.
+	s.Server.WriteTimeout = 0
+	s.Server.ReadTimeout = 0
 	return s
 }
 

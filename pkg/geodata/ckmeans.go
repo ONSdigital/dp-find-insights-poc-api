@@ -211,7 +211,7 @@ AND data_ver.ver_string = '2.2'
 	var metrics []float64
 	for geoID, metricCat1 := range metricsCat1 {
 		metricCat2, prs := metricsCat2[geoID]
-		if prs == false {
+		if !prs {
 			return nil, ErrPartialContent
 		}
 		metrics = append(metrics, metricCat1/metricCat2)

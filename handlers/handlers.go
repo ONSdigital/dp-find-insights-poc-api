@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -96,57 +95,46 @@ func (svr *Server) GetQueryYear(w http.ResponseWriter, r *http.Request, year int
 		return
 	}
 
-	// add CORS header
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-
-	var rows []string
-	var cols []string
-	var bbox string
-	var geotype []string
-	var location string
-	var radius int
-	var polygon string
-	var censustable string
-	if params.Rows != nil {
-		rows = *params.Rows
-	}
-	if params.Cols != nil {
-		cols = *params.Cols
-	}
-	if params.Bbox != nil {
-		bbox = *params.Bbox
-	}
-	if params.Geotype != nil {
-		geotype = *params.Geotype
-	}
-	if params.Location != nil {
-		location = *params.Location
-	}
-	if params.Radius != nil {
-		radius = *params.Radius
-	}
-	if params.Polygon != nil {
-		polygon = *params.Polygon
-	}
-	if params.Censustable != nil {
-		censustable = *params.Censustable
-	}
-
-	ctx := r.Context()
-	csv, err := svr.querygeodata.Query(ctx, year, bbox, location, radius, polygon, geotype, rows, cols, censustable)
-	if err != nil {
-		status := http.StatusInternalServerError
-		if errors.Is(err, geodata.ErrNoContent) {
-			status = http.StatusNoContent
-		} else if errors.Is(err, geodata.ErrTooManyMetrics) {
-			status = http.StatusForbidden
-		} else if errors.Is(err, geodata.ErrMissingParams) || errors.Is(err, geodata.ErrInvalidTable) {
-			status = http.StatusBadRequest
+	generate := func() ([]byte, error) {
+		var rows []string
+		var cols []string
+		var bbox string
+		var geotype []string
+		var location string
+		var radius int
+		var polygon string
+		var censustable string
+		if params.Rows != nil {
+			rows = *params.Rows
 		}
-		sendError(w, status, err.Error())
-		return
+		if params.Cols != nil {
+			cols = *params.Cols
+		}
+		if params.Bbox != nil {
+			bbox = *params.Bbox
+		}
+		if params.Geotype != nil {
+			geotype = *params.Geotype
+		}
+		if params.Location != nil {
+			location = *params.Location
+		}
+		if params.Radius != nil {
+			radius = *params.Radius
+		}
+		if params.Polygon != nil {
+			polygon = *params.Polygon
+		}
+		if params.Censustable != nil {
+			censustable = *params.Censustable
+		}
+
+		ctx := r.Context()
+		csv, err := svr.querygeodata.Query(ctx, year, bbox, location, radius, polygon, geotype, rows, cols, censustable)
+		return []byte(csv), err
 	}
-	sendCSV(w, http.StatusOK, csv)
+
+	svr.respond(w, r, mimeCSV, generate)
 }
 
 func sendError(w http.ResponseWriter, code int, message string) {
@@ -159,12 +147,6 @@ func sendError(w http.ResponseWriter, code int, message string) {
 	if err != nil {
 		log.Printf("SendResult: %s", err)
 	}
-}
-
-func sendCSV(w http.ResponseWriter, code int, message string) {
-	w.Header().Add("Content-Type", "text/csv")
-	w.WriteHeader(code)
-	w.Write([]byte(message))
 }
 
 func toJSON(v interface{}) ([]byte, error) {

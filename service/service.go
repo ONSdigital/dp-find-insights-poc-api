@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"net/http"
 	"os"
 	"time"
 
@@ -111,14 +112,18 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	}
 	hc.Start(ctx)
 
-	// put health checker at beginning of middleware chain
-	chain := alice.New(middleware.Whitelist(middleware.HealthcheckFilter(hc.Handler)))
+	timeoutHandler := func(h http.Handler) http.Handler {
+		return http.TimeoutHandler(h, cfg.WriteTimeout, "operation timed out\n")
+	}
 
-	// attach the appropriate api to the chain to create full router
-	rtr := chain.Then(api.Handler(a))
+	// build handler chain
+	chain := alice.New(
+		middleware.Whitelist(middleware.HealthcheckFilter(hc.Handler)),
+		timeoutHandler,
+	).Then(api.Handler(a))
 
 	// bind router handler to http server
-	s := serviceList.GetHTTPServer(cfg.BindAddr, rtr, cfg.WriteTimeout)
+	s := serviceList.GetHTTPServer(cfg.BindAddr, chain)
 
 	// Run the http server in a new go-routine
 	go func() {
