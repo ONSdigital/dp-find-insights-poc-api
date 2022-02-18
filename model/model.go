@@ -2,7 +2,7 @@ package model
 
 import "gorm.io/gorm"
 
-// this is the schema for the "new" (row-based Postgres database)
+// this is the schema for Postgres database)
 
 type SchemaVer struct {
 	gorm.Model // updated_at etc
@@ -129,4 +129,23 @@ type NomisTopic struct {
 // don't pluralise table name
 func (NomisTopic) TableName() string {
 	return "nomis_topic"
+}
+
+// data prepopulated in Postgres database
+
+// GetGeoTypeValues returns a slice of geo types
+func GetGeoTypeValues() []string {
+	// XXX LSOA to be removed
+	return []string{"EW", "Country", "Region", "LAD", "MSOA", "LSOA"}
+}
+
+// GetGeoTypeValues returns a map of geo types for validation
+func GetGeoTypeMap() map[string]bool {
+	m := make(map[string]bool)
+
+	for _, v := range GetGeoTypeValues() {
+		m[v] = true
+	}
+
+	return m
 }
