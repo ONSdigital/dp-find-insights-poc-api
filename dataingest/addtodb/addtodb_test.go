@@ -13,6 +13,7 @@ import (
 	"github.com/ONSdigital/dp-find-insights-poc-api/comptests"
 	"github.com/ONSdigital/dp-find-insights-poc-api/model"
 	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -37,7 +38,7 @@ type qLogger struct {
 
 func (l *qLogger) Log(ctx context.Context, level pgx.LogLevel, msg string, data map[string]interface{}) {
 	// uncomment me for logs
-	//fmt.Printf("SQL:\n%s\nARGS:%v\n", data["sql"], data["args"])
+	//	fmt.Printf("SQL:\n%s\nARGS:%v\n", data["sql"], data["args"])
 }
 
 func TestGetFiles(t *testing.T) {
@@ -100,43 +101,57 @@ func TestAddCategoryData(t *testing.T) {
 func TestAddGeoGeoMetricData(t *testing.T) {
 	ctx := context.Background()
 
-	config, err := pgx.ParseConfig(dsn)
-	if err != nil {
-		log.Print(err)
-	}
-
-	config.Logger = &qLogger{}
-	conn, err := pgx.ConnectConfig(ctx, config)
-	if err != nil {
-		t.Error(err)
-	}
-
 	func() {
-		tx, err := conn.Begin(ctx)
-		if err != nil {
-			t.Error(err)
-		}
-		defer tx.Rollback(ctx)
-
 		di := New("2011", dsn)
-		di.conn = conn
 
-		conn.Exec(ctx, "INSERT INTO geo_type VALUES(4,'LAD')")
-		conn.Exec(ctx, "INSERT INTO NOMIS_DESC (id,name,pop_stat,short_nomis_code,year,nomis_topic_id) VALUES (66,'Sex','All usual residents','QS104EW',2011,1)")
-		conn.Exec(ctx, "INSERT INTO NOMIS_CATEGORY (id,nomis_desc_id,category_name,measurement_unit,stat_unit,long_nomis_code,year) VALUES (3,66,'All categories: Sex','Count','Person','QS104EW0001',2011)")
-		conn.Exec(ctx, "INSERT INTO NOMIS_CATEGORY (id,nomis_desc_id,category_name,measurement_unit,stat_unit,long_nomis_code,year) VALUES (4,66,'All categories: Sex','Count','Person','QS104EW0002',2011)")
+		config, err := pgxpool.ParseConfig(dsn)
+		if err != nil {
+			log.Print(err)
+		}
+
+		config.ConnConfig.Logger = &qLogger{}
+		pool, err := pgxpool.ConnectConfig(context.Background(), config)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// can't get rollback to work with pool
+		// manual rollback below
+
+		/*
+			tx, err := pool.Begin(ctx)
+			if err != nil {
+				t.Error(err)
+			}
+			defer tx.Rollback(ctx)
+
+		*/
+
+		di.pool = pool
+
+		pool.Exec(ctx, "INSERT INTO geo_type VALUES(4,'LAD')")
+		pool.Exec(ctx, "INSERT INTO NOMIS_DESC (id,name,pop_stat,short_nomis_code,year,nomis_topic_id) VALUES (66,'Sex','All usual residents','QS104EW',2011,1)")
+		pool.Exec(ctx, "INSERT INTO NOMIS_CATEGORY (id,nomis_desc_id,category_name,measurement_unit,stat_unit,long_nomis_code,year) VALUES (3,66,'All categories: Sex','Count','Person','QS104EW0001',2011)")
+		pool.Exec(ctx, "INSERT INTO NOMIS_CATEGORY (id,nomis_desc_id,category_name,measurement_unit,stat_unit,long_nomis_code,year) VALUES (4,66,'All categories: Sex','Count','Person','QS104EW0002',2011)")
 
 		di.files.data = []string{"testdata/QS104EWDATA04.CSV"}
 		di.addGeoGeoMetricData(map[string]int32{"QS104EW0001": 3, "QS104EW0002": 4})
 
 		var metric float64
-		if err := conn.QueryRow(ctx, "SELECT metric FROM geo_metric WHERE category_id=3").Scan(&metric); err != nil {
+		if err := pool.QueryRow(ctx, "SELECT metric FROM geo_metric WHERE category_id=3").Scan(&metric); err != nil {
 			log.Print(err)
 		}
 
 		if metric != 92028 {
 			t.Fail()
 		}
+
+		// manual rollback :-/
+		pool.Exec(ctx, "DELETE FROM geo_metric")
+		pool.Exec(ctx, "DELETE FROM geo")
+		pool.Exec(ctx, "DELETE FROM geo_type")
+		pool.Exec(ctx, "DELETE FROM NOMIS_CATEGORY")
+		pool.Exec(ctx, "DELETE FROM NOMIS_DESC")
 
 	}()
 
