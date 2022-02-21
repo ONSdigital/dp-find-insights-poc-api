@@ -10,11 +10,13 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/model"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/database"
 	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/jszwec/csvutil"
 	"github.com/spf13/cast"
 	"gorm.io/driver/postgres"
@@ -25,9 +27,11 @@ import (
 
 const dataPref = "dataingest/addtodb/data/"
 
+const MAX = 8 // num of go routines for bulk copy
+
 type dataIngest struct {
 	gdb     *gorm.DB
-	conn    *pgx.Conn
+	pool    *pgxpool.Pool
 	dataVer string
 	files   files
 }
@@ -53,7 +57,7 @@ func New(v string, dsns ...string) dataIngest {
 
 	// be nice to share same handle but I can't see how to do this!
 
-	con, err := pgx.Connect(context.Background(), dsn)
+	pool, err := pgxpool.Connect(context.Background(), dsn)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -63,7 +67,7 @@ func New(v string, dsns ...string) dataIngest {
 		log.Fatal(err)
 	}
 
-	return dataIngest{gdb: dbg, conn: con, dataVer: v}
+	return dataIngest{gdb: dbg, pool: pool, dataVer: v}
 }
 
 func (di *dataIngest) addGeoTypes() {
@@ -163,22 +167,20 @@ func (di *dataIngest) addCategoryData() map[string]int32 {
 func (di *dataIngest) addGeoGeoMetricData(longToCatid map[string]int32) {
 	geoCodeToID := make(map[string]int64)
 
-	con := di.conn
+	pool := di.pool
 
-	con.Exec(context.Background(), "SET synchronous_commit TO off")
+	pool.Exec(context.Background(), "SET synchronous_commit TO off")
 	re := regexp.MustCompile(`DATA0(\d)\.CSV`)
 
 	ctx := context.Background()
 
-	// pgx is supposed to auto prepare but it's easy enough...
-	_, err := con.Prepare(ctx, "geo-insert", "INSERT INTO geo (code,name,type_id) VALUES ($1,$2,$3) RETURNING id")
-	if err != nil {
-		log.Print(err)
-	}
-
 	num := len(di.files.data)
 
 	t0 := time.Now()
+
+	sem := make(chan int, MAX)
+
+	wg := new(sync.WaitGroup)
 
 	for i, fn := range di.files.data {
 
@@ -227,7 +229,7 @@ func (di *dataIngest) addGeoGeoMetricData(longToCatid map[string]int32) {
 
 					if geoCodeToID[col] == 0 {
 
-						err := con.QueryRow(ctx, "geo-insert", col, "NA", geoType).Scan(&geoID)
+						err := pool.QueryRow(ctx, "INSERT INTO geo (code,name,type_id) VALUES ($1,$2,$3) RETURNING id", col, "NA", geoType).Scan(&geoID)
 						if err != nil {
 							log.Fatal(err)
 						}
@@ -248,22 +250,29 @@ func (di *dataIngest) addGeoGeoMetricData(longToCatid map[string]int32) {
 
 		} // end rows
 
-		fmt.Println("Bulk copy...")
+		sem <- 1
+		wg.Add(1)
 
-		var count int64
-		count, err = con.CopyFrom(ctx,
-			pgx.Identifier{"geo_metric"},
-			[]string{"data_ver_id", "geo_id", "category_id", "metric"},
-			pgx.CopyFromRows(rows),
-		)
+		go func(rows [][]interface{}) {
+			defer wg.Done()
 
-		fmt.Printf("count: %#v\n", count)
+			var err error
+			var count int64
+			count, err = pool.CopyFrom(ctx,
+				pgx.Identifier{"geo_metric"},
+				[]string{"data_ver_id", "geo_id", "category_id", "metric"},
+				pgx.CopyFromRows(rows),
+			)
 
-		if err != nil {
-			log.Print(err)
-		}
+			if err != nil {
+				log.Print(err)
+			}
+			fmt.Printf("Bulk copy count: %#v\n", count)
+			<-sem
+		}(rows)
 
 	} // end files
+	wg.Wait()
 }
 
 // TODO v4 rename Classification
@@ -342,7 +351,7 @@ func (di *dataIngest) popTopLevelGeoNames() {
 }
 
 func (di *dataIngest) putVersion() {
-	di.gdb.Save(&model.DataVer{ID: 1, CensusYear: 2011, VerString: "2.2", Public: true, Source: "Nomis Bulk API", Notes: "20220204 2i using go addtodb"})
+	di.gdb.Save(&model.DataVer{ID: 1, CensusYear: 2011, VerString: "2.2", Public: true, Source: "Nomis Bulk API", Notes: "20220221 2i using go addtodb"})
 }
 
 func main() {
