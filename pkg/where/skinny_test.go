@@ -126,31 +126,17 @@ func TestParseMultiArgs_OK(t *testing.T) {
 	}
 }
 
-func TestWherePart_Errors(t *testing.T) {
-	var tests = []struct {
-		desc string
-		args []string
-	}{
-		{
-			"error in values",
-			[]string{""},
-		},
-	}
-
-	for _, test := range tests {
-		_, err := WherePart("geo", test.args)
-		if err == nil {
-			t.Errorf("%s: expected error", test.desc)
-		}
-	}
-}
-
 func TestWherePart_OK(t *testing.T) {
 	var tests = []struct {
 		desc string
 		args []string
 		want string
 	}{
+		{
+			"no values",
+			[]string{},
+			"",
+		},
 		{
 			"a single value",
 			[]string{"val"},
@@ -179,12 +165,13 @@ func TestWherePart_OK(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		got, err := WherePart("col", test.args)
+		set, err := ParseMultiArgs(test.args)
 		if err != nil {
-			t.Errorf("%s: %s", test.desc, err)
+			t.Errorf("%s: %s\n", test.desc, err)
 			continue
 		}
-		if !reflect.DeepEqual(got, test.want) {
+		got := WherePart("col", set)
+		if got != test.want {
 			t.Errorf("%s: %s, want %s", test.desc, got, test.want)
 		}
 	}

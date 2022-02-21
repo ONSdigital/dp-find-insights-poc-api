@@ -17,15 +17,12 @@ import (
 // )
 //
 // col is the name of the column we are matching (eg, "geography_code" or "category_code").
-// args is the list of query string values taken from MultiValueQueryStringParameters.
+// set is a ValueSet which contains the single value and ranges returned by ParseMultiArgs.
 //
-func WherePart(col string, args []string) (string, error) {
+// If set has no single values or ranges, an empty string will be returned.
+//
+func WherePart(col string, set *ValueSet) string {
 	var conditions []string
-
-	set, err := ParseMultiArgs(args)
-	if err != nil {
-		return "", err
-	}
 
 	if len(set.Singles) > 0 {
 		var values []string
@@ -50,7 +47,10 @@ func WherePart(col string, args []string) (string, error) {
 		conditions = append(conditions, condition)
 	}
 
-	return strings.Join(conditions, "    OR\n"), nil
+	if len(conditions) == 0 {
+		return ""
+	}
+	return strings.Join(conditions, "    OR\n")
 }
 
 // ParseMultiArgs generates a ValueSet from rows= and col= multi value arguments.

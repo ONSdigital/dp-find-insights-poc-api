@@ -302,10 +302,11 @@ func isAll(token string) bool {
 }
 
 func geoSQL(geos []string) (string, error) {
-	if len(geos) > 0 {
-		return where.WherePart("geo.code", geos)
+	set, err := where.ParseMultiArgs(geos)
+	if err != nil {
+		return "", err
 	}
-	return "", nil
+	return where.WherePart("geo.code", set), nil
 }
 
 func bboxSQL(bbox string) (string, error) {
@@ -418,31 +419,29 @@ func categorySQL(namedCats []string, censusTable string) (string, error) {
 	if len(namedCats) == 0 && censusTable == "" {
 		return "", nil
 	}
+
+	var conditions []string
+
 	// get sql for selecting named categories
-	var namedCatSQL string
-	var err error
-	if len(namedCats) > 0 {
-		namedCatSQL, err = where.WherePart("nomis_category.long_nomis_code", namedCats)
-		if err != nil {
-			return "", err
-		}
-	} else {
-		namedCatSQL = ""
+	set, err := where.ParseMultiArgs(namedCats)
+	if err != nil {
+		return "", err
 	}
-	// get sql for selecting categories by nomis desc selection - will need joining 'OR' if there were named cats
-	var censusTableSQL string
+	namedCatSQL := where.WherePart("nomis_category.long_nomis_code", set)
+	if namedCatSQL != "" {
+		conditions = append(conditions, namedCatSQL)
+	}
+
+	// get sql for selecting categories by nomis desc selection
 	if censusTable != "" {
-		censusTableSQL = " nomis_category.nomis_desc_id = nomis_desc.id"
-		if namedCatSQL != "" {
-			censusTableSQL = " OR\n " + censusTableSQL
-		}
+		conditions = append(conditions, " nomis_category.nomis_desc_id = nomis_desc.id")
 	}
+
 	template := `
 AND (
 %s
-%s
 )`
-	return fmt.Sprintf(template, namedCatSQL, censusTableSQL), nil
+	return fmt.Sprintf(template, strings.Join(conditions, " OR\n ")), nil
 }
 
 // splitCols separates special column names from geography names
@@ -465,12 +464,14 @@ func splitCols(cols []string) (include []string, cats []string) {
 // additionalCondition wraps the output of WherePart inside "AND (...)".
 // We "know" this additionalCondition will not be the first additionalCondition in the query.
 func additionalCondition(col string, args []string) (string, error) {
-	if len(args) == 0 {
-		return "", nil
-	}
-	body, err := where.WherePart(col, args)
+	set, err := where.ParseMultiArgs(args)
 	if err != nil {
 		return "", err
+	}
+	body := where.WherePart(col, set)
+
+	if body == "" {
+		return "", nil
 	}
 
 	template := `
