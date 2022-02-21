@@ -446,7 +446,7 @@ AND (
 }
 
 // splitCols separates special column names from geography names
-// (XXXX This duplicates some of the work in where.GetValues().
+// (XXXX This duplicates some of the work in where.ParseMultiArgs().
 // Think of a better way.)
 func splitCols(cols []string) (include []string, cats []string) {
 	for _, instance := range cols {

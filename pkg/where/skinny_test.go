@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestGetValues_Errors(t *testing.T) {
+func TestParseMultiArgs_Errors(t *testing.T) {
 	var tests = []struct {
 		desc string
 		args []string
@@ -17,14 +17,14 @@ func TestGetValues_Errors(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		_, err := GetValues(test.args)
+		_, err := ParseMultiArgs(test.args)
 		if err == nil {
 			t.Errorf("%s: expected error, got nil", test.desc)
 		}
 	}
 }
 
-func TestGetValues_OK(t *testing.T) {
+func TestParseMultiArgs_OK(t *testing.T) {
 	var tests = []struct {
 		desc string
 		args []string
@@ -115,7 +115,7 @@ func TestGetValues_OK(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		got, err := GetValues(test.args)
+		got, err := ParseMultiArgs(test.args)
 		if err != nil {
 			t.Errorf("%s: %s", test.desc, err)
 			continue

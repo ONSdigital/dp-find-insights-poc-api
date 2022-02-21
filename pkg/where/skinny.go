@@ -22,7 +22,7 @@ import (
 func WherePart(col string, args []string) (string, error) {
 	var conditions []string
 
-	set, err := GetValues(args)
+	set, err := ParseMultiArgs(args)
 	if err != nil {
 		return "", err
 	}
@@ -53,9 +53,9 @@ func WherePart(col string, args []string) (string, error) {
 	return strings.Join(conditions, "    OR\n"), nil
 }
 
-// GetValues generates a ValueSet from rows= and col= multi value arguments.
+// ParseMultiArgs generates a ValueSet from rows= and col= multi value arguments.
 //
-func GetValues(args []string) (*ValueSet, error) {
+func ParseMultiArgs(args []string) (*ValueSet, error) {
 	set := &ValueSet{}
 	for _, arg := range args {
 
