@@ -22,8 +22,24 @@ environment for config.
 
 ## Update
 
-* "make build-linux-amd" locally and scp the freshly compiled binary to ~ubuntu
-* ssh into the remote system and type "./deploy.sh" and C-c after log displayed
+* build binary locally and scp the freshly compiled binary to the EC2 instance
+
+    *Do not copy to `dp-find-insights-poc-api` itself*
+
+        make build-linux-amd
+        scp build/dp-find-insights-poc-api frank:dp-find-insights-poc-api.new
+
+* ssh into the remote system and run `./deploy.sh` to install the new binary; hit `^C`  or `q` after log displayed
+
+        ssh frank
+        ./deploy.sh dp-find-insights-poc-api.new
+
+## Rollback
+
+You can rollback to the previously installed binary:
+
+        ssh frank
+        ./deploy.sh previous
 
 ## Log monitoring
 
@@ -66,13 +82,4 @@ Environment="PGPASSWORD=XXXXXXXXXXX"
 Environment="PGHOST=fi-database-2.cbhpmcuqy9vo.eu-central-1.rds.amazonaws.com"
 Environment="PGPORT=54322"
 Environment="PGDATABASE=census"
-```
-
-## deploy.sh
-
-```
-#!/bin/bash
-sudo cp dp-find-insights-poc-api /usr/local/bin
-sudo systemctl restart dp-find-insights-poc-api
-systemctl status dp-find-insights-poc-api -l
 ```
