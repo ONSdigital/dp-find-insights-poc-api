@@ -149,3 +149,22 @@ func GetGeoTypeMap() map[string]bool {
 
 	return m
 }
+
+func GetTopLevelGeoNames() map[string]string {
+
+	// XXX we are missing Welsh "regions" (whatever they are!)
+	return map[string]string{
+		"K04000001": "England and Wales",
+		"E92000001": "England",
+		"W92000004": "Wales",
+		"E12000001": "North East",
+		"E12000002": "North West",
+		"E12000003": "Yorkshire and The Humber",
+		"E12000004": "East Midlands",
+		"E12000005": "West Midlands",
+		"E12000006": "East of England",
+		"E12000007": "London",
+		"E12000008": "South East",
+		"E12000009": "South West",
+	}
+}

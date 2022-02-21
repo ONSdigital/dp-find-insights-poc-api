@@ -5,6 +5,7 @@ set -e
 tables='
 lsoa_gis|Lower_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.geojson
 lad_gis|Local_Authority_Districts_(December_2017)_Boundaries_in_the_UK_(WGS84).geojson
+msoa_gis|Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.geojson
 '
 
 while read line
@@ -30,6 +31,7 @@ EOF
 
 psql -c "ALTER TABLE lad_gis ADD CONSTRAINT uq_lad17cd UNIQUE(lad17cd)"
 psql -c "ALTER TABLE lsoa_gis ADD CONSTRAINT uq_lsoa11cd UNIQUE(lsoa11cd)"
+psql -c "ALTER TABLE msoa_gis ADD CONSTRAINT uq_msoa11cd UNIQUE(msoa11cd)"
 
 # copy LAD data into geo
 psql <<EOT
@@ -47,8 +49,18 @@ FROM lsoa_gis
 WHERE geo.code=lsoa_gis.lsoa11cd AND geo.type_id=6
 EOT2
 
+# copy MSOA data into geo
+# DON'T SET name we use another source (HoC library) of better ones for MSOA!
+psql <<EOT3
+\x
+UPDATE geo SET wkb_geometry=msoa_gis.wkb_geometry, long=msoa_gis.long, lat=msoa_gis.lat 
+FROM msoa_gis  
+WHERE geo.code=msoa_gis.msoa11cd AND geo.type_id=5
+EOT3
+
 psql -c "DROP TABLE lsoa_gis"
 psql -c "DROP TABLE lad_gis"
+psql -c "DROP TABLE msoa_gis"
 
 # These were valid in 2011 (where our data comes from) but aren't anymore
 # XXX probably incomplete list

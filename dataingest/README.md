@@ -94,7 +94,7 @@ $ ./dataingest/dbsetup/cleandb.sh
 * see geo/README.md
 
 ```
-$ cd dataingest/geo
+$ cd dataingest/geoname
 $ aws --region eu-central-1 s3 sync s3://find-insights-input-data-files/geoname/ .
 $ go run .
 ```
