@@ -11,3 +11,19 @@ type ValueRange struct {
 	Low  string
 	High string
 }
+
+func NewValueSet() *ValueSet {
+	return &ValueSet{}
+}
+
+func (set *ValueSet) AddSingle(s string) {
+	set.Singles = append(set.Singles, s)
+}
+
+func (set *ValueSet) AddRange(low, high string) {
+	r := &ValueRange{
+		Low:  low,
+		High: high,
+	}
+	set.Ranges = append(set.Ranges, r)
+}

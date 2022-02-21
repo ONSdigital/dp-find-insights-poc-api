@@ -56,7 +56,7 @@ func WherePart(col string, set *ValueSet) string {
 // ParseMultiArgs generates a ValueSet from rows= and col= multi value arguments.
 //
 func ParseMultiArgs(args []string) (*ValueSet, error) {
-	set := &ValueSet{}
+	set := NewValueSet()
 	for _, arg := range args {
 
 		// each argument may have many values or ranges separated by commas
@@ -68,7 +68,7 @@ func ParseMultiArgs(args []string) (*ValueSet, error) {
 				if token == "" {
 					return nil, errors.New("value must not be empty")
 				}
-				set.Singles = append(set.Singles, token)
+				set.AddSingle(token)
 
 			} else {
 				r := strings.Split(token, "...")
@@ -78,11 +78,7 @@ func ParseMultiArgs(args []string) (*ValueSet, error) {
 				if r[0] == "" || r[1] == "" {
 					return nil, errors.New("range values must not be empty")
 				}
-				vr := &ValueRange{
-					Low:  r[0],
-					High: r[1],
-				}
-				set.Ranges = append(set.Ranges, vr)
+				set.AddRange(r[0], r[1])
 			}
 		}
 	}
