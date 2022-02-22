@@ -598,3 +598,88 @@ func TestValidateAllToken_OK(t *testing.T) {
 		})
 	}
 }
+
+func TestFixgeotype_Error(t *testing.T) {
+	// catch invalid geotypes
+	_, err := geodata.FixGeotype("foo")
+	assert.Error(t, err)
+}
+
+func TestFixgeotype_OK(t *testing.T) {
+	// verify geotypes are fixed
+	geotype, err := geodata.FixGeotype("country")
+	assert.NoError(t, err)
+	assert.Equal(t, geotype, "Country")
+}
+
+func TestMapGeotypes_Error(t *testing.T) {
+	// catch error when a geotype isn't valid
+	var tests = map[string]struct {
+		geos []string // input geos as received from query string
+	}{
+		"invalid single geotype": {
+			[]string{"foo"},
+		},
+		"geotype as low part of range": {
+			[]string{"lsoa...foo"},
+		},
+		"geotype as high part of range": {
+			[]string{"foo...lsoa"},
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			// parse geos into a ValueSet
+			set, err := where.ParseMultiArgs(test.geos)
+			if !assert.NoError(t, err) {
+				return
+			}
+
+			// expect validation error
+			_, err = geodata.MapGeotypes(set)
+			assert.Error(t, err)
+		})
+	}
+}
+
+func TestMapGeotypes_OK(t *testing.T) {
+	var tests = map[string]struct {
+		geos []string // input geos as received from query string
+		want []string // expected fixed geos
+	}{
+		"single geotype": {
+			[]string{"lsoa"},
+			[]string{"LSOA"},
+		},
+		"multiple geotyupes": {
+			[]string{"eW", "country", "LaD"},
+			[]string{"EW,Country,LAD"},
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			// parse geos into a ValueSet
+			set, err := where.ParseMultiArgs(test.geos)
+			if !assert.NoError(t, err) {
+				return
+			}
+
+			// expect validation ok
+			fixedset, err := geodata.MapGeotypes(set)
+			if !assert.NoError(t, err) {
+				return
+			}
+
+			// parse our expected string to get a ValueSet
+			wantset, err := where.ParseMultiArgs(test.want)
+			if !assert.NoError(t, err) {
+				return
+			}
+
+			// expect
+			assert.Equal(t, wantset, fixedset)
+		})
+	}
+}

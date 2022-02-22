@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/ONSdigital/dp-find-insights-poc-api/model"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/database"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/table"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/timer"
@@ -518,4 +519,36 @@ AND (
 %s
 )`
 	return fmt.Sprintf(template, body), nil
+}
+
+func FixGeotype(token string) (string, error) {
+	for _, geotype := range model.GetGeoTypeValues() {
+		if strings.EqualFold(token, geotype) {
+			return geotype, nil
+		}
+	}
+	return "", fmt.Errorf("%w: %q is not a geotype", ErrInvalidParams, token)
+}
+
+// MapGeotypes changes case-insensitive geotypes given in query strings to the specific
+// case-sensitive geotypes used in the db.
+// For example, "lsoa" will be changed to "LSOA".
+// Returns error if a geotype doesn't match at all.
+func MapGeotypes(set *where.ValueSet) (*where.ValueSet, error) {
+	callback := func(single, low, high *string) (*string, *string, *string, error) {
+		var err error
+
+		if single == nil {
+			err = fmt.Errorf("%w: cannot have ranges of geotypes", ErrInvalidParams)
+		} else {
+			var geotype string
+			geotype, err = FixGeotype(*single)
+			if err == nil {
+				single = &geotype
+			}
+		}
+		return single, low, high, err
+	}
+
+	return set.Walk(callback)
 }
