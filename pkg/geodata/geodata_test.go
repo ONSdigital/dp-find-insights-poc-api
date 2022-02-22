@@ -10,8 +10,11 @@ import (
 	"unicode"
 
 	"github.com/kylelemons/godebug/diff"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/geodata"
+	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/table"
+	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/where"
 )
 
 func TestGetCensusQuery(t *testing.T) {
@@ -445,4 +448,95 @@ func normSQL(sql string) string {
 	// strip blank lines and return
 	multiNewlinePattern := regexp.MustCompile(`\n\s*\n+`)
 	return multiNewlinePattern.ReplaceAllString(wsNormed, "\n")
+}
+
+func TestExtractSpecialCols_Error(t *testing.T) {
+	// catch error when a special column is named in a range
+	var tests = map[string]struct {
+		cols []string // input cols as received from query string
+	}{
+		"special col at beginning of range": {
+			[]string{"foo," + table.ColGeotype + "...high"},
+		},
+		"special col at end of range": {
+			[]string{"foo,low..." + table.ColGeotype},
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			// parse cols into a ValueSet
+			set, err := where.ParseMultiArgs(test.cols)
+			if !assert.NoError(t, err) {
+				return
+			}
+
+			// split into special columns and new ValueSet
+			_, _, err = geodata.ExtractSpecialCols(set)
+			assert.Error(t, err)
+		})
+	}
+}
+func TestExtractSpecialCols_OK(t *testing.T) {
+	var tests = map[string]struct {
+		cols         []string // input cols as received from query string(s)
+		wantIncludes []string // expected list of special cols found
+		wantCols     []string // expected list of non-special cols
+	}{
+		"no query strings": {
+			cols:         []string{},
+			wantIncludes: nil,
+			wantCols:     nil,
+		},
+		"single non-special col": {
+			cols:         []string{"foo"},
+			wantIncludes: nil,
+			wantCols:     []string{"foo"},
+		},
+		"single special col": {
+			cols:         []string{table.ColGeotype},
+			wantIncludes: []string{table.ColGeotype},
+			wantCols:     nil,
+		},
+		"special and non-special cols": {
+			cols:         []string{"foo", table.ColGeotype},
+			wantIncludes: []string{table.ColGeotype},
+			wantCols:     []string{"foo"},
+		},
+		"special and non-special cols with range": {
+			cols:         []string{"foo", table.ColGeotype, "low...high"},
+			wantIncludes: []string{table.ColGeotype},
+			wantCols:     []string{"foo,low...high"},
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			// parse cols into a ValueSet
+			set, err := where.ParseMultiArgs(test.cols)
+			if !assert.NoError(t, err) {
+				return
+			}
+
+			// split into special columns and new ValueSet
+			includes, newset, err := geodata.ExtractSpecialCols(set)
+			if !assert.NoError(t, err) {
+				return
+			}
+
+			// make sure extracted special column list is correct
+			if !assert.Equal(t, test.wantIncludes, includes) {
+				return
+			}
+
+			// parse wantcols into a ValueSet so we can compare with newset
+			wantset, err := where.ParseMultiArgs(test.wantCols)
+			if !assert.NoError(t, err) {
+				return
+			}
+
+			// verify resulting ValueSet after extraction
+			assert.Equal(t, wantset, newset)
+		})
+	}
 }

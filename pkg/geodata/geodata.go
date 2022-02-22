@@ -2,6 +2,7 @@ package geodata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -459,6 +460,34 @@ func splitCols(cols []string) (include []string, cats []string) {
 		}
 	}
 	return
+}
+
+// ExtractSpecialCols removes special column names like "geography_code" from
+// the ValueSet, returning a reduced ValueSet, and the list of special columns
+// found.
+func ExtractSpecialCols(set *where.ValueSet) ([]string, *where.ValueSet, error) {
+	var includes []string
+
+	callback := func(single, low, high *string) (*string, *string, *string, error) {
+		var err error
+		if single != nil {
+			if *single == table.ColGeographyCode || *single == table.ColGeotype {
+				includes = append(includes, *single)
+				single = nil
+			}
+		} else {
+			if *low == table.ColGeographyCode || *high == table.ColGeographyCode || *low == table.ColGeotype || *high == table.ColGeotype {
+				err = errors.New("special columns cannot be part of a range")
+			}
+		}
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		return single, low, high, nil
+	}
+
+	newset, err := set.Walk(callback)
+	return includes, newset, err
 }
 
 // additionalCondition wraps the output of WherePart inside "AND (...)".
