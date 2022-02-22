@@ -2,7 +2,6 @@ package geodata
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -488,7 +487,7 @@ func ExtractSpecialCols(set *where.ValueSet) ([]string, *where.ValueSet, error) 
 			}
 		} else {
 			if *low == table.ColGeographyCode || *high == table.ColGeographyCode || *low == table.ColGeotype || *high == table.ColGeotype {
-				err = errors.New("special columns cannot be part of a range")
+				err = fmt.Errorf("%w: special columns cannot be part of a range", ErrInvalidParams)
 			}
 		}
 		if err != nil {

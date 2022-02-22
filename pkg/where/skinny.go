@@ -55,6 +55,7 @@ func WherePart(col string, set *ValueSet) string {
 
 // ParseMultiArgs generates a ValueSet from rows= and col= multi value arguments.
 //
+// XXX return proper error types once errors are factored out of geodata
 func ParseMultiArgs(args []string) (*ValueSet, error) {
 	set := NewValueSet()
 	for _, arg := range args {
