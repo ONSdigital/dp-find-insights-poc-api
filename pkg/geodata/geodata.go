@@ -209,11 +209,20 @@ func CensusQuerySQL(ctx context.Context, args CensusQuerySQLArgs) (sql string, i
 		return sql, include, err
 	}
 
-	// split column list into includes and categories
-	include, cats := splitCols(args.Cols)
+	// parse cols query strings into a ValueSet
+	catset, err := where.ParseMultiArgs(args.Cols)
+	if err != nil {
+		return sql, include, err
+	}
+
+	// extract special column names from ValueSet
+	include, catset, err = ExtractSpecialCols(catset)
+	if err != nil {
+		return sql, include, err
+	}
 
 	// construct WHERE condition for categories
-	catConditions, err := categorySQL(cats, args.Censustable)
+	catConditions, err := categorySQL(catset, args.Censustable)
 	if err != nil {
 		return sql, include, err
 	}
@@ -416,18 +425,10 @@ func censusTableFromAndSQL(censustable string) (string, string) {
 	return fromSQL, andSQL
 }
 
-func categorySQL(namedCats []string, censusTable string) (string, error) {
-	if len(namedCats) == 0 && censusTable == "" {
-		return "", nil
-	}
-
+func categorySQL(set *where.ValueSet, censusTable string) (string, error) {
 	var conditions []string
 
 	// get sql for selecting named categories
-	set, err := where.ParseMultiArgs(namedCats)
-	if err != nil {
-		return "", err
-	}
 	namedCatSQL := where.WherePart("nomis_category.long_nomis_code", set)
 	if namedCatSQL != "" {
 		conditions = append(conditions, namedCatSQL)
@@ -438,28 +439,15 @@ func categorySQL(namedCats []string, censusTable string) (string, error) {
 		conditions = append(conditions, " nomis_category.nomis_desc_id = nomis_desc.id")
 	}
 
+	if len(conditions) == 0 {
+		return "", nil
+	}
+
 	template := `
 AND (
 %s
 )`
 	return fmt.Sprintf(template, strings.Join(conditions, " OR\n ")), nil
-}
-
-// splitCols separates special column names from geography names
-// (XXXX This duplicates some of the work in where.ParseMultiArgs().
-// Think of a better way.)
-func splitCols(cols []string) (include []string, cats []string) {
-	for _, instance := range cols {
-		tokens := strings.Split(instance, ",")
-		for _, token := range tokens {
-			if token == table.ColGeographyCode || token == table.ColGeotype {
-				include = append(include, token)
-			} else {
-				cats = append(cats, token)
-			}
-		}
-	}
-	return
 }
 
 // ExtractSpecialCols removes special column names like "geography_code" from
