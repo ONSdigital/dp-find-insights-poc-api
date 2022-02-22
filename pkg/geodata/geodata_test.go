@@ -540,3 +540,61 @@ func TestExtractSpecialCols_OK(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateAllToken_Error(t *testing.T) {
+	// catch error when a ALL is given more than once or in a range
+	var tests = map[string]struct {
+		cols []string // input cols as received from query string
+	}{
+		"ALL is given more than once": {
+			[]string{"ALL", "ALL}"},
+		},
+		"ALL is low part of a range": {
+			[]string{"ALL...high"},
+		},
+		"ALL is high part of a range": {
+			[]string{"low...ALL"},
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			// parse cols into a ValueSet
+			set, err := where.ParseMultiArgs(test.cols)
+			if !assert.NoError(t, err) {
+				return
+			}
+
+			// call validator
+			err = geodata.ValidateAllToken(set)
+			assert.Error(t, err)
+		})
+	}
+}
+
+func TestValidateAllToken_OK(t *testing.T) {
+	var tests = map[string]struct {
+		cols []string // input cols as received from query string
+	}{
+		"ALL is not given at all": {
+			[]string{"foo"},
+		},
+		"ALL is only token": {
+			[]string{"ALL"},
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			// parse cols into a ValueSet
+			set, err := where.ParseMultiArgs(test.cols)
+			if !assert.NoError(t, err) {
+				return
+			}
+
+			// call validator
+			err = geodata.ValidateAllToken(set)
+			assert.NoError(t, err)
+		})
+	}
+}

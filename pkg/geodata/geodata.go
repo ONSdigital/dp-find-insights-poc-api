@@ -281,17 +281,39 @@ func validateCensusQuery(args CensusQuerySQLArgs) error {
 		args.Polygon == "" {
 		return fmt.Errorf("%w: must specify a condition (rows, bbox, location/radius, and/or polygon)", ErrMissingParams)
 	}
-	// if ALL is in Geos, it must be first and only Geos token
-	var tokens = 0
-	var all = 0
-	for _, geo := range args.Geos {
-		for _, token := range strings.Split(geo, ",") {
-			tokens++
-			if isAll(token) {
+
+	set, err := where.ParseMultiArgs(args.Geos)
+	if err != nil {
+		return err
+	}
+	return ValidateAllToken(set)
+}
+
+// ValidateAllToken verifies that if there is an "ALL" specified, it is the only token.
+func ValidateAllToken(set *where.ValueSet) error {
+	var all, tokens int
+
+	callback := func(single, low, high *string) (*string, *string, *string, error) {
+		var err error
+		tokens++
+		if single != nil {
+			if isAll(*single) {
 				all++
 			}
+		} else {
+			if isAll(*low) || isAll(*high) {
+				err = fmt.Errorf("%w: ALL cannot be part of a range", ErrInvalidParams)
+			}
 		}
+		// we're only interested in the err status
+		return nil, nil, nil, err
 	}
+
+	_, err := set.Walk(callback)
+	if err != nil {
+		return err
+	}
+
 	if all == 0 {
 		return nil
 	}
