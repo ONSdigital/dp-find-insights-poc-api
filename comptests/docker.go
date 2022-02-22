@@ -13,6 +13,7 @@ import (
 )
 
 const DefaultDSN = "postgres://insights:insights@localhost:54322/censustest"
+const DefaultPostgresPW = "mylocalsecret"
 
 func SetupDockerDB(dsn string) {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
@@ -20,7 +21,17 @@ func SetupDockerDB(dsn string) {
 	_, _, host, port, _ := model.ParseDSN(dsn)
 	user := "postgres"
 	db := "postgres"
-	pw := os.Getenv("POSTGRES_PASSWORD")
+
+	// get password from env, or fall back to default
+	var pw string
+	envPW := os.Getenv("POSTGRES_PASSWORD")
+	if envPW != "" {
+		pw = envPW
+	} else {
+		pw = DefaultPostgresPW
+		os.Setenv("POSTGRES_PASSWORD", DefaultPostgresPW)
+	}
+
 	dsn = model.CreatDSN(user, pw, host, port, db)
 
 	// is docker postgres+postgis running?
