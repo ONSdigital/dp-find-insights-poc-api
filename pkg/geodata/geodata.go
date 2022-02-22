@@ -508,6 +508,10 @@ func additionalCondition(col string, args []string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	set, err = MapGeotypes(set)
+	if err != nil {
+		return "", err
+	}
 	body := where.WherePart(col, set)
 
 	if body == "" {
