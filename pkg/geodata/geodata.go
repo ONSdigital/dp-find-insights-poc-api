@@ -204,7 +204,7 @@ func CensusQuerySQL(ctx context.Context, args CensusQuerySQLArgs) (sql string, i
 	}
 
 	// construct WHERE condition for geotypes
-	geotypeConditions, err := additionalCondition("geo_type.name", args.Geotypes)
+	geotypeConditions, err := geotypeSQL("geo_type.name", args.Geotypes)
 	if err != nil {
 		return sql, include, err
 	}
@@ -500,9 +500,8 @@ func ExtractSpecialCols(set *where.ValueSet) ([]string, *where.ValueSet, error) 
 	return includes, newset, err
 }
 
-// additionalCondition wraps the output of WherePart inside "AND (...)".
-// We "know" this additionalCondition will not be the first additionalCondition in the query.
-func additionalCondition(col string, args []string) (string, error) {
+// geotypeSQL generates an AND where part for geotypes.
+func geotypeSQL(col string, args []string) (string, error) {
 	set, err := where.ParseMultiArgs(args)
 	if err != nil {
 		return "", err

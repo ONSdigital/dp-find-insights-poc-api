@@ -652,7 +652,7 @@ func TestMapGeotypes_OK(t *testing.T) {
 			[]string{"lsoa"},
 			[]string{"LSOA"},
 		},
-		"multiple geotyupes": {
+		"multiple geotypes": {
 			[]string{"eW", "country", "LaD"},
 			[]string{"EW,Country,LAD"},
 		},
