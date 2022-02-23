@@ -1,6 +1,6 @@
 package where
 
-// ValueSet holds all the single values and ranges for a for a multi-valued column.
+// ValueSet holds all the single values and ranges for a for a multi-valued query parameter.
 type ValueSet struct {
 	Singles []string      // list of single values; becomes IN
 	Ranges  []*ValueRange // list of value ranges; becomes BETWEEN
