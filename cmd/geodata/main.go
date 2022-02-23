@@ -86,16 +86,18 @@ func query(ctx context.Context, app *geodata.Geodata, argv []string) {
 }
 
 func ckmeans(ctx context.Context, app *geodata.Geodata, argv []string) {
+	var cat, geotype multiFlag
+
 	flagset := flag.NewFlagSet("ckmeans", flag.ExitOnError)
 
 	year := flagset.Int("year", 2011, "census year")
-	cat := flagset.String("cat", "", "category code")
-	geotype := flagset.String("geotype", "", "geography type (LSOA,...)")
+	flagset.Var(&cat, "cat", "category code(s) to provide ckmeans for")
+	flagset.Var(&geotype, "geotype", "geography types (LSOA, LAD, etc)")
 	k := flagset.Int("k", 5, "number of clusters/bins")
 	divide_by := flagset.String("divide_by", "", "category code to divide all other categories by (optional)")
 	flagset.Parse(argv)
 
-	breaks, err := app.CKmeans(ctx, *year, *cat, *geotype, *k, *divide_by)
+	breaks, err := app.CKmeans(ctx, *year, cat, geotype, *k, *divide_by)
 	if err != nil {
 		log.Fatalln(err)
 	}

@@ -57,7 +57,10 @@ type GetCkmeansYearParams struct {
 	// Can be:
 	//   - single values (e.g. QS202EW0002)
 	//   - comma-separated array of values (e.g QS202EW0003,QS202EW0003,QS202EW0004)
-	Cat *string `json:"cat,omitempty"`
+	//
+	// Multiple cats parameters can be supplied, e.g. cats=QS202EW0002&cats=QS202EW0003
+	// NB - use of ranges (e.g. QS202EW0003...QS202EW0004) is NOT supported for the ckmeans endpoint.
+	Cat *[]string `json:"cat,omitempty"`
 
 	// The type of geography to calculate data breaks for.
 	// At the moment these options are supported:
@@ -67,7 +70,9 @@ type GetCkmeansYearParams struct {
 	// Can be:
 	//   - single values (e.g. LAD)
 	//   - comma-separated array of values (e.g LAD,LSOA)
-	Geotype *string `json:"geotype,omitempty"`
+	//
+	// Multiple geotype parameters can be supplied, e.g. geotype=LAD&geotype=LSOA
+	Geotype *[]string `json:"geotype,omitempty"`
 
 	// The number of data breaks to estimate.
 	K *int `json:"k,omitempty"`
@@ -91,12 +96,16 @@ type GetQueryYearParams struct {
 	// - single values (e.g. E01000001)
 	// - comma-separated array of values (e.g E01000001,E01000002,E01000003)
 	// - ellipsis-separated contiguous range of values (e.g. E01000001...E01000010)
+	//
+	// Multiple rows parameters can be supplied, e.g. rows=E01000001&rows=E01000001...E01000010
 	Rows *[]string `json:"rows,omitempty"`
 
 	// The census data that you want (NB - use metadata endpoint to see list of currently available census data). Can be:
 	// - single values (e.g. QS101EW0001)
 	// - comma-separated array of values (e.g QS101EW0001,QS101EW0002,QS101EW0003)
 	// - ellipsis-separated contiguous range of values (e.g. QS101EW0001...QS101EW0010)
+	//
+	// Multiple cols parameters can be supplied, e.g. cols=QS101EW0001&rows=QS101EW0001...QS101EW0010
 	Cols *[]string `json:"cols,omitempty"`
 
 	// Two long, lat coordinate pairs representing the opposite corners of a bounding box (e.g. bbox=0.1338,51.4635,0.1017,51.4647).
@@ -108,6 +117,8 @@ type GetQueryYearParams struct {
 	// At the moment these options are supported:
 	// - LAD
 	// - LSOA
+	//
+	// Multiple geotype parameters can be supplied, e.g. geotype=LAD&geotype=LSOA
 	Geotype *[]string `json:"geotype,omitempty"`
 
 	// Radius and location (both are required) will select all geographies with radius of the long,lat pair location,

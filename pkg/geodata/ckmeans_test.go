@@ -147,7 +147,7 @@ func TestCkmeansHappyPathSingleCategorySingleGeotype(t *testing.T) {
 			https://github.com/simple-statistics/simple-statistics/blob/master/src/ckmeans.js#224)
 		*/
 		metrics := map[string]map[string][]float64{
-			"testGeotype": {
+			"LAD": {
 				"category1": {-1.0, 2.0, -1.0, 2.0, 4.0, 5.0, 6.0, -1.0, 2.0, -1.0},
 			},
 		}
@@ -162,8 +162,8 @@ func TestCkmeansHappyPathSingleCategorySingleGeotype(t *testing.T) {
 		result, err := app.CKmeans(
 			context.Background(),
 			2011,
-			"category1",
-			"testGeotype",
+			[]string{"category1"},
+			[]string{"LAD"},
 			testK,
 			"",
 		)
@@ -171,7 +171,7 @@ func TestCkmeansHappyPathSingleCategorySingleGeotype(t *testing.T) {
 		// THEN we expect the breakpoints to match the example given in the original javascript repo
 		wantBreaks := map[string]map[string][]float64{
 			"category1": {
-				"testGeotype": {-1.0, 2.0, 6.0},
+				"LAD": {-1.0, 2.0, 6.0},
 			},
 		}
 		if !reflect.DeepEqual(result, wantBreaks) {
@@ -199,7 +199,7 @@ func TestCkmeansHappyPathMultiCategorySingleGeotype(t *testing.T) {
 			https://github.com/simple-statistics/simple-statistics/blob/master/src/ckmeans.js#224)
 		*/
 		metrics := map[string]map[string][]float64{
-			"testGeotype": {
+			"LAD": {
 				"category1": {-1.0, 2.0, -1.0, 2.0, 4.0, 5.0, 6.0, -1.0, 2.0, -1.0},
 				"category2": {-10.0, 20.0, -10.0, 20.0, 40.0, 50.0, 60.0, -10.0, 20.0, -10.0},
 				"category3": {-100.0, 200.0, -100.0, 200.0, 400.0, 500.0, 600.0, -100.0, 200.0, -100.0},
@@ -216,8 +216,8 @@ func TestCkmeansHappyPathMultiCategorySingleGeotype(t *testing.T) {
 		result, err := app.CKmeans(
 			context.Background(),
 			2011,
-			"category1,category2,category3",
-			"testGeotype",
+			[]string{"category1,category2,category3"},
+			[]string{"LAD"},
 			testK,
 			"",
 		)
@@ -225,13 +225,13 @@ func TestCkmeansHappyPathMultiCategorySingleGeotype(t *testing.T) {
 		// THEN we expect the breakpoints to match the example given in the original javascript repo, after adjustment
 		wantBreaks := map[string]map[string][]float64{
 			"category1": {
-				"testGeotype": {-1.0, 2.0, 6.0},
+				"LAD": {-1.0, 2.0, 6.0},
 			},
 			"category2": {
-				"testGeotype": {-10.0, 20.0, 60.0},
+				"LAD": {-10.0, 20.0, 60.0},
 			},
 			"category3": {
-				"testGeotype": {-100.0, 200.0, 600.0},
+				"LAD": {-100.0, 200.0, 600.0},
 			},
 		}
 		if !reflect.DeepEqual(result, wantBreaks) {
@@ -259,12 +259,12 @@ func TestCkmeansHappyPathMultiCategoryMultiGeotype(t *testing.T) {
 			https://github.com/simple-statistics/simple-statistics/blob/master/src/ckmeans.js#224)
 		*/
 		metrics := map[string]map[string][]float64{
-			"testGeotype1": {
+			"LAD": {
 				"category1": {-1.0, 2.0, -1.0, 2.0, 4.0, 5.0, 6.0, -1.0, 2.0, -1.0},
 				"category2": {-10.0, 20.0, -10.0, 20.0, 40.0, 50.0, 60.0, -10.0, 20.0, -10.0},
 				"category3": {-100.0, 200.0, -100.0, 200.0, 400.0, 500.0, 600.0, -100.0, 200.0, -100.0},
 			},
-			"testGeotype2": {
+			"MSOA": {
 				"category1": {-1000.0, 2000.0, -1000.0, 2000.0, 4000.0, 5000.0, 6000.0, -1000.0, 2000.0, -1000.0},
 				"category2": {-10000.0, 20000.0, -10000.0, 20000.0, 40000.0, 50000.0, 60000.0, -10000.0, 20000.0, -10000.0},
 				"category3": {-100000.0, 200000.0, -100000.0, 200000.0, 400000.0, 500000.0, 600000.0, -100000.0, 200000.0, -100000.0},
@@ -281,8 +281,8 @@ func TestCkmeansHappyPathMultiCategoryMultiGeotype(t *testing.T) {
 		result, err := app.CKmeans(
 			context.Background(),
 			2011,
-			"category1,category2,category3",
-			"testGeotype1,testGeotype2",
+			[]string{"category1,category2,category3"},
+			[]string{"LAD,MSOA"},
 			testK,
 			"",
 		)
@@ -290,16 +290,16 @@ func TestCkmeansHappyPathMultiCategoryMultiGeotype(t *testing.T) {
 		// THEN we expect the breakpoints to match the example given in the original javascript repo, after adjustment
 		wantBreaks := map[string]map[string][]float64{
 			"category1": {
-				"testGeotype1": {-1.0, 2.0, 6.0},
-				"testGeotype2": {-1000.0, 2000.0, 6000.0},
+				"LAD":  {-1.0, 2.0, 6.0},
+				"MSOA": {-1000.0, 2000.0, 6000.0},
 			},
 			"category2": {
-				"testGeotype1": {-10.0, 20.0, 60.0},
-				"testGeotype2": {-10000.0, 20000.0, 60000.0},
+				"LAD":  {-10.0, 20.0, 60.0},
+				"MSOA": {-10000.0, 20000.0, 60000.0},
 			},
 			"category3": {
-				"testGeotype1": {-100.0, 200.0, 600.0},
-				"testGeotype2": {-100000.0, 200000.0, 600000.0},
+				"LAD":  {-100.0, 200.0, 600.0},
+				"MSOA": {-100000.0, 200000.0, 600000.0},
 			},
 		}
 		if !reflect.DeepEqual(result, wantBreaks) {
@@ -327,7 +327,7 @@ func TestCkmeansNoData(t *testing.T) {
 			AND GIVEN we have seeded datapoints for one category, with values taken from
 			https://github.com/simple-statistics/simple-statistics/blob/master/src/ckmeans.js#224)
 		*/
-		metrics := map[string]map[string][]float64{"testGeotype": {"category1": {}}}
+		metrics := map[string]map[string][]float64{"LAD": {"category1": {}}}
 		ckmeansTestSetup(t, db, metrics)
 
 		// WHEN we use app.CKmeans to get breakpoints for a category with NO DATA
@@ -339,8 +339,8 @@ func TestCkmeansNoData(t *testing.T) {
 		result, err := app.CKmeans(
 			context.Background(),
 			2011,
-			"category1",
-			"testGeotype",
+			[]string{"category1"},
+			[]string{"LAD"},
 			testK,
 			"",
 		)
@@ -375,7 +375,7 @@ func TestCkmeansRatiosHappyPathSingleGeotype(t *testing.T) {
 			Keep it simple and make the denominators all 2, and the data have three obvious order-of-magnitude breaks
 		*/
 		metrics := map[string]map[string][]float64{
-			"testGeotype": {
+			"LAD": {
 				"denominator": {2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2},
 				"numerator1":  {3, 598, 4, 57, 59, 60, 58, 597, 599, 600, 6, 5},
 				"numerator2":  {1199, 1198, 1197, 120, 12, 118, 119, 1200, 9, 117, 10, 11},
@@ -393,8 +393,8 @@ func TestCkmeansRatiosHappyPathSingleGeotype(t *testing.T) {
 		result, err := app.CKmeans(
 			context.Background(),
 			2011,
-			"numerator1,numerator2,numerator3",
-			"testGeotype",
+			[]string{"numerator1,numerator2,numerator3"},
+			[]string{"LAD"},
 			testK,
 			"denominator",
 		)
@@ -402,13 +402,13 @@ func TestCkmeansRatiosHappyPathSingleGeotype(t *testing.T) {
 		// THEN we expect to get breakpoints matching the order-of-magnitude breaks in our test data
 		wantBreaks := map[string]map[string][]float64{
 			"numerator1": {
-				"testGeotype": {3.0, 30.0, 300},
+				"LAD": {3.0, 30.0, 300},
 			},
 			"numerator2": {
-				"testGeotype": {6.0, 60.0, 600},
+				"LAD": {6.0, 60.0, 600},
 			},
 			"numerator3": {
-				"testGeotype": {12.0, 120.0, 1200},
+				"LAD": {12.0, 120.0, 1200},
 			},
 		}
 		if !reflect.DeepEqual(result, wantBreaks) {
@@ -438,13 +438,13 @@ func TestCkmeansRatiosHappyPathMultipleGeotypes(t *testing.T) {
 			Keep it simple and make the denominators all 2, and the data have three obvious order-of-magnitude breaks
 		*/
 		metrics := map[string]map[string][]float64{
-			"testGeotype1": {
+			"LAD": {
 				"denominator": {2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2},
 				"numerator1":  {3, 598, 4, 57, 59, 60, 58, 597, 599, 600, 6, 5},
 				"numerator2":  {1199, 1198, 1197, 120, 12, 118, 119, 1200, 9, 117, 10, 11},
 				"numerator3":  {23, 2, 238, 240, 237, 21, 239, 2398, 2399, 2400, 24, 2397},
 			},
-			"testGeotype2": {
+			"MSOA": {
 				"denominator": {2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2},
 				"numerator1":  {480, 47, 479, 4797, 46, 478, 4800, 45, 48, 4798, 477, 4799},
 				"numerator2":  {95, 958, 960, 957, 959, 94, 96, 9599, 9598, 9597, 9600, 93},
@@ -462,8 +462,8 @@ func TestCkmeansRatiosHappyPathMultipleGeotypes(t *testing.T) {
 		result, err := app.CKmeans(
 			context.Background(),
 			2011,
-			"numerator1,numerator2,numerator3",
-			"testGeotype1,testGeotype2",
+			[]string{"numerator1,numerator2,numerator3"},
+			[]string{"LAD,MSOA"},
 			testK,
 			"denominator",
 		)
@@ -471,16 +471,16 @@ func TestCkmeansRatiosHappyPathMultipleGeotypes(t *testing.T) {
 		// THEN we expect to get breakpoints matching the order-of-magnitude breaks in our test data
 		wantBreaks := map[string]map[string][]float64{
 			"numerator1": {
-				"testGeotype1": {3.0, 30.0, 300},
-				"testGeotype2": {24.0, 240.0, 2400},
+				"LAD":  {3.0, 30.0, 300},
+				"MSOA": {24.0, 240.0, 2400},
 			},
 			"numerator2": {
-				"testGeotype1": {6.0, 60.0, 600},
-				"testGeotype2": {48, 480.0, 4800},
+				"LAD":  {6.0, 60.0, 600},
+				"MSOA": {48, 480.0, 4800},
 			},
 			"numerator3": {
-				"testGeotype1": {12.0, 120.0, 1200},
-				"testGeotype2": {96.0, 960.0, 9600},
+				"LAD":  {12.0, 120.0, 1200},
+				"MSOA": {96.0, 960.0, 9600},
 			},
 		}
 		if !reflect.DeepEqual(result, wantBreaks) {
@@ -509,7 +509,7 @@ func TestCkmeansRatiosPartialDataOneCategoryMissing(t *testing.T) {
 				- two numerator data categories
 		*/
 		metrics := map[string]map[string][]float64{
-			"testGeotype": {
+			"LAD": {
 				"denominator": {2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2},
 				"numerator1":  {3, 598, 4, 57, 59, 60, 58, 597, 599, 600, 6, 5},
 				"numerator2":  {1199, 1198, 1197, 120, 12, 118, 119, 1200, 9, 117, 10, 11},
@@ -529,8 +529,8 @@ func TestCkmeansRatiosPartialDataOneCategoryMissing(t *testing.T) {
 		result, err := app.CKmeans(
 			context.Background(),
 			2011,
-			"numerator1,numerator2,numerator3",
-			"testGeotype",
+			[]string{"numerator1,numerator2,numerator3"},
+			[]string{"LAD"},
 			testK,
 			"denominator",
 		)
@@ -566,7 +566,7 @@ func TestCkmeansRatiosPartialDataOneCategoryPartialDataOnly(t *testing.T) {
 				- partial data for a third data category
 		*/
 		metrics := map[string]map[string][]float64{
-			"testGeotype": {
+			"LAD": {
 				"denominator": {2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2},
 				"numerator1":  {3, 598, 4, 57, 59, 60, 58, 597, 599, 600, 6, 5},
 				"numerator2":  {1199, 1198, 1197, 120, 12, 118, 119, 1200, 9, 117, 10, 11},
@@ -586,8 +586,8 @@ func TestCkmeansRatiosPartialDataOneCategoryPartialDataOnly(t *testing.T) {
 		result, err := app.CKmeans(
 			context.Background(),
 			2011,
-			"numerator1,numerator2,numerator3",
-			"testGeotype",
+			[]string{"numerator1,numerator2,numerator3"},
+			[]string{"LAD"},
 			testK,
 			"denominator",
 		)
@@ -619,7 +619,7 @@ func TestCkmeansRatiosNoData(t *testing.T) {
 		/*
 			AND GIVEN we have seeded no datapoints for our test geotype
 		*/
-		metrics := map[string]map[string][]float64{"testGeotype": {}}
+		metrics := map[string]map[string][]float64{"LAD": {}}
 		ckmeansTestSetup(t, db, metrics)
 		// WHEN we use app.CKmeansRatio to get breakpoints for category 1 / category 2
 		app, err := New(db, 100)
@@ -630,8 +630,8 @@ func TestCkmeansRatiosNoData(t *testing.T) {
 		result, err := app.CKmeans(
 			context.Background(),
 			2011,
-			"doesNotExist1,doesNotExist2",
-			"testGeotype",
+			[]string{"doesNotExist1,doesNotExist2"},
+			[]string{"LAD"},
 			testK,
 			"doesNotExist3",
 		)
@@ -645,6 +645,116 @@ func TestCkmeansRatiosNoData(t *testing.T) {
 		// AND THEN we expect to receive an ErrNoContent error
 		if !errors.Is(err, ErrNoContent) {
 			t.Errorf("got this error = '%s', wanted '%s'", err, ErrNoContent)
+		}
+	}()
+}
+
+func TestCkmeansArgParsingAndValidation(t *testing.T) {
+	// GIVEN the database is setup
+	dsn := comptests.DefaultDSN
+	db, err := database.Open("pgx", dsn)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	func() {
+		db.DB().Exec("BEGIN")
+		defer db.DB().Exec("ROLLBACK")
+		/*
+			AND GIVEN we have seeded datapoints for both of test geotype for:
+				- one denominator data category
+				- three numerator data categories
+			Keep it simple and make the denominators all 2, and the data have three obvious order-of-magnitude breaks
+		*/
+		metrics := map[string]map[string][]float64{
+			"LAD": {
+				"denominator": {2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2},
+				"numerator1":  {3, 598, 4, 57, 59, 60, 58, 597, 599, 600, 6, 5},
+				"numerator2":  {1199, 1198, 1197, 120, 12, 118, 119, 1200, 9, 117, 10, 11},
+				"numerator3":  {23, 2, 238, 240, 237, 21, 239, 2398, 2399, 2400, 24, 2397},
+			},
+			"MSOA": {
+				"denominator": {2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2},
+				"numerator1":  {480, 47, 479, 4797, 46, 478, 4800, 45, 48, 4798, 477, 4799},
+				"numerator2":  {95, 958, 960, 957, 959, 94, 96, 9599, 9598, 9597, 9600, 93},
+				"numerator3":  {19198, 1917, 19200, 191, 190, 1920, 189, 192, 1918, 1919, 19199, 19197},
+			},
+		}
+		ckmeansTestSetup(t, db, metrics)
+
+		app, err := New(db, 100)
+		if err != nil {
+			log.Fatal(err)
+		}
+		testK := 3
+
+		// WHEN we use app.CKmeansRatio to get breakpoints for all numerators / denominator, using various versions of
+		// calling it...
+		for _, argset := range []map[string][]string{
+			{
+				"cat":     []string{"numerator1,numerator2,numerator3"},
+				"geotype": []string{"LAD,MSOA"},
+			},
+			{
+				"cat":     []string{"numerator1", "numerator2", "numerator3"},
+				"geotype": []string{"LAD", "MSOA"},
+			},
+			{
+				"cat":     []string{"numerator1,numerator2,numerator3"},
+				"geotype": []string{"lad,msoa"},
+			},
+		} {
+			result, err := app.CKmeans(
+				context.Background(),
+				2011,
+				argset["cat"],
+				argset["geotype"],
+				testK,
+				"denominator",
+			)
+
+			// THEN we expect to get breakpoints matching the order-of-magnitude breaks in our test data, in all cases
+			wantBreaks := map[string]map[string][]float64{
+				"numerator1": {
+					"LAD":  {3.0, 30.0, 300},
+					"MSOA": {24.0, 240.0, 2400},
+				},
+				"numerator2": {
+					"LAD":  {6.0, 60.0, 600},
+					"MSOA": {48, 480.0, 4800},
+				},
+				"numerator3": {
+					"LAD":  {12.0, 120.0, 1200},
+					"MSOA": {96.0, 960.0, 9600},
+				},
+			}
+			if !reflect.DeepEqual(result, wantBreaks) {
+				t.Errorf("got %#v, wanted %#v", result, wantBreaks)
+			}
+			if err != nil {
+				log.Print(err)
+			}
+		}
+
+		// AND WHEN we try to call using ranges, we get an error
+		result, err := app.CKmeans(
+			context.Background(),
+			2011,
+			[]string{"numerator1...numerator3"},
+			[]string{"LAD,MSOA"},
+			testK,
+			"denominator",
+		)
+
+		// THEN we expect to get breakpoints matching the order-of-magnitude breaks in our test data, in all cases
+		var wantBreaks map[string]map[string][]float64
+		if !reflect.DeepEqual(result, wantBreaks) {
+			t.Errorf("got %#v, wanted %#v", result, wantBreaks)
+		}
+
+		// AND THEN we expect to receive an ErrInvalidParams error
+		if !errors.Is(err, ErrInvalidParams) {
+			t.Errorf("got this error = '%s', wanted '%s'", err, ErrInvalidParams)
 		}
 	}()
 }

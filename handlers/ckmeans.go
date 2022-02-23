@@ -27,14 +27,14 @@ func (svr *Server) GetCkmeansYear(w http.ResponseWriter, r *http.Request, year i
 			k = *params.K
 		}
 		if params.DivideBy != nil {
-			divide_by = *params.DivideBy
+			divideBy = *params.DivideBy
 		}
 		if cat == nil || geotype == nil || k == 0 {
 			return nil, fmt.Errorf("%w: cat, geotype and k required", geodata.ErrMissingParams)
 		}
 
 		ctx := r.Context()
-		breaks, err := svr.querygeodata.CKmeans(ctx, year, cat, geotype, k, divide_by)
+		breaks, err := svr.querygeodata.CKmeans(ctx, year, cat, geotype, k, divideBy)
 		if err != nil {
 			return nil, err
 		}
