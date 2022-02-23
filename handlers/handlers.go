@@ -59,6 +59,22 @@ func (svr *Server) GetSwaggerui(w http.ResponseWriter, r *http.Request) {
 }
 
 func (svr *Server) GetMetadataYear(w http.ResponseWriter, r *http.Request, year int, params api.GetMetadataYearParams) {
+	if !svr.private {
+		sendError(w, http.StatusNotFound, "endpoint not enabled")
+		return
+	}
+
+	// check Auth header
+	c, _ := config.Get()
+	if c.EnableHeaderAuth {
+		auth := r.Header.Get("Authorization")
+		if auth != c.APIToken {
+			sendError(w, http.StatusUnauthorized, "unauthorized")
+			fmt.Printf("failed auth header '%s' from '%s'", auth, r.Header.Get("X-Forwarded-For"))
+			return
+		}
+	}
+
 	generate := func() ([]byte, error) {
 		var filtertotals bool
 		if params.Filtertotals != nil {
@@ -135,6 +151,30 @@ func (svr *Server) GetQueryYear(w http.ResponseWriter, r *http.Request, year int
 	}
 
 	svr.respond(w, r, mimeCSV, generate)
+}
+
+func (svr *Server) GetClearCache(w http.ResponseWriter, r *http.Request) {
+	if !svr.private {
+		sendError(w, http.StatusNotFound, "endpoint not enabled")
+		return
+	}
+
+	// check Auth header
+	c, _ := config.Get()
+	if c.EnableHeaderAuth {
+		auth := r.Header.Get("Authorization")
+		if auth != c.APIToken {
+			sendError(w, http.StatusUnauthorized, "unauthorized")
+			fmt.Printf("failed auth header '%s' from '%s'", auth, r.Header.Get("X-Forwarded-For"))
+			return
+		}
+	}
+
+	err := svr.cm.Clear(r.Context())
+	if err == nil {
+		return
+	}
+	sendError(w, http.StatusInternalServerError, fmt.Sprintf("problem clearing cache: %s", err.Error()))
 }
 
 func sendError(w http.ResponseWriter, code int, message string) {

@@ -335,6 +335,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  /clear-cache:
+    get:
+      tags:
+        - private
+      summary: remove all entries from request cache
+      responses:
+        200:
+          description: empty response when cache cleared successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+        default:
+          description: internal server error
+          content:
+            application/json:
+              schmea:
+                $ref: '#/components/schemas/Error'
+
 components:
   schemas:
 

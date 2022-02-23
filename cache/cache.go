@@ -69,6 +69,11 @@ func New(ttl time.Duration, megabytes int) (*Manager, error) {
 	}, nil
 }
 
+// Clear removes all entries from the cache.
+func (cm *Manager) Clear(ctx context.Context) error {
+	return cm.cache.Clear(ctx)
+}
+
 // AllocateEntry returns an object that may be locked to serialise
 // access to cache entries for the given key.
 // The returned object is also used to Get and Set cache values

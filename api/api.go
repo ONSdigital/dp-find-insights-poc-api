@@ -136,6 +136,9 @@ type ServerInterface interface {
 	// calculate ckmeans for the ratio between two given categories (cat1 / cat2) for a given geography type
 	// (GET /ckmeansratio/{year})
 	GetCkmeansratioYear(w http.ResponseWriter, r *http.Request, year int, params GetCkmeansratioYearParams)
+	// remove all entries from request cache
+	// (GET /clear-cache)
+	GetClearCache(w http.ResponseWriter, r *http.Request)
 	// Get Metadata
 	// (GET /metadata/{year})
 	GetMetadataYear(w http.ResponseWriter, r *http.Request, year int, params GetMetadataYearParams)
@@ -284,6 +287,21 @@ func (siw *ServerInterfaceWrapper) GetCkmeansratioYear(w http.ResponseWriter, r 
 
 	var handler = func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetCkmeansratioYear(w, r, year, params)
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler(w, r.WithContext(ctx))
+}
+
+// GetClearCache operation middleware
+func (siw *ServerInterfaceWrapper) GetClearCache(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetClearCache(w, r)
 	}
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -522,6 +540,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/ckmeansratio/{year}", wrapper.GetCkmeansratioYear)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/clear-cache", wrapper.GetClearCache)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/metadata/{year}", wrapper.GetMetadataYear)
