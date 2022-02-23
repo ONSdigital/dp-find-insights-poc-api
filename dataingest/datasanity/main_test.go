@@ -26,7 +26,7 @@ func init() {
 
 }
 
-func TestSpacialLatLog(t *testing.T) {
+func TestSpacialLatLogLSOA(t *testing.T) {
 	testCases := []struct {
 		lat          float64
 		long         float64
@@ -82,6 +82,51 @@ func TestSpacialLatLog(t *testing.T) {
 	}
 }
 
+// refactor out with above
+func TestSpacialLatLogMSOA(t *testing.T) {
+	testCases := []struct {
+		lat          float64
+		long         float64
+		desc         string
+		expectedCode string
+	}{
+		{
+			lat:          51.56616,
+			long:         -0.06589,
+			desc:         "Stoke Newington East & Cazenove - nice name MSOA",
+			expectedCode: "E02000350",
+		},
+	}
+	for _, tC := range testCases {
+		t.Run(tC.desc, func(t *testing.T) {
+
+			results := []model.Geo{}
+			if err := db.Raw(`
+			SELECT code FROM geo 
+			WHERE ST_Within(ST_GeomFromText('POINT('|| ? || ' ' || ? ||')',4326),wkb_geometry::GEOMETRY) 
+			AND type_id=5
+			`, cast.ToString(tC.long), cast.ToString(tC.lat)).Scan(&results).Error; err != nil {
+				t.Error(err)
+			}
+
+			fmt.Printf("%#v\n", results)
+
+			if len(results) > 1 {
+				t.Errorf("more than one row")
+			}
+
+			if len(results) == 1 {
+				if results[0].Code != tC.expectedCode {
+					t.Errorf("got %s code", results[0].Code)
+				}
+			} else if tC.expectedCode != "" {
+				t.Errorf("got unexpected result")
+			}
+
+		})
+	}
+}
+
 func TestWelshAbsent(t *testing.T) {
 	results := []model.NomisCategory{}
 	if err := db.Raw(`
@@ -99,7 +144,7 @@ func TestWelshAbsent(t *testing.T) {
 	}
 }
 
-func TestMsoaDataAbsent(t *testing.T) {
+func TestMsoaDataPresent(t *testing.T) {
 	var count int
 	if err := db.Raw(`
 	SELECT count(*) 
@@ -112,12 +157,12 @@ func TestMsoaDataAbsent(t *testing.T) {
 
 	fmt.Printf("%#v\n", count)
 
-	if count != 0 {
-		t.Error("got unexpected row(s)")
+	if count == 0 {
+		t.Error("MSOA data not there")
 	}
 }
 
-func TestMsoaCodesAbsent(t *testing.T) {
+func TestMsoaCodesPresent(t *testing.T) {
 	var count int
 	if err := db.Raw(`
 	SELECT count(*) 
@@ -129,8 +174,25 @@ func TestMsoaCodesAbsent(t *testing.T) {
 
 	fmt.Printf("%#v\n", count)
 
+	if count == 0 {
+		t.Error("MSOA codes not there")
+	}
+}
+
+func TestAllGeoNamed(t *testing.T ) {
+	var count int
+	if err := db.Raw(`
+	SELECT count(*) 
+	FROM geo
+	WHERE name='NA' AND valid=true
+	`).Scan(&count).Error; err != nil {
+		t.Error(err)
+	}
+
+	fmt.Printf("%#v\n", count)
+
 	if count != 0 {
-		t.Error("got unexpected row(s)")
+		t.Error("not all geo named")
 	}
 }
 

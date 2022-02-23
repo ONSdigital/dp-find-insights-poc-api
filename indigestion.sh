@@ -14,8 +14,8 @@ dropdb $PGDATABASE
 yes | make update-schema
 go run ./dataingest/addtodb
 (yes | make update-schema) 
-cd dataingest/geo && go run .  
-cd ../spatial && ./import.sh linux-localhost        
+cd dataingest/geoname && go run .  
+cd ../spatial && ./import.sh
 cd longlatgeom  && go run .    
 echo "sec(s) elapsed: " $(($SECONDS-$otime))
 cd ../../../dataingest && make test
