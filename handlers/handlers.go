@@ -1,5 +1,7 @@
 package handlers
 
+// XXX move config into Server and don't call config.Get
+
 import (
 	"encoding/json"
 	"fmt"
@@ -15,7 +17,7 @@ import (
 )
 
 type Server struct {
-	private      bool             // true if private endpoint feature flag is enabled
+	private      bool             // true if private endpoints are enabled
 	querygeodata *geodata.Geodata // if nil, database not available
 	md           *metadata.Metadata
 	cm           *cache.Manager
@@ -59,20 +61,8 @@ func (svr *Server) GetSwaggerui(w http.ResponseWriter, r *http.Request) {
 }
 
 func (svr *Server) GetMetadataYear(w http.ResponseWriter, r *http.Request, year int, params api.GetMetadataYearParams) {
-	if !svr.private {
-		sendError(w, http.StatusNotFound, "endpoint not enabled")
+	if !svr.assertAuthorized(w, r) || !svr.assertDatabaseEnabled(w, r) {
 		return
-	}
-
-	// check Auth header
-	c, _ := config.Get()
-	if c.EnableHeaderAuth {
-		auth := r.Header.Get("Authorization")
-		if auth != c.APIToken {
-			sendError(w, http.StatusUnauthorized, "unauthorized")
-			fmt.Printf("failed auth header '%s' from '%s'", auth, r.Header.Get("X-Forwarded-For"))
-			return
-		}
 	}
 
 	generate := func() ([]byte, error) {
@@ -90,24 +80,7 @@ func (svr *Server) GetMetadataYear(w http.ResponseWriter, r *http.Request, year 
 }
 
 func (svr *Server) GetQueryYear(w http.ResponseWriter, r *http.Request, year int, params api.GetQueryYearParams) {
-	if !svr.private {
-		sendError(w, http.StatusNotFound, "endpoint not enabled")
-		return
-	}
-
-	// check Auth header
-	c, _ := config.Get()
-	if c.EnableHeaderAuth {
-		auth := r.Header.Get("Authorization")
-		if auth != c.APIToken {
-			sendError(w, http.StatusUnauthorized, "unauthorized")
-			fmt.Printf("failed auth header '%s' from '%s'", auth, r.Header.Get("X-Forwarded-For"))
-			return
-		}
-	}
-
-	if svr.querygeodata == nil {
-		sendError(w, http.StatusNotImplemented, "database not enabled")
+	if !svr.assertAuthorized(w, r) || !svr.assertDatabaseEnabled(w, r) {
 		return
 	}
 
@@ -154,20 +127,8 @@ func (svr *Server) GetQueryYear(w http.ResponseWriter, r *http.Request, year int
 }
 
 func (svr *Server) GetClearCache(w http.ResponseWriter, r *http.Request) {
-	if !svr.private {
-		sendError(w, http.StatusNotFound, "endpoint not enabled")
+	if !svr.assertPrivate(w) || !svr.assertAuthorized(w, r) {
 		return
-	}
-
-	// check Auth header
-	c, _ := config.Get()
-	if c.EnableHeaderAuth {
-		auth := r.Header.Get("Authorization")
-		if auth != c.APIToken {
-			sendError(w, http.StatusUnauthorized, "unauthorized")
-			fmt.Printf("failed auth header '%s' from '%s'", auth, r.Header.Get("X-Forwarded-For"))
-			return
-		}
 	}
 
 	err := svr.cm.Clear(r.Context())
@@ -175,6 +136,43 @@ func (svr *Server) GetClearCache(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	sendError(w, http.StatusInternalServerError, fmt.Sprintf("problem clearing cache: %s", err.Error()))
+}
+
+// assertPrivate sends an error to the client if private endpoints are not enabled.
+// Returns true if private endpoints are enabled.
+func (svr *Server) assertPrivate(w http.ResponseWriter) bool {
+	if svr.private {
+		return true
+	}
+	sendError(w, http.StatusNotFound, "endpoint not enabled")
+	return false
+}
+
+// assertAuthorized send an error to the client if they are not authorized.
+// Returns true if authorized.
+func (svr *Server) assertAuthorized(w http.ResponseWriter, req *http.Request) bool {
+	// check Auth header
+	c, _ := config.Get()
+	if !c.EnableHeaderAuth {
+		return true
+	}
+	auth := req.Header.Get("Authorization")
+	if auth == c.APIToken {
+		return true
+	}
+	sendError(w, http.StatusUnauthorized, "unauthorized")
+	fmt.Printf("failed auth header '%s' from '%s'", auth, req.Header.Get("X-Forwarded-For"))
+	return false
+}
+
+// assertDatabaseEnabled sends and error to the client if database is not enabled.
+// Returns true if the database is enabled.
+func (svr *Server) assertDatabaseEnabled(w http.ResponseWriter, req *http.Request) bool {
+	if svr.querygeodata != nil {
+		return true
+	}
+	sendError(w, http.StatusNotImplemented, "database not enabled")
+	return false
 }
 
 func sendError(w http.ResponseWriter, code int, message string) {

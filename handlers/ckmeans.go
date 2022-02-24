@@ -5,29 +5,11 @@ import (
 	"net/http"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/api"
-	"github.com/ONSdigital/dp-find-insights-poc-api/config"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/geodata"
 )
 
 func (svr *Server) GetCkmeansYear(w http.ResponseWriter, r *http.Request, year int, params api.GetCkmeansYearParams) {
-	if !svr.private {
-		sendError(w, http.StatusNotFound, "endpoint not enabled")
-		return
-	}
-
-	// check Auth header
-	c, _ := config.Get()
-	if c.EnableHeaderAuth {
-		auth := r.Header.Get("Authorization")
-		if auth != c.APIToken {
-			sendError(w, http.StatusUnauthorized, "unauthorized")
-			fmt.Printf("failed auth header '%s' from '%s'", auth, r.Header.Get("X-Forwarded-For"))
-			return
-		}
-	}
-
-	if svr.querygeodata == nil {
-		sendError(w, http.StatusNotImplemented, "database not enabled")
+	if !svr.assertAuthorized(w, r) || !svr.assertDatabaseEnabled(w, r) {
 		return
 	}
 
@@ -59,24 +41,7 @@ func (svr *Server) GetCkmeansYear(w http.ResponseWriter, r *http.Request, year i
 }
 
 func (svr *Server) GetCkmeansratioYear(w http.ResponseWriter, r *http.Request, year int, params api.GetCkmeansratioYearParams) {
-	if !svr.private {
-		sendError(w, http.StatusNotFound, "endpoint not enabled")
-		return
-	}
-
-	// check Auth header
-	c, _ := config.Get()
-	if c.EnableHeaderAuth {
-		auth := r.Header.Get("Authorization")
-		if auth != c.APIToken {
-			sendError(w, http.StatusUnauthorized, "unauthorized")
-			fmt.Printf("failed auth header '%s' from '%s'", auth, r.Header.Get("X-Forwarded-For"))
-			return
-		}
-	}
-
-	if svr.querygeodata == nil {
-		sendError(w, http.StatusNotImplemented, "database not enabled")
+	if !svr.assertAuthorized(w, r) || !svr.assertDatabaseEnabled(w, r) {
 		return
 	}
 
