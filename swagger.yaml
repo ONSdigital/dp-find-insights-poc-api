@@ -237,6 +237,81 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  /ckmeansratio/{year}:
+    get:
+      tags:
+        - public
+      summary: calculate ckmeans for the ratio between two given categories (cat1 / cat2) for a given geography type
+      description: |
+        Uses ckmeans algorithm to estimate natural breakpoints in the ratio between two given census data category 
+        (*cat1* paramter / *cat2* parameter), filtered to only rows for the specified geography type (*geotype* parameter). 
+        Returns a list of the maximum values (i.e. the upper breakpoint) in each ckmean cluster.
+      parameters:
+        - in: path
+          name: year
+          description: |
+            Census year. Currently available:
+            - 2011
+          required: true
+          schema:
+            type: integer
+        - in: query
+          name: cat1
+          description: |
+            The census data category to use as numerator (cat1/cat2) when producing the ratio to calculate data breaks for 
+            (NB - use metadata endpoint to see list of currently available census data).
+          schema:
+            type: string
+        - in: query
+          name: cat2
+          description: |
+            The census data category to use as denominator (cat1/cat2) when producing the ratio to calculate data breaks for 
+            (NB - use metadata endpoint to see list of currently available census data).
+          schema:
+            type: string
+        - in: query
+          name: geotype
+          description: The type of geography to calculate data breaks for.
+          schema:
+            type: string
+        - in: query
+          name: k
+          description: The number of data breaks to estimate.
+          schema:
+            type: integer
+      responses:
+        200:
+          description: ckmeans successfully calculated
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: number
+                  format: double
+                example: |
+                  [
+                    0.5433526011560693,
+                    0.7609518658734451,
+                    0.9072164948453608,
+                    0.9783929777177582,
+                    1
+                  ]
+        204:
+          descriptions: no results found
+        400:
+          description: missing or badly formed input values
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
   /query/{year}:
     get:
       tags:
