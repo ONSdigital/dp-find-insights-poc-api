@@ -165,6 +165,9 @@ type ServerInterface interface {
 	// remove all entries from request cache
 	// (GET /clear-cache)
 	GetClearCache(w http.ResponseWriter, r *http.Request)
+	// Get geographic info about a region
+	// (GET /geo/{year}/{region})
+	GetGeoYearRegion(w http.ResponseWriter, r *http.Request, year int, region string)
 	// Get Metadata
 	// (GET /metadata/{year})
 	GetMetadataYear(w http.ResponseWriter, r *http.Request, year int, params GetMetadataYearParams)
@@ -339,6 +342,41 @@ func (siw *ServerInterfaceWrapper) GetClearCache(w http.ResponseWriter, r *http.
 
 	var handler = func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetClearCache(w, r)
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler(w, r.WithContext(ctx))
+}
+
+// GetGeoYearRegion operation middleware
+func (siw *ServerInterfaceWrapper) GetGeoYearRegion(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var err error
+
+	// ------------- Path parameter "year" -------------
+	var year int
+
+	err = runtime.BindStyledParameter("simple", false, "year", chi.URLParam(r, "year"), &year)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid format for parameter year: %s", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Path parameter "region" -------------
+	var region string
+
+	err = runtime.BindStyledParameter("simple", false, "region", chi.URLParam(r, "region"), &region)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid format for parameter region: %s", err), http.StatusBadRequest)
+		return
+	}
+
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetGeoYearRegion(w, r, year, region)
 	}
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -580,6 +618,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/clear-cache", wrapper.GetClearCache)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/geo/{year}/{region}", wrapper.GetGeoYearRegion)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/metadata/{year}", wrapper.GetMetadataYear)

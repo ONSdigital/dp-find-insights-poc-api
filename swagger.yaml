@@ -412,6 +412,28 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  /geo/{year}/{region}:
+    get:
+      tags:
+        - public
+      summary: Get geographic info about a region
+      parameters:
+        - in: path
+          name: year
+          description: |
+            Census year, Currently available:
+            - 2011
+          required: true
+          schema:
+            type: integer
+        - in: path
+          name: region
+          description: |
+            Region or geography code, eg E09000004
+          required: true
+          schema:
+            type: string
+
   /clear-cache:
     get:
       tags:
