@@ -12,7 +12,7 @@ TODO: should be replaced by terraform
 Access via
 
 ```
-$ ssh -i frank-ec2-dev0.pem ubuntu@ec2-18-193-78-190.eu-central-1.compute.amazonaws.com
+$ ssh -i swaggerui/frank-ec2-dev0.pem ubuntu@ec2-18-193-78-190.eu-central-1.compute.amazonaws.com
 ```
 
 An encrypted copy of the private key is in this repo.
@@ -27,18 +27,18 @@ environment for config.
     *Do not copy to `dp-find-insights-poc-api` itself*
 
         make build-linux-amd
-        scp build/dp-find-insights-poc-api frank:dp-find-insights-poc-api.new
+        scp -i swaggerui/frank-ec2-dev0.pem  build/dp-find-insights-poc-api ubuntu@ec2-18-193-78-190.eu-central-1.compute.amazonaws.com:dp-find-insights-poc-api.new
 
 * ssh into the remote system and run `./deploy.sh` to install the new binary; hit `^C`  or `q` after log displayed
 
-        ssh frank
+        ssh -i swaggerui/frank-ec2-dev0.pem ubuntu@ec2-18-193-78-190.eu-central-1.compute.amazonaws.com
         ./deploy.sh dp-find-insights-poc-api.new
 
 ## Rollback
 
 You can rollback to the previously installed binary:
 
-        ssh frank
+        ssh -i swaggerui/frank-ec2-dev0.pem ubuntu@ec2-18-193-78-190.eu-central-1.compute.amazonaws.com
         ./deploy.sh previous
 
 ## Log monitoring
