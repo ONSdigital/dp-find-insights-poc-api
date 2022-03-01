@@ -54,13 +54,33 @@ type Triplet struct {
 type GetCkmeansYearParams struct {
 	// The census data category to calculate data breaks for.
 	// (NB - use metadata endpoint to see list of currently available census data).
-	Cat *string `json:"cat,omitempty"`
+	// Can be:
+	//   - single values (e.g. QS202EW0002)
+	//   - comma-separated array of values (e.g QS202EW0003,QS202EW0003,QS202EW0004)
+	//
+	// Multiple cats parameters can be supplied, e.g. cats=QS202EW0002&cats=QS202EW0003
+	// NB - use of ranges (e.g. QS202EW0003...QS202EW0004) is NOT supported for the ckmeans endpoint.
+	Cat *[]string `json:"cat,omitempty"`
 
 	// The type of geography to calculate data breaks for.
-	Geotype *string `json:"geotype,omitempty"`
+	// At the moment these options are supported:
+	//   - LAD
+	//   - LSOA
+	//
+	// Can be:
+	//   - single values (e.g. LAD)
+	//   - comma-separated array of values (e.g LAD,LSOA)
+	//
+	// Multiple geotype parameters can be supplied, e.g. geotype=LAD&geotype=LSOA
+	Geotype *[]string `json:"geotype,omitempty"`
 
 	// The number of data breaks to estimate.
 	K *int `json:"k,omitempty"`
+
+	// (OPTIONAL) - census data category to use as denominator (cat/divide_by) to ratios for calculating data
+	// breaks, instead of raw data (NB if multiple cat are supplied, each cat will be divided by divide_by). Only
+	// single values for divide_by are supported.
+	DivideBy *string `json:"divide_by,omitempty"`
 }
 
 // GetCkmeansratioYearParams defines parameters for GetCkmeansratioYear.
@@ -93,12 +113,16 @@ type GetQueryYearParams struct {
 	// - single values (e.g. E01000001)
 	// - comma-separated array of values (e.g E01000001,E01000002,E01000003)
 	// - ellipsis-separated contiguous range of values (e.g. E01000001...E01000010)
+	//
+	// Multiple rows parameters can be supplied, e.g. rows=E01000001&rows=E01000001...E01000010
 	Rows *[]string `json:"rows,omitempty"`
 
 	// The census data that you want (NB - use metadata endpoint to see list of currently available census data). Can be:
 	// - single values (e.g. QS101EW0001)
 	// - comma-separated array of values (e.g QS101EW0001,QS101EW0002,QS101EW0003)
 	// - ellipsis-separated contiguous range of values (e.g. QS101EW0001...QS101EW0010)
+	//
+	// Multiple cols parameters can be supplied, e.g. cols=QS101EW0001&rows=QS101EW0001...QS101EW0010
 	Cols *[]string `json:"cols,omitempty"`
 
 	// Two long, lat coordinate pairs representing the opposite corners of a bounding box (e.g. bbox=0.1338,51.4635,0.1017,51.4647).
@@ -110,6 +134,8 @@ type GetQueryYearParams struct {
 	// At the moment these options are supported:
 	// - LAD
 	// - LSOA
+	//
+	// Multiple geotype parameters can be supplied, e.g. geotype=LAD&geotype=LSOA
 	Geotype *[]string `json:"geotype,omitempty"`
 
 	// Radius and location (both are required) will select all geographies with radius of the long,lat pair location,
@@ -209,6 +235,17 @@ func (siw *ServerInterfaceWrapper) GetCkmeansYear(w http.ResponseWriter, r *http
 	err = runtime.BindQueryParameter("form", true, false, "k", r.URL.Query(), &params.K)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Invalid format for parameter k: %s", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "divide_by" -------------
+	if paramValue := r.URL.Query().Get("divide_by"); paramValue != "" {
+
+	}
+
+	err = runtime.BindQueryParameter("form", true, false, "divide_by", r.URL.Query(), &params.DivideBy)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid format for parameter divide_by: %s", err), http.StatusBadRequest)
 		return
 	}
 

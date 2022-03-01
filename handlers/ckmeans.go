@@ -14,7 +14,8 @@ func (svr *Server) GetCkmeansYear(w http.ResponseWriter, r *http.Request, year i
 	}
 
 	generate := func() ([]byte, error) {
-		var cat, geotype string
+		var cat, geotype []string
+		var divideBy string
 		var k int
 		if params.Cat != nil {
 			cat = *params.Cat
@@ -25,12 +26,15 @@ func (svr *Server) GetCkmeansYear(w http.ResponseWriter, r *http.Request, year i
 		if params.K != nil {
 			k = *params.K
 		}
-		if cat == "" || geotype == "" || k == 0 {
+		if params.DivideBy != nil {
+			divideBy = *params.DivideBy
+		}
+		if cat == nil || geotype == nil || k == 0 {
 			return nil, fmt.Errorf("%w: cat, geotype and k required", geodata.ErrMissingParams)
 		}
 
 		ctx := r.Context()
-		breaks, err := svr.querygeodata.CKmeans(ctx, year, cat, geotype, k)
+		breaks, err := svr.querygeodata.CKmeans(ctx, year, cat, geotype, k, divideBy)
 		if err != nil {
 			return nil, err
 		}
@@ -40,6 +44,8 @@ func (svr *Server) GetCkmeansYear(w http.ResponseWriter, r *http.Request, year i
 	svr.respond(w, r, mimeJSON, generate)
 }
 
+// !!!! DEPRECATED CKMEANSRATIO TO BE REMOVED WHEN FRONT END REMOVES DEPENDENCY ON IT !!!!
+//
 func (svr *Server) GetCkmeansratioYear(w http.ResponseWriter, r *http.Request, year int, params api.GetCkmeansratioYearParams) {
 	if !svr.assertAuthorized(w, r) || !svr.assertDatabaseEnabled(w, r) {
 		return

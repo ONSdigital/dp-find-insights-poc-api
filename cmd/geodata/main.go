@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -52,8 +53,6 @@ func main() {
 		query(ctx, app, flag.Args()[1:])
 	case "ckmeans":
 		ckmeans(ctx, app, flag.Args()[1:])
-	case "ckmeansratio":
-		ckmeansratio(ctx, app, flag.Args()[1:])
 	case "metadata":
 		mdquery(ctx, md, flag.Args()[1:])
 	default:
@@ -87,41 +86,26 @@ func query(ctx context.Context, app *geodata.Geodata, argv []string) {
 }
 
 func ckmeans(ctx context.Context, app *geodata.Geodata, argv []string) {
+	var cat, geotype multiFlag
+
 	flagset := flag.NewFlagSet("ckmeans", flag.ExitOnError)
 
 	year := flagset.Int("year", 2011, "census year")
-	cat := flagset.String("cat", "", "category code")
-	geotype := flagset.String("geotype", "", "geography type (LSOA,...)")
+	flagset.Var(&cat, "cat", "category code(s) to provide ckmeans for")
+	flagset.Var(&geotype, "geotype", "geography types (LSOA, LAD, etc)")
 	k := flagset.Int("k", 5, "number of clusters/bins")
+	divide_by := flagset.String("divide_by", "", "category code to divide all other categories by (optional)")
 	flagset.Parse(argv)
 
-	breaks, err := app.CKmeans(ctx, *year, *cat, *geotype, *k)
+	breaks, err := app.CKmeans(ctx, *year, cat, geotype, *k, *divide_by)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	for _, breakpoint := range breaks {
-		fmt.Printf("%0.13g\n", breakpoint)
-	}
-}
-
-func ckmeansratio(ctx context.Context, app *geodata.Geodata, argv []string) {
-	flagset := flag.NewFlagSet("ckmeansratio", flag.ExitOnError)
-
-	year := flagset.Int("year", 2011, "census year")
-	cat1 := flagset.String("cat1", "", "category code")
-	cat2 := flagset.String("cat2", "", "category code")
-	geotype := flagset.String("geotype", "", "geography type (LSOA,...)")
-	k := flagset.Int("k", 5, "number of clusters/bins")
-	flagset.Parse(argv)
-
-	fmt.Fprintf(os.Stderr, "year=%d cat1=%s cat2=%s geotype=%s k=%d\n", *year, *cat1, *cat2, *geotype, *k)
-	breaks, err := app.CKmeansRatio(ctx, *year, *cat1, *cat2, *geotype, *k)
+	buf, err := json.MarshalIndent(breaks, "", "    ")
 	if err != nil {
 		log.Fatalln(err)
 	}
-	for _, breakpoint := range breaks {
-		fmt.Printf("%0.13g\n", breakpoint)
-	}
+	fmt.Print(string(append(buf, "\n"...)))
 }
 
 func mdquery(ctx context.Context, md *metadata.Metadata, argv []string) {

@@ -104,8 +104,10 @@ paths:
       summary: calculate ckmeans over a given category and geography type
       description: |
         Uses ckmeans algorithm to estimate natural breakpoints in the given census data category (*cat* parameter), 
-        filtered to only rows for the specified geography type (*geotype* parameter). Returns a list of the maximum 
-        values (i.e. the upper breakpoint) in each ckmean cluster.
+        filtered to only rows for the specified geography type (*geotype* parameter). Returns JSON with list of the 
+        maximum values (i.e. the upper breakpoint) in each ckmean cluster, keyed to both geotype and category 
+        (see examples). Optionally can estimates for data breaks in ratios of one category to another, if the 'divide_by'
+        parameter is supplied (see below).
       parameters:
         - in: path
           name: year
@@ -120,18 +122,46 @@ paths:
           description: |
             The census data category to calculate data breaks for. 
             (NB - use metadata endpoint to see list of currently available census data).
+            Can be: 
+              - single values (e.g. QS202EW0002)
+              - comma-separated array of values (e.g QS202EW0003,QS202EW0003,QS202EW0004)
+
+            Multiple cats parameters can be supplied, e.g. cats=QS202EW0002&cats=QS202EW0003
+            NB - use of ranges (e.g. QS202EW0003...QS202EW0004) is NOT supported for the ckmeans endpoint.
           schema:
-            type: string
+            type: array
+            items:
+              type: string
         - in: query
           name: geotype
-          description: The type of geography to calculate data breaks for.
+          description: |
+            The type of geography to calculate data breaks for.
+            At the moment these options are supported:
+              - LAD
+              - LSOA
+            
+            Can be: 
+              - single values (e.g. LAD)
+              - comma-separated array of values (e.g LAD,LSOA)
+
+            Multiple geotype parameters can be supplied, e.g. geotype=LAD&geotype=LSOA
           schema:
-            type: string
+            type: array
+            items:
+              type: string
         - in: query
           name: k
           description: The number of data breaks to estimate.
           schema:
             type: integer
+        - in: query
+          name: divide_by
+          description: |
+            (OPTIONAL) - census data category to use as denominator (cat/divide_by) to ratios for calculating data 
+            breaks, instead of raw data (NB if multiple cat are supplied, each cat will be divided by divide_by). Only
+            single values for divide_by are supported.           
+          schema:
+            type: string
       responses:
         200:
           description: ckmeans successfully calculated
@@ -143,13 +173,54 @@ paths:
                   type: number
                   format: double
                 example: |
-                  [
-                    0.5433526011560693,
-                    0.7609518658734451,
-                    0.9072164948453608,
-                    0.9783929777177582,
-                    1
-                  ]
+                  single geotype, single category:
+                  {
+                    "QS101EW0002": {
+                      "LSOA": [
+                        0.5433526011560693,
+                        0.7609518658734451,
+                        0.9072164948453608,
+                        0.9783929777177582,
+                        1
+                      ]
+                    }
+                  }
+                  
+                  multiple geotype, multiple category:
+                  {
+                    "QS101EW0002": {
+                      "LAD": [
+                        0.9165886162327063,
+                        0.9613281427511096,
+                        0.9772694272476471,
+                        0.9869511834452102,
+                        0.9963767340679719
+                      ],
+                      "LSOA": [
+                        0.5433526011560693,
+                        0.7609518658734451,
+                        0.9072164948453608,
+                        0.9783929777177582,
+                        1
+                      ]
+                    },
+                    "QS101EW0003": {
+                      "LAD": [
+                        0.012890145455898219,
+                        0.022561772874335508,
+                        0.03631411711302769,
+                        0.06462149954832881,
+                        0.13338500165500092
+                      ],
+                      "LSOA": [
+                        0.021602513747054203,
+                        0.09240622140896615,
+                        0.23637289862455427,
+                        0.45350227109729857,
+                        0.8673925724285436
+                      ]
+                    }
+                  }
 
         204:
           descriptions: no results found
@@ -263,6 +334,8 @@ paths:
             - single values (e.g. E01000001)
             - comma-separated array of values (e.g E01000001,E01000002,E01000003)
             - ellipsis-separated contiguous range of values (e.g. E01000001...E01000010)
+
+            Multiple rows parameters can be supplied, e.g. rows=E01000001&rows=E01000001...E01000010
           schema:
             type: array
             items:
@@ -274,6 +347,8 @@ paths:
             - single values (e.g. QS101EW0001)
             - comma-separated array of values (e.g QS101EW0001,QS101EW0002,QS101EW0003)
             - ellipsis-separated contiguous range of values (e.g. QS101EW0001...QS101EW0010)
+
+            Multiple cols parameters can be supplied, e.g. cols=QS101EW0001&rows=QS101EW0001...QS101EW0010
           schema:
             type: array
             items:
@@ -293,6 +368,8 @@ paths:
             At the moment these options are supported:
             - LAD
             - LSOA
+
+            Multiple geotype parameters can be supplied, e.g. geotype=LAD&geotype=LSOA
           schema:
             type: array
             items:
