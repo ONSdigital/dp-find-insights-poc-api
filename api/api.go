@@ -167,7 +167,7 @@ type ServerInterface interface {
 	GetClearCache(w http.ResponseWriter, r *http.Request)
 	// Get geographic info about a region
 	// (GET /geo/{year}/{region})
-	GetGeoYearRegion(w http.ResponseWriter, r *http.Request, year int, region string)
+	GetGeo(w http.ResponseWriter, r *http.Request, year int, region string)
 	// Get Metadata
 	// (GET /metadata/{year})
 	GetMetadataYear(w http.ResponseWriter, r *http.Request, year int, params GetMetadataYearParams)
@@ -351,8 +351,8 @@ func (siw *ServerInterfaceWrapper) GetClearCache(w http.ResponseWriter, r *http.
 	handler(w, r.WithContext(ctx))
 }
 
-// GetGeoYearRegion operation middleware
-func (siw *ServerInterfaceWrapper) GetGeoYearRegion(w http.ResponseWriter, r *http.Request) {
+// GetGeo operation middleware
+func (siw *ServerInterfaceWrapper) GetGeo(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var err error
@@ -376,7 +376,7 @@ func (siw *ServerInterfaceWrapper) GetGeoYearRegion(w http.ResponseWriter, r *ht
 	}
 
 	var handler = func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetGeoYearRegion(w, r, year, region)
+		siw.Handler.GetGeo(w, r, year, region)
 	}
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -620,7 +620,7 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/clear-cache", wrapper.GetClearCache)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/geo/{year}/{region}", wrapper.GetGeoYearRegion)
+		r.Get(options.BaseURL+"/geo/{year}/{region}", wrapper.GetGeo)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/metadata/{year}", wrapper.GetMetadataYear)

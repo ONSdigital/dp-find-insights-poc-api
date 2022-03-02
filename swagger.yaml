@@ -412,8 +412,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
-  /geo/{year}/{region}:
+  /geo/{year}/{geography_code}:
     get:
+      operationId: GetGeo
       tags:
         - public
       summary: Get geographic info about a region
@@ -427,9 +428,9 @@ paths:
           schema:
             type: integer
         - in: path
-          name: region
+          name: geography_code
           description: |
-            Region or geography code, eg E09000004
+            Geography code, eg E09000004
           required: true
           schema:
             type: string

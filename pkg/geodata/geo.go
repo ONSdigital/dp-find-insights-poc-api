@@ -3,20 +3,17 @@ package geodata
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
+
+	"github.com/twpayne/go-geom/encoding/geojson"
+	"github.com/twpayne/go-geom/encoding/wkb"
 )
 
-type GeoJSON struct {
-	Type     string            `json:"type"`
-	Features []json.RawMessage `json:"features"`
-}
-
-func (app *Geodata) Geo(ctx context.Context, year int, region string) (*GeoJSON, error) {
+func (app *Geodata) Geo(ctx context.Context, year int, geocode string) (*geojson.FeatureCollection, error) {
 	template := `
 		SELECT
-			ST_AsGeoJSON(wkb_long_lat_geom),
-			ST_AsGeoJSON(wkb_geometry),
-			ST_ASGeoJSON(ST_BoundingDiagonal(wkb_geometry))
+			ST_AsBinary(wkb_long_lat_geom),
+			ST_AsBinary(wkb_geometry),
+			ST_AsBinary(ST_BoundingDiagonal(wkb_geometry))
 		FROM geo
 		WHERE code = $1 
 		`
@@ -27,8 +24,8 @@ func (app *Geodata) Geo(ctx context.Context, year int, region string) (*GeoJSON,
 	}
 	defer stmt.Close()
 
-	var centroid, boundary, bbox string
-	err = stmt.QueryRowContext(ctx, region).Scan(&centroid, &boundary, &bbox)
+	var centroid, boundary, bbox []byte
+	err = stmt.QueryRowContext(ctx, geocode).Scan(&centroid, &boundary, &bbox)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, ErrNoContent
@@ -36,12 +33,26 @@ func (app *Geodata) Geo(ctx context.Context, year int, region string) (*GeoJSON,
 		return nil, err
 	}
 
-	return &GeoJSON{
-		Type: "FeatureCollection",
-		Features: []json.RawMessage{
-			json.RawMessage(centroid),
-			json.RawMessage(boundary),
-			json.RawMessage(bbox),
+	geomCentroid, err := wkb.Unmarshal(centroid)
+	if err != nil {
+		return nil, err
+	}
+	geomBoundary, err := wkb.Unmarshal(boundary)
+	if err != nil {
+		return nil, err
+	}
+	geomBbox, err := wkb.Unmarshal(bbox)
+	if err != nil {
+		return nil, err
+	}
+
+	collection := &geojson.FeatureCollection{
+		Features: []*geojson.Feature{
+			{ID: "centroid", Geometry: geomCentroid},
+			{ID: "boundary", Geometry: geomBoundary},
+			{ID: "bbox", Geometry: geomBbox},
 		},
-	}, nil
+	}
+
+	return collection, nil
 }
