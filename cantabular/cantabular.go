@@ -258,56 +258,6 @@ func ParseMetric(geo, cats Pairs, values IntValues) (resp string) {
 	return resp
 }
 
-// map to 2011 syn type params
-func BuildCantParam(geo, code string) (vars map[string]interface{}) {
-	name := getGeoTypeName(geo)
-	geo = "syn" + geo
-
-	ds := getDataSet(code)
-
-	m := ShortVarMap()
-	code = m[code]
-	vars = map[string]interface{}{
-		"ds":   graphql.String(ds),
-		"var1": graphql.String(name), // DB lookup and map needed from geo!
-		"var2": graphql.String(code),
-		"geos": graphql.String(geo),
-	}
-
-	q.Q(vars)
-
-	return vars
-}
-
-/*
-// deprecated
-func getGeoTypeName(geo string) (name string) {
-
-	// we could probably save a DB access by getting the geo_type from the format of the geo_code
-	conn, err := pgx.Connect(context.Background(), database.GetDSN())
-	if err != nil {
-		log.Print(err)
-	}
-
-	defer conn.Close(context.Background())
-
-	if err := conn.QueryRow(context.Background(),
-		"SELECT gt.name FROM geo g, geo_type gt WHERE code=$1 AND g.type_id=gt.id", geo).Scan(&name); err != nil {
-		log.Print(err)
-	}
-
-	gtMap := map[string]string{
-		"Country": "Country",
-		"Region":  "Region", // XXX
-		"LAD":     "LA",
-		"MSOA":    "MSOA",
-	}
-
-	return gtMap[name]
-
-}
-*/
-
 func GeoTypeMap() map[string]string {
 
 	return map[string]string{
