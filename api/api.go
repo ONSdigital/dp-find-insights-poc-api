@@ -166,8 +166,8 @@ type ServerInterface interface {
 	// (GET /clear-cache)
 	GetClearCache(w http.ResponseWriter, r *http.Request)
 	// Get geographic info about a region
-	// (GET /geo/{year}/{region})
-	GetGeo(w http.ResponseWriter, r *http.Request, year int, region string)
+	// (GET /geo/{year}/{geography_code})
+	GetGeo(w http.ResponseWriter, r *http.Request, year int, geographyCode string)
 	// Get Metadata
 	// (GET /metadata/{year})
 	GetMetadataYear(w http.ResponseWriter, r *http.Request, year int, params GetMetadataYearParams)
@@ -366,17 +366,17 @@ func (siw *ServerInterfaceWrapper) GetGeo(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// ------------- Path parameter "region" -------------
-	var region string
+	// ------------- Path parameter "geography_code" -------------
+	var geographyCode string
 
-	err = runtime.BindStyledParameter("simple", false, "region", chi.URLParam(r, "region"), &region)
+	err = runtime.BindStyledParameter("simple", false, "geography_code", chi.URLParam(r, "geography_code"), &geographyCode)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Invalid format for parameter region: %s", err), http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("Invalid format for parameter geography_code: %s", err), http.StatusBadRequest)
 		return
 	}
 
 	var handler = func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetGeo(w, r, year, region)
+		siw.Handler.GetGeo(w, r, year, geographyCode)
 	}
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -620,7 +620,7 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/clear-cache", wrapper.GetClearCache)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/geo/{year}/{region}", wrapper.GetGeo)
+		r.Get(options.BaseURL+"/geo/{year}/{geography_code}", wrapper.GetGeo)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/metadata/{year}", wrapper.GetMetadataYear)
