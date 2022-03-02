@@ -1,7 +1,5 @@
 package cantabular
 
-// adhoc query tool to investigate cantabular 2011 instance
-
 import (
 	"context"
 	"fmt"
@@ -11,7 +9,6 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/ryboe/q"
 	"github.com/shurcooL/graphql"
 )
 
@@ -36,13 +33,12 @@ type DataSets struct {
 
 type IntValues []graphql.Int
 
-type Pairs []struct { // Rename
+type Pairs []struct {
 	Code  graphql.String
 	Label graphql.String
 }
 
-// like Nomis short codes and geo_type names mixed up (?)
-type VariableCodes struct { // rename
+type VariableCodes struct {
 	Dataset struct {
 		Variables struct {
 			Edges []struct {
@@ -55,7 +51,6 @@ type VariableCodes struct { // rename
 	} `graphql:"dataset(name: $ds)"`
 }
 
-// return classifications like long nomis codes
 type ClassCodes struct { // rename
 	Dataset struct {
 		Table struct {
@@ -116,9 +111,10 @@ func QueryMetricFilter(ds, geo, geoType, code string) (geoq, catsQL Pairs, value
 		ds = GetDataSet(code)
 	}
 
+	// 2011 cantabular geocodes have syn appended to the front
 	var geosQL []graphql.String
 	for _, v := range geos {
-		geosQL = append(geosQL, graphql.String("syn"+v)) // XXX
+		geosQL = append(geosQL, graphql.String("syn"+v))
 	}
 
 	var query MetricFilter
@@ -130,7 +126,6 @@ func QueryMetricFilter(ds, geo, geoType, code string) (geoq, catsQL Pairs, value
 		"var2": graphql.String(ShortVarMap()[code]),
 	}
 
-	q.Q(vars)
 	SendQueryVars(&query, vars)
 
 	geoq = query.Dataset.Table.Dimensions[0].Categories
@@ -237,7 +232,6 @@ func ParseMetric(geo, cats Pairs, values IntValues) (resp string) {
 
 	k := 0
 	for _, g := range geo {
-		// factor
 		geo := strings.Split(string(g.Code), "syn")[1]
 		line := []string{geo}
 
@@ -252,8 +246,6 @@ func ParseMetric(geo, cats Pairs, values IntValues) (resp string) {
 	resp += fmt.Sprintf("%s\n", strings.Join(second, ","))
 	resp += fmt.Sprintf("%s\n", strings.Join(lines, "\n"))
 
-	q.Q(resp)
-
 	return resp
 }
 
@@ -261,7 +253,7 @@ func GeoTypeMap() map[string]string {
 
 	return map[string]string{
 		"Country": "Country",
-		"Region":  "Region", // XXX checkme
+		"Region":  "Region",
 		"LAD":     "LA",
 		"MSOA":    "MSOA",
 	}
@@ -305,6 +297,7 @@ func ShortVarMap() map[string]string {
 
 }
 
+//  GetDataSet maps variable code to dataset
 func GetDataSet(varCode string) string {
 
 	mappy := map[string]string{
