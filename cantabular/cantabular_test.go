@@ -28,6 +28,22 @@ func TestQueryMetricFilters(t *testing.T) { // QUERY 1
 
 }
 
+func TestQueryMetricFilterOtherDS(t *testing.T) { // QUERY 1
+	geo := "E92000001,W92000004"
+	geotype := "Country"
+	code := "QS406EW"
+
+	geoq, catsq, values := QueryMetricFilter("", geo, geotype, code)
+	got := ParseMetric(geoq, catsq, values)
+
+	exp := "\"cantabular\",\"1 person in household\",\"2 people in household\",\"3 people in household\",\"4 people in household\",\"5 people in household\",\"6 or more people in household\",\"Not applicable\"\n\"geography_code\",\"1\",\"2\",\"3\",\"4\",\"5\",\"6-9\",\"-9\"\nE92000001, 5465645, 13535176, 11630475, 11182493, 6183087, 4657106, 1054765\nW92000004, 316241, 786253, 672344, 647015, 357566, 263329, 59263\n"
+	if got != exp {
+		fmt.Printf("%#v\n", got)
+		t.Fail()
+	}
+
+}
+
 func TestSpecificMetrics(t *testing.T) { // QUERY 2
 
 	// need mapping for region and dataset

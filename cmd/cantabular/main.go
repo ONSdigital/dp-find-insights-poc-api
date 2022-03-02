@@ -37,7 +37,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		geoq, catsq, values := cantabular.QueryMetricFilter(*ds, *geo, *geotype, *code)
+		geoq, catsq, values := cantabular.QueryMetricFilter("", *geo, *geotype, *code)
 		got := cantabular.ParseMetric(geoq, catsq, values)
 
 		fmt.Println(got)

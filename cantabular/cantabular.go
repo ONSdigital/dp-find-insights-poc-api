@@ -112,6 +112,10 @@ type MetricFilter struct {
 func QueryMetricFilter(ds, geo, geoType, code string) (geoq, catsQL Pairs, values IntValues) {
 	geos := strings.Split(geo, ",")
 
+	if ds == "" {
+		ds = GetDataSet(code)
+	}
+
 	var geosQL []graphql.String
 	for _, v := range geos {
 		geosQL = append(geosQL, graphql.String("syn"+v)) // XXX
@@ -120,7 +124,7 @@ func QueryMetricFilter(ds, geo, geoType, code string) (geoq, catsQL Pairs, value
 	var query MetricFilter
 
 	vars := map[string]interface{}{
-		"ds":   graphql.String("Usual-Residents"),
+		"ds":   graphql.String(ds),
 		"geos": geosQL,
 		"var1": graphql.String(GeoTypeMap()[geoType]),
 		"var2": graphql.String(ShortVarMap()[code]),
@@ -297,7 +301,7 @@ func ShortVarMap() map[string]string {
 
 }
 
-func getDataSet(varCode string) string {
+func GetDataSet(varCode string) string {
 
 	mappy := map[string]string{
 		"QS406EW": "People-Households",
