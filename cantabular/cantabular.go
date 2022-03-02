@@ -81,7 +81,7 @@ type MetricFilter struct {
 			}
 
 			Values IntValues
-		} `graphql:"table(variables: [$var1,$var2],filters: [{variable: $var1, codes: $geos}])"`
+		} `graphql:"table(variables: [$geotype,$var],filters: [{variable: $geotype, codes: $geos}])"`
 	} `graphql:"dataset(name: $ds)"`
 }
 
@@ -121,10 +121,10 @@ func QueryMetricFilter(ds, geo, geoType, code string) (geoq, catsQL Pairs, value
 	var query MetricFilter
 
 	vars := map[string]interface{}{
-		"ds":   graphql.String(ds),
-		"geos": geosQL,
-		"var1": graphql.String(GeoTypeMap()[geoType]),
-		"var2": graphql.String(ShortVarMap()[code]),
+		"ds":      graphql.String(ds),
+		"geos":    geosQL,
+		"geotype": graphql.String(GeoTypeMap()[geoType]),
+		"var":     graphql.String(ShortVarMap()[code]),
 	}
 
 	SendQueryVars(&query, vars)
