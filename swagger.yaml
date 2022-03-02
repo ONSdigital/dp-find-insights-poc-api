@@ -412,12 +412,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
-  /geo/{year}/{geography_code}:
+  /geo/{year}:
     get:
       operationId: GetGeo
       tags:
         - public
-      summary: Get geographic info about a region
+      summary: Get geographic info about an area
       parameters:
         - in: path
           name: year
@@ -427,13 +427,22 @@ paths:
           required: true
           schema:
             type: integer
-        - in: path
-          name: geography_code
+        - in: query
+          name: geocode
           description: |
             Geography code, eg E09000004
-          required: true
           schema:
             type: string
+      responses:
+        200:
+          content:
+            application/json:
+        default:
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error" 
 
   /clear-cache:
     get:

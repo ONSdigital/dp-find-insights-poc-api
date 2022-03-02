@@ -100,6 +100,12 @@ type GetCkmeansratioYearParams struct {
 	K *int `json:"k,omitempty"`
 }
 
+// GetGeoParams defines parameters for GetGeo.
+type GetGeoParams struct {
+	// Geography code, eg E09000004
+	Geocode *string `json:"geocode,omitempty"`
+}
+
 // GetMetadataYearParams defines parameters for GetMetadataYear.
 type GetMetadataYearParams struct {
 	// Use filtertotals=true if you want to have 'totals' categories separated from other categories in the response (see Examples).
@@ -165,9 +171,9 @@ type ServerInterface interface {
 	// remove all entries from request cache
 	// (GET /clear-cache)
 	GetClearCache(w http.ResponseWriter, r *http.Request)
-	// Get geographic info about a region
-	// (GET /geo/{year}/{geography_code})
-	GetGeo(w http.ResponseWriter, r *http.Request, year int, geographyCode string)
+	// Get geographic info about an area
+	// (GET /geo/{year})
+	GetGeo(w http.ResponseWriter, r *http.Request, year int, params GetGeoParams)
 	// Get Metadata
 	// (GET /metadata/{year})
 	GetMetadataYear(w http.ResponseWriter, r *http.Request, year int, params GetMetadataYearParams)
@@ -366,17 +372,22 @@ func (siw *ServerInterfaceWrapper) GetGeo(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// ------------- Path parameter "geography_code" -------------
-	var geographyCode string
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetGeoParams
 
-	err = runtime.BindStyledParameter("simple", false, "geography_code", chi.URLParam(r, "geography_code"), &geographyCode)
+	// ------------- Optional query parameter "geocode" -------------
+	if paramValue := r.URL.Query().Get("geocode"); paramValue != "" {
+
+	}
+
+	err = runtime.BindQueryParameter("form", true, false, "geocode", r.URL.Query(), &params.Geocode)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Invalid format for parameter geography_code: %s", err), http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("Invalid format for parameter geocode: %s", err), http.StatusBadRequest)
 		return
 	}
 
 	var handler = func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetGeo(w, r, year, geographyCode)
+		siw.Handler.GetGeo(w, r, year, params)
 	}
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -620,7 +631,7 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/clear-cache", wrapper.GetClearCache)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/geo/{year}/{geography_code}", wrapper.GetGeo)
+		r.Get(options.BaseURL+"/geo/{year}", wrapper.GetGeo)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/metadata/{year}", wrapper.GetMetadataYear)

@@ -27,6 +27,7 @@ const baseURLLocal = `http://localhost:25252`
 const censusEndpoint = `query/2011`
 const metadataEndpoint = `metadata/2011`
 const ckmeansEndpoint = `ckmeans/2011`
+const geoEndpoint = "geo/2011"
 
 var Tests = []APITest{
 	// skinny is deprecated
@@ -220,6 +221,14 @@ var Tests = []APITest{
 		baseURLLocal,
 		ckmeansEndpoint,
 		"cat=QS208EW0002&geotype=LSOA&k=5",
+	},
+	// geo
+	{
+		"geo",
+		baseURL,
+		baseURLLocal,
+		geoEndpoint,
+		"geocode=E09000004",
 	},
 }
 
