@@ -77,19 +77,7 @@ type Metric struct {
 	} `graphql:"dataset(name: $ds)"`
 }
 
-// return metrics
 type MetricFilter struct {
-	Dataset struct {
-		Table struct {
-			Dimensions []struct {
-				Categories Pairs
-			}
-			Values IntValues
-		} `graphql:"table(variables: [$var1,$var2],filters: [{variable: $var1, codes: [$geos]}])"`
-	} `graphql:"dataset(name: $ds)"`
-}
-
-type MetricFilter2 struct {
 	Dataset struct {
 		Table struct {
 			Dimensions []struct {
@@ -128,7 +116,7 @@ func QueryMetricFilter(ds, geo, geoType, code string) (geoq, catsQL Pairs, value
 		geosQL = append(geosQL, graphql.String("syn"+v)) // XXX
 	}
 
-	var query MetricFilter2
+	var query MetricFilter
 
 	vars := map[string]interface{}{
 		"ds":   graphql.String("Usual-Residents"),
@@ -195,6 +183,7 @@ func SendQueryVars(query interface{}, vars map[string]interface{}) interface{} {
 	return query
 }
 
+//  ParseResp is used for the command line investigate API commands
 func ParseResp(query interface{}) {
 	// wish there were a better way!
 	qt := reflect.TypeOf(query).String()
