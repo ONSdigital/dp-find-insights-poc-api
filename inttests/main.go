@@ -103,7 +103,7 @@ var Tests = []APITest{
 		baseURL,
 		baseURLLocal,
 		censusEndpoint,
-		`rows=E01000001&cols=geography_code,QS112EW0001...QS112EW0011`,
+		`rows=E01000001&cols=geography_code,QS119EW0001...QS119EW0006`,
 	},
 	{
 		"census tables rows param single cols param multi mixed",
