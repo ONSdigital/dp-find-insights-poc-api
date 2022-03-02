@@ -160,6 +160,10 @@ func QueryMetricFilter(ds, geo, geoType, code string) (geoq, catsQL Pairs, value
 // QueryMetric is is a cli query2
 // could be entrypoint for REST endpoint
 func QueryMetric(ds, geoType, code string) (geoq, catsQL Pairs, values IntValues) {
+	if ds == "" {
+		ds = GetDataSet(code)
+	}
+
 	vars := map[string]interface{}{
 		"ds":      graphql.String(ds),
 		"geotype": graphql.String(GeoTypeMap()[geoType]),

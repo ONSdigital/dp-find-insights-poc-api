@@ -1,4 +1,3 @@
-// FIX THIS SHIT UP
 package cantabular
 
 import (
@@ -45,8 +44,6 @@ func TestQueryMetricFilterOtherDS(t *testing.T) { // QUERY 1
 }
 
 func TestSpecificMetrics(t *testing.T) { // QUERY 2
-
-	// need mapping for region and dataset
 	ds := "Usual-Residents"
 	code := "QS301EW"
 	geotype := "Region"
@@ -57,7 +54,23 @@ func TestSpecificMetrics(t *testing.T) { // QUERY 2
 	exp := "\"cantabular\",\"Provides no unpaid care\",\"Provides unpaid care\",\"Not applicable\"\n\"geography_code\",\"1\",\"2-4\",\"-9\"\nE12000001, 2307839, 286530, 0\nE12000002, 6261878, 785955, 0\nE12000003, 4717798, 558367, 0\nE12000004, 4034230, 491420, 0\nE12000005, 4969823, 618354, 0\nE12000006, 5237546, 603132, 0\nE12000007, 7409443, 687162, 0\nE12000008, 7770397, 850101, 0\nE12000009, 4714266, 574221, 0\nW92000004, 2691486, 368938, 0\n"
 
 	if got != exp {
-		t.Errorf(got)
+		fmt.Printf("%#v\n", got)
+		t.Fail()
+	}
+}
+
+func TestSpecificMetricsOtherDS(t *testing.T) { // QUERY 2
+	code := "QS416EW"
+	geotype := "Region"
+
+	geoq, catsq, values := QueryMetric("", geotype, code)
+	got := ParseMetric(geoq, catsq, values)
+
+	exp := "\"cantabular\",\"No cars or vans in household\",\"1 car or van in household\",\"2 or more cars or vans in household\",\"Not applicable\"\n\"geography_code\",\"0\",\"1\",\"2-4\",\"-9\"\nE12000001, 620632, 1005179, 949070, 49018\nE12000002, 1456726, 2688158, 2860409, 131208\nE12000003, 1061663, 2057408, 2116106, 108899\nE12000004, 704466, 1640205, 2146475, 98765\nE12000005, 995417, 2055221, 2510158, 102261\nE12000006, 705831, 2124298, 2991478, 111561\nE12000007, 2734412, 3428989, 1986363, 120091\nE12000008, 1042660, 3029708, 4498032, 207868\nE12000009, 646812, 1925768, 2672339, 125092\nW92000004, 495272, 1114274, 1433202, 59263\n"
+
+	if got != exp {
+		fmt.Printf("%#v\n", got)
+		t.Fail()
 	}
 }
 
