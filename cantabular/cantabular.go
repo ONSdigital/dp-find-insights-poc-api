@@ -239,7 +239,7 @@ func ParseMetric(geo, cats Pairs, values IntValues) (resp string) {
 			line = append(line, fmt.Sprintf("%d", values[k]))
 			k++
 		}
-		lines = append(lines, strings.Join(line, ", "))
+		lines = append(lines, strings.Join(line, ","))
 	}
 
 	resp = fmt.Sprintf("%s\n", strings.Join(first, ","))
