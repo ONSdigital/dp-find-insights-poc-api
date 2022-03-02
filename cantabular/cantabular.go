@@ -2,6 +2,7 @@ package cantabular
 
 import (
 	"context"
+	"encoding/csv"
 	"fmt"
 	"log"
 	"net/http"
@@ -220,15 +221,20 @@ func ParseResp(query interface{}) {
 
 }
 
-func ParseMetric(geo, cats Pairs, values IntValues) (resp string) {
-	first := []string{"\"cantabular\""}
-	second := []string{"\"geography_code\""}
-	var lines []string
+func ParseMetric(geo, cats Pairs, values IntValues) string {
+	first := []string{"cantabular"}
+	second := []string{"geography_code"}
+
+	var b strings.Builder
+	w := csv.NewWriter(&b)
 
 	for _, k := range cats {
-		first = append(first, fmt.Sprintf("%q", string(k.Label)))
-		second = append(second, fmt.Sprintf("%q", string(k.Code)))
+		first = append(first, string(k.Label))
+		second = append(second, string(k.Code))
 	}
+
+	w.Write(first)
+	w.Write(second)
 
 	k := 0
 	for _, g := range geo {
@@ -239,14 +245,12 @@ func ParseMetric(geo, cats Pairs, values IntValues) (resp string) {
 			line = append(line, fmt.Sprintf("%d", values[k]))
 			k++
 		}
-		lines = append(lines, strings.Join(line, ","))
+		w.Write(line)
 	}
 
-	resp = fmt.Sprintf("%s\n", strings.Join(first, ","))
-	resp += fmt.Sprintf("%s\n", strings.Join(second, ","))
-	resp += fmt.Sprintf("%s\n", strings.Join(lines, "\n"))
+	w.Flush()
 
-	return resp
+	return b.String()
 }
 
 func GeoTypeMap() map[string]string {
