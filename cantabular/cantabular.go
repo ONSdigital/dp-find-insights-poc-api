@@ -107,7 +107,8 @@ type MetricFilter struct {
   }
 }
 */
-// MetricFilter type query1
+// MetricFilter is a cli type query1
+// could be entrypoint for REST endpoint
 func QueryMetricFilter(ds, geo, geoType, code string) (geoq, catsQL Pairs, values IntValues) {
 	geos := strings.Split(geo, ",")
 
@@ -152,7 +153,8 @@ func QueryMetricFilter(ds, geo, geoType, code string) (geoq, catsQL Pairs, value
   }
 }
 */
-// QueryMetric is query2
+// QueryMetric is is a cli query2
+// could be entrypoint for REST endpoint
 func QueryMetric(ds, geoType, code string) (geoq, catsQL Pairs, values IntValues) {
 	vars := map[string]interface{}{
 		"ds":      graphql.String(ds),
@@ -160,7 +162,6 @@ func QueryMetric(ds, geoType, code string) (geoq, catsQL Pairs, values IntValues
 		"var":     graphql.String(ShortVarMap()[code]),
 	}
 
-	// OLD SHIT?
 	var query Metric
 	SendQueryVars(&query, vars)
 
@@ -183,7 +184,8 @@ func SendQueryVars(query interface{}, vars map[string]interface{}) interface{} {
 	return query
 }
 
-//  ParseResp is used for the command line investigate API commands
+// ParseResp is used for the command line investigate API commands
+// probably doesn't make sense for REST API
 func ParseResp(query interface{}) {
 	// wish there were a better way!
 	qt := reflect.TypeOf(query).String()
