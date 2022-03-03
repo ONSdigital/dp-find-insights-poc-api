@@ -1,3 +1,6 @@
+//go:build cantint
+// +build cantint
+
 package cantabular
 
 import (
