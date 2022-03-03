@@ -79,7 +79,6 @@ type MetricFilter struct {
 			Dimensions []struct {
 				Categories Pairs
 			}
-
 			Values IntValues
 		} `graphql:"table(variables: [$geotype,$var],filters: [{variable: $geotype, codes: $geos}])"`
 	} `graphql:"dataset(name: $ds)"`

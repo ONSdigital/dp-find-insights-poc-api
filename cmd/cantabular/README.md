@@ -28,6 +28,22 @@ To drill down and see catalogies under COBG variable for datasets use:
 ./class-query.sh COBG
 ```
 
+## Queries "1" & "2"
+
+# Query 1 is based on geocode(s)
+
+```
+go run . -query1 -code QS301EW -geo E02004332,E02004333,E02004356,E02004341 -geotype MSOA
+```
+Note currently the geotype must match all geocode types
+
+Would be possible to make geotype optional
+
+# Query 2 is based on geotype
+
+```
+go run . -query2 -code QS416EW -geotype Region  
+```
 
 ## Using GraphiQL
 
@@ -37,7 +53,7 @@ There is a web UI at https://ftb-api-ext.ons.sensiblecode.io/graphql
 
 Ctrl-space will auto complete inside it.
 
-Example queries not covered by these tool are:
+Example queries are:
 
 
 ```
