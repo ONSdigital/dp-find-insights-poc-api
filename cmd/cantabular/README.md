@@ -33,9 +33,10 @@ To drill down and see catalogies under COBG variable for datasets use:
 # Query 1 is based on geocode(s)
 
 ```
-go run . -query1 -code QS301EW -geo E02004332,E02004333,E02004356,E02004341 -geotype MSOA
+go run . -query1 -code QS501EW -geo E02004332,E02004333,E02004356,E02004341 -geotype MSOA
 ```
-Note currently the geotype must match all geocode types
+Note currently the geotype must match all geocode types and response includes a
+field with a comma in!
 
 Would be possible to make geotype optional
 
