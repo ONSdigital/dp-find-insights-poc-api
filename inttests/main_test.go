@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package main
@@ -21,15 +22,27 @@ func init() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 }
 
-func parseURL(test APITest) string {
+// parseURL returns a test's URL and possibly a second url that should return the same results.
+// The second url is because /query2 should return the same as /query until switch switch over.
+func parseURL(test APITest) (string, string) {
 	var queryString string
 	if test.query != "" {
 		queryString = "?" + test.query
 	}
+
+	var base string
 	if *local {
-		return fmt.Sprintf(`%s/%s%s`, test.baseURLLocal, test.endpoint, queryString)
+		base = test.baseURLLocal
+	} else {
+		base = test.baseURL
 	}
-	return fmt.Sprintf(`%s/%s%s`, test.baseURL, test.endpoint, queryString)
+
+	var queryURL, query2URL string
+	queryURL = fmt.Sprintf(`%s/%s%s`, base, test.endpoint, queryString)
+	if test.endpoint == censusEndpoint {
+		query2URL = fmt.Sprintf(`%s/%s%s`, base, query2Endpoint, queryString)
+	}
+	return queryURL, query2URL
 }
 
 func TestAPI(t *testing.T) {
@@ -37,9 +50,21 @@ func TestAPI(t *testing.T) {
 
 		t.Run(test.desc, func(t *testing.T) {
 
-			url := parseURL(test)
+			url, q2url := parseURL(test)
 			b, header, err := HTTPget(url)
 
+			if err != nil {
+				t.Errorf("Error getting %s: %v", url, err)
+			} else {
+				assertCORSHeader(header, url, t)
+				assertAPIResponse(b, test, t, url)
+			}
+
+			if q2url == "" {
+				return
+			}
+
+			b, header, err = HTTPget(q2url)
 			if err != nil {
 				t.Errorf("Error getting %s: %v", url, err)
 			} else {
@@ -104,7 +129,7 @@ func assertAPIResponse(b []byte, test APITest, t *testing.T, url string) {
 func BenchmarkAllTestAPI(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		for _, test := range Tests {
-			url := parseURL(test)
+			url, _ := parseURL(test) // ignoring query2 for now
 			_, _, err := HTTPget(url)
 			if err != nil {
 				panic(err)
@@ -127,7 +152,7 @@ func BenchmarkAllConcurrentTestAPI(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		for _, test := range Tests {
 			<-ticker.C
-			url := parseURL(test)
+			url, _ := parseURL(test) // ignoring query2 for now
 			go func(s string) {
 				HTTPget(s)
 			}(url)

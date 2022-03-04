@@ -28,6 +28,7 @@ const censusEndpoint = `query/2011`
 const metadataEndpoint = `metadata/2011`
 const ckmeansEndpoint = `ckmeans/2011`
 const geoEndpoint = "geo/2011"
+const query2Endpoint = `query2/2011`
 
 var Tests = []APITest{
 	// skinny is deprecated
