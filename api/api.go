@@ -160,6 +160,54 @@ type GetQueryYearParams struct {
 	Censustable *string `json:"censustable,omitempty"`
 }
 
+// GetQueryParams defines parameters for GetQuery.
+type GetQueryParams struct {
+	// [ONS codes](https://en.wikipedia.org/wiki/ONS_coding_system) for the geographies that you
+	// want data for. Can be:
+	// - single values (e.g. E01000001)
+	// - comma-separated array of values (e.g E01000001,E01000002,E01000003)
+	// - ellipsis-separated contiguous range of values (e.g. E01000001...E01000010)
+	//
+	// Multiple rows parameters can be supplied, e.g. rows=E01000001&rows=E01000001...E01000010
+	Rows *[]string `json:"rows,omitempty"`
+
+	// The census data that you want (NB - use metadata endpoint to see list of currently available census data). Can be:
+	// - single values (e.g. QS101EW0001)
+	// - comma-separated array of values (e.g QS101EW0001,QS101EW0002,QS101EW0003)
+	// - ellipsis-separated contiguous range of values (e.g. QS101EW0001...QS101EW0010)
+	//
+	// Multiple cols parameters can be supplied, e.g. cols=QS101EW0001&rows=QS101EW0001...QS101EW0010
+	Cols *[]string `json:"cols,omitempty"`
+
+	// Two long, lat coordinate pairs representing the opposite corners of a bounding box (e.g. bbox=0.1338,51.4635,0.1017,51.4647).
+	// This will select all geographies that lie within this bounding box. Bbox can be used instead of, or in combination with the
+	// rows parameter as a way of selecting geography.
+	Bbox *string `json:"bbox,omitempty"`
+
+	// Geotype filters API results to a specific geography type. Can be single values or comma-separated array.
+	// At the moment these options are supported:
+	// - LAD
+	// - LSOA
+	//
+	// Multiple geotype parameters can be supplied, e.g. geotype=LAD&geotype=LSOA
+	Geotype *[]string `json:"geotype,omitempty"`
+
+	// Radius and location (both are required) will select all geographies with radius of the long,lat pair location,
+	// e.g. location=0.1338,51.4635&radius=1000. Radius and location can be used instead of, or in combination with the rows parameter as a way of selecting geography.
+	Location *string `json:"location,omitempty"`
+
+	// Radius and location (both are required) will select all geographies with radius of the long,lat pair location,
+	// e.g. location=0.1338,51.4635&radius=1000. Radius and location can be used instead of, or in combination with the rows parameter as a way of selecting geography.
+	Radius *int `json:"radius,omitempty"`
+
+	// A sequence of long, lat coordinate pairs representing a closed polygon (NB - 'closed' means the first and last coordinate pair
+	// must be the same), e.g. polygon=0.0844,51.4897,0.1214,51.4910,0.1338,51.4635,0.1017,51.4647,0.0844,51.4897. This will select
+	// all geographies that lie within this polygon. polygon can be used instead of, or in combination with the rows parameter as a
+	// way of selecting geography.
+	Polygon     *string `json:"polygon,omitempty"`
+	Censustable *string `json:"censustable,omitempty"`
+}
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// calculate ckmeans over a given category and geography type
@@ -180,6 +228,9 @@ type ServerInterface interface {
 	// query census
 	// (GET /query/{year})
 	GetQueryYear(w http.ResponseWriter, r *http.Request, year int, params GetQueryYearParams)
+	// List geocodes matching search conditions
+	// (GET /query2/{year})
+	GetQuery(w http.ResponseWriter, r *http.Request, year int, params GetQueryParams)
 	// spec
 	// (GET /swagger)
 	GetSwagger(w http.ResponseWriter, r *http.Request)
@@ -554,6 +605,123 @@ func (siw *ServerInterfaceWrapper) GetQueryYear(w http.ResponseWriter, r *http.R
 	handler(w, r.WithContext(ctx))
 }
 
+// GetQuery operation middleware
+func (siw *ServerInterfaceWrapper) GetQuery(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var err error
+
+	// ------------- Path parameter "year" -------------
+	var year int
+
+	err = runtime.BindStyledParameter("simple", false, "year", chi.URLParam(r, "year"), &year)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid format for parameter year: %s", err), http.StatusBadRequest)
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetQueryParams
+
+	// ------------- Optional query parameter "rows" -------------
+	if paramValue := r.URL.Query().Get("rows"); paramValue != "" {
+
+	}
+
+	err = runtime.BindQueryParameter("form", true, false, "rows", r.URL.Query(), &params.Rows)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid format for parameter rows: %s", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "cols" -------------
+	if paramValue := r.URL.Query().Get("cols"); paramValue != "" {
+
+	}
+
+	err = runtime.BindQueryParameter("form", true, false, "cols", r.URL.Query(), &params.Cols)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid format for parameter cols: %s", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "bbox" -------------
+	if paramValue := r.URL.Query().Get("bbox"); paramValue != "" {
+
+	}
+
+	err = runtime.BindQueryParameter("form", true, false, "bbox", r.URL.Query(), &params.Bbox)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid format for parameter bbox: %s", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "geotype" -------------
+	if paramValue := r.URL.Query().Get("geotype"); paramValue != "" {
+
+	}
+
+	err = runtime.BindQueryParameter("form", true, false, "geotype", r.URL.Query(), &params.Geotype)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid format for parameter geotype: %s", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "location" -------------
+	if paramValue := r.URL.Query().Get("location"); paramValue != "" {
+
+	}
+
+	err = runtime.BindQueryParameter("form", true, false, "location", r.URL.Query(), &params.Location)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid format for parameter location: %s", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "radius" -------------
+	if paramValue := r.URL.Query().Get("radius"); paramValue != "" {
+
+	}
+
+	err = runtime.BindQueryParameter("form", true, false, "radius", r.URL.Query(), &params.Radius)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid format for parameter radius: %s", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "polygon" -------------
+	if paramValue := r.URL.Query().Get("polygon"); paramValue != "" {
+
+	}
+
+	err = runtime.BindQueryParameter("form", true, false, "polygon", r.URL.Query(), &params.Polygon)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid format for parameter polygon: %s", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "censustable" -------------
+	if paramValue := r.URL.Query().Get("censustable"); paramValue != "" {
+
+	}
+
+	err = runtime.BindQueryParameter("form", true, false, "censustable", r.URL.Query(), &params.Censustable)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid format for parameter censustable: %s", err), http.StatusBadRequest)
+		return
+	}
+
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetQuery(w, r, year, params)
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler(w, r.WithContext(ctx))
+}
+
 // GetSwagger operation middleware
 func (siw *ServerInterfaceWrapper) GetSwagger(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -638,6 +806,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/query/{year}", wrapper.GetQueryYear)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/query2/{year}", wrapper.GetQuery)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/swagger", wrapper.GetSwagger)

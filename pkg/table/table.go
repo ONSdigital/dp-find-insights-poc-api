@@ -27,6 +27,7 @@ import (
 const (
 	ColGeographyCode = "geography_code"
 	ColGeotype       = "geotype"
+	ColGeocodes      = "geocode" // XXX temporary
 )
 
 type Geocode string // eg "E07000107"

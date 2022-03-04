@@ -481,12 +481,12 @@ func ExtractSpecialCols(set *where.ValueSet) ([]string, *where.ValueSet, error) 
 	callback := func(single, low, high *string) (*string, *string, *string, error) {
 		var err error
 		if single != nil {
-			if *single == table.ColGeographyCode || *single == table.ColGeotype {
+			if isSpecialCol(*single) {
 				includes = append(includes, *single)
 				single = nil
 			}
 		} else {
-			if *low == table.ColGeographyCode || *high == table.ColGeographyCode || *low == table.ColGeotype || *high == table.ColGeotype {
+			if isSpecialCol(*low) || isSpecialCol(*high) {
 				err = fmt.Errorf("%w: special columns cannot be part of a range", ErrInvalidParams)
 			}
 		}
@@ -498,6 +498,15 @@ func ExtractSpecialCols(set *where.ValueSet) ([]string, *where.ValueSet, error) 
 
 	newset, err := set.Walk(callback)
 	return includes, newset, err
+}
+
+func isSpecialCol(col string) bool {
+	specials := map[string]bool{
+		table.ColGeographyCode: true,
+		table.ColGeotype:       true,
+		table.ColGeocodes:      true,
+	}
+	return specials[col]
 }
 
 // geotypeSQL generates an AND where part for geotypes.
