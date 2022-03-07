@@ -26,7 +26,15 @@ func main() {
 	ds := flag.String("ds", "Usual-Residents", "set dataset to query")
 	class := flag.String("class", "", "classifications under variables eg. pass AGE_T022A (or MSOA) to get categories under it (like old longcodes)")
 	variables := flag.Bool("variables", false, "list variables, results eg. 'AGE_T022A : Age of individual (21 categories)' (like old short codes)")
+	metadata := flag.Bool("metadata", false, "display metadata in slow, tactical way")
 	flag.Parse()
+
+	// metadata query
+	if *metadata {
+		fmt.Println(cantabular.QueryMetaData(*ds))
+
+		os.Exit(0)
+	}
 
 	// MetricFilter type query
 	if *query1 {
