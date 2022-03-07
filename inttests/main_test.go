@@ -66,10 +66,10 @@ func TestAPI(t *testing.T) {
 
 			b, header, err = HTTPget(q2url)
 			if err != nil {
-				t.Errorf("Error getting %s: %v", url, err)
+				t.Errorf("Error getting %s: %v", q2url, err)
 			} else {
-				assertCORSHeader(header, url, t)
-				assertAPIResponse(b, test, t, url)
+				assertCORSHeader(header, q2url, t)
+				assertAPIResponse(b, test, t, q2url)
 			}
 		})
 	}
