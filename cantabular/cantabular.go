@@ -333,51 +333,27 @@ func GeoTypeMap() map[string]string {
 }
 
 func ShortVarMap() map[string]string {
+	// "matching" via command output and eg.
+	// SELECT  nd.name,nc.* FROM nomis_desc nd, nomis_category nc where nd.short_nomis_code='KS103EW' and nd.id=nc.nomis_desc_id and nc.measurement_unit='Count' and nc.long_nomis_code not like '%0001';
 
-	// maybe this should be in the database?
-	// these are syn2011 values
-	// although list is short & likely to change..
-
-	/* actual keys map for data as of March 2022 is
-	   "KS103EW"
-	   "KS206EW"
-	   "KS207WA"
-	   "QS101EW"
-	   "QS104EW"
-	   "QS113EW"
-	   "QS119EW"
-	   "QS201EW"
-	   "QS202EW"
-	   "QS203EW"
-	   "QS208EW"
-	   "QS301EW"
-	   "QS302EW"
-	   "QS303EW"
-	   "QS402EW"
-	   "QS403EW"
-	   "QS406EW"
-	   "QS411EW"
-	   "QS415EW"
-	   "QS416EW"
-	   "QS501EW"
-	   "QS803EW"
-	*/
-
+	// these are syn2011 "keys" which we pretend, temporarily, are NOMIS short codes
 	return map[string]string{
 		"KS102EW": "AGE_T009A",
-		"KS202EW": "NATID_ALL_T009A", // in f/e metadata!
+		"KS103EW": "MARSTAT_T006A",
+		"KS202EW": "NATID_ALL_T009A",
 		"KS206EW": "WELSHPUK112_T007A",
 		"KS207WA": "WELSHPUK112_R003A",
 		"KS208WA": "WELSHPUK112_R003A",
+		"QS101EW": "RESIDTYPE",
 		"QS104EW": "SEX",
-		"QS113EW": "MARSTAT_T006A",
 		"QS201EW": "ETHPUK11_T009A",
 		"QS203EW": "COB_R010A",
-		"QS208EW": "RELPUK11_R005A",
-		"QS301EW": "CARER_R003A",
+		"QS208EW": "RELIGIONEW",
+		"QS301EW": "CARER",
 		"QS302EW": "HEALTH_T004A", // HEALTH
 		"QS303EW": "DISABILITY_T003B",
 		"QS402EW": "TYPACCOM_T009A",
+		"QS403EW": "TENHUK11_T010A",
 		"QS406EW": "SIZHUK11_T007A",
 		"QS415EW": "CENHEATHUK11_T003A",
 		"QS416EW": "CARSNO_T004A",
@@ -388,10 +364,6 @@ func ShortVarMap() map[string]string {
 		"QS606EW": "OCCPUK113_T010A",
 		"QS701EW": "TRANSPORT_R005A",
 		"QS702EW": "AGGDTWPEW11_R010A",
-		//"DC6102EW": "STUDENT_AGE_T002A",
-		//"QS402EW":  "TENHUK11_T007B",
-		//"QS411EW": "BEDROOMS_T006A",
-		//"QS501EW":  "HLQPUK11_T007A",
 	}
 
 }
@@ -400,6 +372,7 @@ func ShortVarMap() map[string]string {
 func GetDataSet(varCode string) string {
 
 	mappy := map[string]string{
+		"QS403EW": "People-Households",
 		"QS406EW": "People-Households",
 		"KS206EW": "People-Households",
 		"QS402EW": "People-Households",
