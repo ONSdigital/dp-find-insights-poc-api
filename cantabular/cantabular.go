@@ -189,14 +189,14 @@ func QueryMetric(ds, geoType, code string) (geoq, catsQL Pairs, values IntValues
 // QueryMetaData does some multiple data queries to get data structure
 // XXX a poor work around for a lack of metadata.
 
-func QueryMetaData(ds string) string {
+func QueryMetaData(ds string, nomis bool) string {
 	if ds == "" {
 		ds = GetDataSet("")
 	}
 
-	revMap := make(map[string]bool)
-	for _, v := range ShortVarMap() {
-		revMap[v] = true
+	revMap := make(map[string]string)
+	for k, v := range ShortVarMap() {
+		revMap[v] = k
 
 	}
 
@@ -209,12 +209,20 @@ func QueryMetaData(ds string) string {
 	var metadata []Metadata
 
 	for _, v := range query.Dataset.Variables.Edges {
-		if !revMap[string(v.Node.Name)] {
+		if revMap[string(v.Node.Name)] == "" {
 			continue
 		}
 
+		var name string
+		if nomis {
+			name = revMap[string(v.Node.Name)]
+		} else {
+			name = string(v.Node.Name)
+
+		}
 		md := Metadata{
-			Code: string(v.Node.Name),
+			Code: name,
+			//Code: string(v.Node.Name),
 			Name: string(v.Node.Label),
 		}
 		var query2 ClassCodes
