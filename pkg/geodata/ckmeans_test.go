@@ -154,7 +154,7 @@ func TestCkmeansHappyPathSingleCategorySingleGeotype(t *testing.T) {
 		ckmeansTestSetup(t, db, metrics)
 
 		// WHEN we use app.CKmeans to get breakpoints for our category
-		app, err := New(db, 100)
+		app, err := New(db, nil, 100)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -208,7 +208,7 @@ func TestCkmeansHappyPathMultiCategorySingleGeotype(t *testing.T) {
 		ckmeansTestSetup(t, db, metrics)
 
 		// WHEN we use app.CKmeans to get breakpoints for our category
-		app, err := New(db, 100)
+		app, err := New(db, nil, 100)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -273,7 +273,7 @@ func TestCkmeansHappyPathMultiCategoryMultiGeotype(t *testing.T) {
 		ckmeansTestSetup(t, db, metrics)
 
 		// WHEN we use app.CKmeans to get breakpoints for our category
-		app, err := New(db, 100)
+		app, err := New(db, nil, 100)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -331,7 +331,7 @@ func TestCkmeansNoData(t *testing.T) {
 		ckmeansTestSetup(t, db, metrics)
 
 		// WHEN we use app.CKmeans to get breakpoints for a category with NO DATA
-		app, err := New(db, 100)
+		app, err := New(db, nil, 100)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -385,7 +385,7 @@ func TestCkmeansRatiosHappyPathSingleGeotype(t *testing.T) {
 		ckmeansTestSetup(t, db, metrics)
 
 		// WHEN we use app.CKmeansRatio to get breakpoints for all numerators / denominator
-		app, err := New(db, 100)
+		app, err := New(db, nil, 100)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -454,7 +454,7 @@ func TestCkmeansRatiosHappyPathMultipleGeotypes(t *testing.T) {
 		ckmeansTestSetup(t, db, metrics)
 
 		// WHEN we use app.CKmeansRatio to get breakpoints for all numerators / denominator
-		app, err := New(db, 100)
+		app, err := New(db, nil, 100)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -521,7 +521,7 @@ func TestCkmeansRatiosPartialDataOneCategoryMissing(t *testing.T) {
 			WHEN we use app.CKmeansRatio to get breakpoints for all numerators / denominator, INCLUDING ONE NUMERATOR
 			THAT DOES NOT EXIST
 		*/
-		app, err := New(db, 100)
+		app, err := New(db, nil, 100)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -578,7 +578,7 @@ func TestCkmeansRatiosPartialDataOneCategoryPartialDataOnly(t *testing.T) {
 		/*
 			WHEN we use app.CKmeansRatio to get breakpoints for all numerators / denominator
 		*/
-		app, err := New(db, 100)
+		app, err := New(db, nil, 100)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -622,7 +622,7 @@ func TestCkmeansRatiosNoData(t *testing.T) {
 		metrics := map[string]map[string][]float64{"LAD": {}}
 		ckmeansTestSetup(t, db, metrics)
 		// WHEN we use app.CKmeansRatio to get breakpoints for category 1 / category 2
-		app, err := New(db, 100)
+		app, err := New(db, nil, 100)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -682,7 +682,7 @@ func TestCkmeansArgParsingAndValidation(t *testing.T) {
 		}
 		ckmeansTestSetup(t, db, metrics)
 
-		app, err := New(db, 100)
+		app, err := New(db, nil, 100)
 		if err != nil {
 			log.Fatal(err)
 		}
