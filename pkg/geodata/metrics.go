@@ -159,6 +159,10 @@ func quoteCodes(geocodes []string) string {
 
 // Retrieve metrics from Cantabular.
 func (app *Geodata) CantabularMetrics(ctx context.Context, geocodes []string, catset *where.ValueSet, geotype string) ([]byte, error) {
+	if app.cant == nil {
+		return nil, fmt.Errorf("%w: cantabular not enabled", ErrNotSupported)
+	}
+
 	// the current cantabular queries accept a single category code
 	if len(catset.Singles) != 1 {
 		return nil, fmt.Errorf("%w: cantabular queries only accept a single category code", ErrInvalidParams)

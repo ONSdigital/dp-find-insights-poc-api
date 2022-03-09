@@ -37,6 +37,11 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 
 	log.Info(ctx, "using service configuration", log.Data{"config": cfg})
 
+	var cant *cantabular.Client
+	if cfg.EnableCantabular {
+		cant = cantabular.New(cfg.CantabularURL, cfg.CantabularUser, os.Getenv("CANT_PW"))
+	}
+
 	var db *database.Database
 	var queryGeodata *geodata.Geodata
 	var md *metadata.Metadata
@@ -61,10 +66,6 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		if err != nil {
 			return nil, err
 		}
-
-		// set up cantabular client
-		// XXX make these cfg vars
-		cant := cantabular.New(cantabular.URL, os.Getenv("CANT_USER"), os.Getenv("CANT_PW"))
 
 		// set up our query functionality if we have a db
 		queryGeodata, err = geodata.New(db, cant, cfg.MaxMetrics)

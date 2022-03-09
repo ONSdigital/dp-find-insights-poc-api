@@ -73,6 +73,8 @@ func (svr *Server) respond(w http.ResponseWriter, r *http.Request, contentType s
 		code = http.StatusNoContent
 	case errors.Is(err, geodata.ErrTooManyMetrics):
 		code = http.StatusForbidden
+	case errors.Is(err, geodata.ErrNotSupported):
+		code = http.StatusNotFound
 	}
 	sendError(w, code, err.Error())
 }

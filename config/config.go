@@ -19,6 +19,9 @@ type Config struct {
 	EnableHeaderAuth           bool          `envconfig:"ENABLE_HEADER_AUTH"`
 	CacheSize                  int           `envconfig:"CACHE_SIZE"`
 	CacheTTL                   time.Duration `envconfig:"CACHE_TTL"`
+	EnableCantabular           bool          `envconfig:"ENABLE_CANTABULAR"`
+	CantabularURL              string        `envconfig:"CANT_URL"`
+	CantabularUser             string        `envconfig:"CANT_USER"`
 }
 
 var cfg *Config
@@ -41,6 +44,7 @@ func Get() (*Config, error) {
 		EnableHeaderAuth:           false,
 		CacheSize:                  200,            // memory cache size in MB
 		CacheTTL:                   12 * time.Hour, // cache entry TTL
+		// Cantabular defaults to disabled, so no defaults
 	}
 
 	return cfg, envconfig.Process("", cfg)
