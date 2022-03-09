@@ -26,7 +26,26 @@ func main() {
 	ds := flag.String("ds", "Usual-Residents", "set dataset to query")
 	class := flag.String("class", "", "classifications under variables eg. pass AGE_T022A (or MSOA) to get categories under it (like old longcodes)")
 	variables := flag.Bool("variables", false, "list variables, results eg. 'AGE_T022A : Age of individual (21 categories)' (like old short codes)")
+	cmetadata := flag.Bool("cmetadata", false, "display cant-like tactical metadata slowly")
+	nmetadata := flag.Bool("nmetadata", false, "display NOMIS-like tactical metadata slowly")
 	flag.Parse()
+
+	if *nmetadata && *cmetadata {
+		fmt.Println("you can't select both cant-like  & NOMIS-like metadata")
+		os.Exit(0)
+	}
+
+	if *nmetadata {
+		fmt.Println(cantabular.QueryMetaData(*ds, true))
+
+		os.Exit(0)
+	}
+
+	if *cmetadata {
+		fmt.Println(cantabular.QueryMetaData(*ds, false))
+
+		os.Exit(0)
+	}
 
 	// MetricFilter type query
 	if *query1 {

@@ -3,6 +3,7 @@ package cantabular
 import (
 	"context"
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -82,6 +83,16 @@ type MetricFilter struct {
 			Values IntValues
 		} `graphql:"table(variables: [$geotype,$var],filters: [{variable: $geotype, codes: $geos}])"`
 	} `graphql:"dataset(name: $ds)"`
+}
+
+// Metadata is a slow, tactical solution
+type Metadata struct {
+	Code       string
+	Name       string
+	Categories []struct {
+		Code string
+		Name string
+	} `json:"categories"`
 }
 
 /*
@@ -175,6 +186,73 @@ func QueryMetric(ds, geoType, code string) (geoq, catsQL Pairs, values IntValues
 	return geoq, catsQL, values
 }
 
+// QueryMetaData does some multiple data queries to get data structure
+// XXX a poor work around for a lack of metadata.
+
+func QueryMetaData(ds string, nomis bool) string {
+	if ds == "" {
+		ds = GetDataSet("")
+	}
+
+	revMap := make(map[string]string)
+	for k, v := range ShortVarMap() {
+		revMap[v] = k
+
+	}
+
+	var query VariableCodes
+	vars := map[string]interface{}{
+		"ds": graphql.String(ds),
+	}
+	SendQueryVars(&query, vars)
+
+	var metadata []Metadata
+
+	for _, v := range query.Dataset.Variables.Edges {
+		if revMap[string(v.Node.Name)] == "" {
+			continue
+		}
+
+		var name string
+		if nomis {
+			name = revMap[string(v.Node.Name)]
+		} else {
+			name = string(v.Node.Name)
+
+		}
+		md := Metadata{
+			Code: name,
+			//Code: string(v.Node.Name),
+			Name: string(v.Node.Label),
+		}
+		var query2 ClassCodes
+		vars := map[string]interface{}{
+			"ds":   graphql.String(ds),
+			"vars": graphql.String(v.Node.Name),
+		}
+		SendQueryVars(&query2, vars)
+		for _, v2 := range query2.Dataset.Table.Dimensions {
+			for _, v3 := range v2.Categories { // XXX not ordered!
+				md.Categories = append(md.Categories, struct {
+					Code string
+					Name string
+				}{Code: string(v3.Code), Name: string(v3.Label)})
+
+			}
+		}
+
+		metadata = append(metadata, md)
+
+	}
+
+	bs, err := json.Marshal(metadata)
+	if err != nil {
+		log.Print(err)
+	}
+
+	return (string(bs))
+}
+
 func SendQueryVars(query interface{}, vars map[string]interface{}) interface{} {
 	if os.Getenv("CANT_USER") == "" || os.Getenv("CANT_PW") == "" {
 		log.Fatal("define CANT_USER & CANT_PW")
@@ -263,25 +341,27 @@ func GeoTypeMap() map[string]string {
 }
 
 func ShortVarMap() map[string]string {
+	// "matching" via command output and eg.
+	// SELECT  nd.name,nc.* FROM nomis_desc nd, nomis_category nc where nd.short_nomis_code='KS103EW' and nd.id=nc.nomis_desc_id and nc.measurement_unit='Count' and nc.long_nomis_code not like '%0001';
 
-	// maybe this should be in the database?
-	// although list is short & likely to change..
-
+	// these are syn2011 "keys" which we pretend, temporarily, are NOMIS short codes
 	return map[string]string{
 		"KS102EW": "AGE_T009A",
+		"KS103EW": "MARSTAT_T006A",
 		"KS202EW": "NATID_ALL_T009A",
 		"KS206EW": "WELSHPUK112_T007A",
 		"KS207WA": "WELSHPUK112_R003A",
 		"KS208WA": "WELSHPUK112_R003A",
+		"QS101EW": "RESIDTYPE",
 		"QS104EW": "SEX",
-		"QS113EW": "MARSTAT_T006A",
 		"QS201EW": "ETHPUK11_T009A",
 		"QS203EW": "COB_R010A",
-		"QS208EW": "RELPUK11_R005A",
-		"QS301EW": "CARER_R003A",
+		"QS208EW": "RELIGIONEW",
+		"QS301EW": "CARER",
 		"QS302EW": "HEALTH_T004A", // HEALTH
 		"QS303EW": "DISABILITY_T003B",
 		"QS402EW": "TYPACCOM_T009A",
+		"QS403EW": "TENHUK11_T010A",
 		"QS406EW": "SIZHUK11_T007A",
 		"QS415EW": "CENHEATHUK11_T003A",
 		"QS416EW": "CARSNO_T004A",
@@ -292,10 +372,6 @@ func ShortVarMap() map[string]string {
 		"QS606EW": "OCCPUK113_T010A",
 		"QS701EW": "TRANSPORT_R005A",
 		"QS702EW": "AGGDTWPEW11_R010A",
-		//"DC6102EW": "STUDENT_AGE_T002A",
-		//"QS402EW":  "TENHUK11_T007B",
-		//"QS411EW": "BEDROOMS_T006A",
-		//"QS501EW":  "HLQPUK11_T007A",
 	}
 
 }
@@ -304,6 +380,7 @@ func ShortVarMap() map[string]string {
 func GetDataSet(varCode string) string {
 
 	mappy := map[string]string{
+		"QS403EW": "People-Households",
 		"QS406EW": "People-Households",
 		"KS206EW": "People-Households",
 		"QS402EW": "People-Households",
