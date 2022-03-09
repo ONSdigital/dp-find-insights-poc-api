@@ -225,6 +225,9 @@ type ServerInterface interface {
 	// Get Metadata
 	// (GET /metadata/{year})
 	GetMetadataYear(w http.ResponseWriter, r *http.Request, year int, params GetMetadataYearParams)
+	// return MSOA code and its name
+	// (GET /msoa/{postcode})
+	GetMsoaPostcode(w http.ResponseWriter, r *http.Request, postcode string)
 	// query census
 	// (GET /query/{year})
 	GetQueryYear(w http.ResponseWriter, r *http.Request, year int, params GetQueryYearParams)
@@ -479,6 +482,32 @@ func (siw *ServerInterfaceWrapper) GetMetadataYear(w http.ResponseWriter, r *htt
 
 	var handler = func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetMetadataYear(w, r, year, params)
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler(w, r.WithContext(ctx))
+}
+
+// GetMsoaPostcode operation middleware
+func (siw *ServerInterfaceWrapper) GetMsoaPostcode(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var err error
+
+	// ------------- Path parameter "postcode" -------------
+	var postcode string
+
+	err = runtime.BindStyledParameter("simple", false, "postcode", chi.URLParam(r, "postcode"), &postcode)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid format for parameter postcode: %s", err), http.StatusBadRequest)
+		return
+	}
+
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetMsoaPostcode(w, r, postcode)
 	}
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -803,6 +832,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/metadata/{year}", wrapper.GetMetadataYear)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/msoa/{postcode}", wrapper.GetMsoaPostcode)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/query/{year}", wrapper.GetQueryYear)

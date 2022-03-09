@@ -97,6 +97,36 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  /msoa/{postcode}:
+    get:
+      tags:
+        - public
+      summary: return MSOA code and its name
+      parameters:
+        - in: path
+          name: postcode
+          description: |
+            Postcode 
+            -  SW1A 1AA
+          required: true
+          schema:
+            type: string
+      
+      responses:
+        200:
+          description: CSV of MSOA code and name
+          content:
+            text/plain:
+              schema:
+                type: string
+        default:
+          description: internal server error
+          content:
+            application/json:
+              schmea:
+                $ref: '#/components/schemas/Error'
+
+
   /ckmeans/{year}:
     get:
       tags:

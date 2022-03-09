@@ -13,6 +13,7 @@ import (
 	"github.com/ONSdigital/dp-find-insights-poc-api/config"
 	"github.com/ONSdigital/dp-find-insights-poc-api/metadata"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/geodata"
+	"github.com/ONSdigital/dp-find-insights-poc-api/postcode"
 	Swagger "github.com/ONSdigital/dp-find-insights-poc-api/swagger"
 )
 
@@ -74,6 +75,20 @@ func (svr *Server) GetMetadataYear(w http.ResponseWriter, r *http.Request, year 
 		}
 
 		return svr.md.Get(year, filtertotals)
+	}
+
+	svr.respond(w, r, mimeCSV, generate)
+}
+
+func (svr *Server) GetMsoaPostcode(w http.ResponseWriter, r *http.Request, pc string) {
+
+	generate := func() ([]byte, error) {
+		code, name, err := postcode.GetMSOA(pc)
+		if err != nil {
+			return nil, err
+		}
+		// JSON?
+		return []byte(code + ", " + name), nil
 	}
 
 	svr.respond(w, r, mimeCSV, generate)
