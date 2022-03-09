@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/ONSdigital/dp-find-insights-poc-api/cantabular"
 	"github.com/ONSdigital/dp-find-insights-poc-api/metadata"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/database"
 	geodata "github.com/ONSdigital/dp-find-insights-poc-api/pkg/geodata"
@@ -33,7 +34,8 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	app, err := geodata.New(db, *maxmetrics)
+	cant := cantabular.New(cantabular.URL, os.Getenv("CANT_USER"), os.Getenv("CANT_PW"))
+	app, err := geodata.New(db, cant, *maxmetrics)
 	if err != nil {
 		log.Fatalln(err)
 	}

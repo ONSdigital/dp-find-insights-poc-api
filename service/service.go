@@ -9,6 +9,7 @@ import (
 	"github.com/ONSdigital/dp-api-clients-go/middleware"
 	"github.com/ONSdigital/dp-find-insights-poc-api/api"
 	"github.com/ONSdigital/dp-find-insights-poc-api/cache"
+	"github.com/ONSdigital/dp-find-insights-poc-api/cantabular"
 	"github.com/ONSdigital/dp-find-insights-poc-api/config"
 	"github.com/ONSdigital/dp-find-insights-poc-api/handlers"
 	"github.com/ONSdigital/dp-find-insights-poc-api/metadata"
@@ -61,8 +62,12 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 			return nil, err
 		}
 
+		// set up cantabular client
+		// XXX make these cfg vars
+		cant := cantabular.New(cantabular.URL, os.Getenv("CANT_USER"), os.Getenv("CANT_PW"))
+
 		// set up our query functionality if we have a db
-		queryGeodata, err = geodata.New(db, cfg.MaxMetrics)
+		queryGeodata, err = geodata.New(db, cant, cfg.MaxMetrics)
 		if err != nil {
 			return nil, err
 		}

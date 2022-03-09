@@ -170,6 +170,9 @@ func (app *Geodata) CantabularMetrics(ctx context.Context, geocodes []string, ca
 		return nil, fmt.Errorf("%w: cantabular queries require geotype", ErrMissingParams)
 	}
 
-	geoq, catsQL, values := cantabular.QueryMetricFilter("", strings.Join(geocodes, ","), geotype, catset.Singles[0])
+	geoq, catsQL, values, err := app.cant.QueryMetricFilter("", strings.Join(geocodes, ","), geotype, catset.Singles[0])
+	if err != nil {
+		return nil, err
+	}
 	return []byte(cantabular.ParseMetric(geoq, catsQL, values)), nil
 }

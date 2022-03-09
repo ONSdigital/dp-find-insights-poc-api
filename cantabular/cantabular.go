@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"reflect"
 	"strings"
 
@@ -17,6 +16,11 @@ import (
 const URL = "https://ftb-api-ext.ons.sensiblecode.io/graphql"
 
 //const URL = "http://127.0.0.1:8080"
+
+type Client struct {
+	url    string // graphql server we are querying
+	client *graphql.Client
+}
 
 type AuthTripper struct {
 	User string
@@ -95,6 +99,21 @@ type Metadata struct {
 	} `json:"categories"`
 }
 
+// New returns a reusable Client to be used for Metric and Metadata queries.
+func New(url, user, pass string) *Client {
+	hclient := &http.Client{
+		Transport: AuthTripper{
+			User: user,
+			Pass: pass,
+		},
+	}
+	client := graphql.NewClient(url, hclient)
+	return &Client{
+		url:    url,
+		client: client,
+	}
+}
+
 /*
 { dataset(name: "Usual-Residents") {
     table(
@@ -115,7 +134,7 @@ type Metadata struct {
 */
 // MetricFilter is a cli type query1
 // could be entrypoint for REST endpoint
-func QueryMetricFilter(ds, geo, geoType, code string) (geoq, catsQL Pairs, values IntValues) {
+func (cant *Client) QueryMetricFilter(ds, geo, geoType, code string) (geoq, catsQL Pairs, values IntValues, err error) {
 	geos := strings.Split(geo, ",")
 
 	if ds == "" {
@@ -137,13 +156,15 @@ func QueryMetricFilter(ds, geo, geoType, code string) (geoq, catsQL Pairs, value
 		"var":     graphql.String(ShortVarMap()[code]),
 	}
 
-	SendQueryVars(&query, vars)
+	if err = cant.SendQueryVars(&query, vars); err != nil {
+		return
+	}
 
 	geoq = query.Dataset.Table.Dimensions[0].Categories
 	catsQL = query.Dataset.Table.Dimensions[1].Categories
 	values = query.Dataset.Table.Values
 
-	return geoq, catsQL, values
+	return
 }
 
 /*
@@ -165,7 +186,7 @@ func QueryMetricFilter(ds, geo, geoType, code string) (geoq, catsQL Pairs, value
 */
 // QueryMetric is is a cli query2
 // could be entrypoint for REST endpoint
-func QueryMetric(ds, geoType, code string) (geoq, catsQL Pairs, values IntValues) {
+func (cant *Client) QueryMetric(ds, geoType, code string) (geoq, catsQL Pairs, values IntValues, err error) {
 	if ds == "" {
 		ds = GetDataSet(code)
 	}
@@ -177,19 +198,21 @@ func QueryMetric(ds, geoType, code string) (geoq, catsQL Pairs, values IntValues
 	}
 
 	var query Metric
-	SendQueryVars(&query, vars)
+	if err = cant.SendQueryVars(&query, vars); err != nil {
+		return
+	}
 
 	geoq = query.Dataset.Table.Dimensions[0].Categories
 	catsQL = query.Dataset.Table.Dimensions[1].Categories
 	values = query.Dataset.Table.Values
 
-	return geoq, catsQL, values
+	return
 }
 
 // QueryMetaData does some multiple data queries to get data structure
 // XXX a poor work around for a lack of metadata.
 
-func QueryMetaData(ds string, nomis bool) string {
+func (cant *Client) QueryMetaData(ds string, nomis bool) (string, error) {
 	if ds == "" {
 		ds = GetDataSet("")
 	}
@@ -204,7 +227,9 @@ func QueryMetaData(ds string, nomis bool) string {
 	vars := map[string]interface{}{
 		"ds": graphql.String(ds),
 	}
-	SendQueryVars(&query, vars)
+	if err := cant.SendQueryVars(&query, vars); err != nil {
+		return "", err
+	}
 
 	var metadata []Metadata
 
@@ -230,7 +255,9 @@ func QueryMetaData(ds string, nomis bool) string {
 			"ds":   graphql.String(ds),
 			"vars": graphql.String(v.Node.Name),
 		}
-		SendQueryVars(&query2, vars)
+		if err := cant.SendQueryVars(&query2, vars); err != nil {
+			return "", err
+		}
 		for _, v2 := range query2.Dataset.Table.Dimensions {
 			for _, v3 := range v2.Categories { // XXX not ordered!
 				md.Categories = append(md.Categories, struct {
@@ -247,22 +274,14 @@ func QueryMetaData(ds string, nomis bool) string {
 
 	bs, err := json.Marshal(metadata)
 	if err != nil {
-		log.Print(err)
+		return "", nil
 	}
 
-	return (string(bs))
+	return string(bs), nil
 }
 
-func SendQueryVars(query interface{}, vars map[string]interface{}) interface{} {
-	if os.Getenv("CANT_USER") == "" || os.Getenv("CANT_PW") == "" {
-		log.Fatal("define CANT_USER & CANT_PW")
-	}
-	hclient := &http.Client{Transport: AuthTripper{User: os.Getenv("CANT_USER"), Pass: os.Getenv("CANT_PW")}}
-	client := graphql.NewClient(URL, hclient)
-	if err := client.Query(context.Background(), query, vars); err != nil {
-		log.Fatal(err)
-	}
-	return query
+func (cant *Client) SendQueryVars(query interface{}, vars map[string]interface{}) error {
+	return cant.client.Query(context.Background(), query, vars) // XXX use request-specific context
 }
 
 // ParseResp is used for the command line investigate API commands

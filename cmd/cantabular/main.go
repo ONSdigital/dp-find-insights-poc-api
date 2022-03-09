@@ -35,15 +35,22 @@ func main() {
 		os.Exit(0)
 	}
 
+	cant := cantabular.New(cantabular.URL, os.Getenv("CANT_USER"), os.Getenv("CANT_PW"))
 	if *nmetadata {
-		fmt.Println(cantabular.QueryMetaData(*ds, true))
-
+		buf, err := cant.QueryMetaData(*ds, true)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println(buf)
 		os.Exit(0)
 	}
 
 	if *cmetadata {
-		fmt.Println(cantabular.QueryMetaData(*ds, false))
-
+		buf, err := cant.QueryMetaData(*ds, false)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println(buf)
 		os.Exit(0)
 	}
 
@@ -56,7 +63,10 @@ func main() {
 			os.Exit(1)
 		}
 
-		geoq, catsq, values := cantabular.QueryMetricFilter("", *geo, *geotype, *code)
+		geoq, catsq, values, err := cant.QueryMetricFilter("", *geo, *geotype, *code)
+		if err != nil {
+			log.Fatal(err)
+		}
 		got := cantabular.ParseMetric(geoq, catsq, values)
 
 		fmt.Println(got)
@@ -73,7 +83,10 @@ func main() {
 			os.Exit(1)
 		}
 
-		geoq, catsq, values := cantabular.QueryMetric("", *geotype, *code)
+		geoq, catsq, values, err := cant.QueryMetric("", *geotype, *code)
+		if err != nil {
+			log.Fatal(err)
+		}
 		got := cantabular.ParseMetric(geoq, catsq, values)
 
 		fmt.Println(got)
@@ -82,7 +95,9 @@ func main() {
 
 	if *datasets {
 		var query cantabular.DataSets
-		cantabular.SendQueryVars(&query, nil)
+		if err := cant.SendQueryVars(&query, nil); err != nil {
+			log.Fatal(err)
+		}
 		cantabular.ParseResp(&query)
 		os.Exit(0)
 	}
@@ -92,7 +107,9 @@ func main() {
 		vars := map[string]interface{}{
 			"ds": graphql.String(*ds),
 		}
-		cantabular.SendQueryVars(&query, vars)
+		if err := cant.SendQueryVars(&query, vars); err != nil {
+			log.Fatal(err)
+		}
 		cantabular.ParseResp(&query)
 		fmt.Println("\nUSED: '" + *ds + "'")
 		os.Exit(0)
@@ -104,7 +121,9 @@ func main() {
 			"ds":   graphql.String(*ds),
 			"vars": graphql.String(*class),
 		}
-		cantabular.SendQueryVars(&query, vars)
+		if err := cant.SendQueryVars(&query, vars); err != nil {
+			log.Fatal(err)
+		}
 		cantabular.ParseResp(&query)
 		fmt.Println("\nUSED: '" + *ds + "'")
 
