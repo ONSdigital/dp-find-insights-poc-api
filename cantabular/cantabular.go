@@ -134,7 +134,7 @@ func New(url, user, pass string) *Client {
 */
 // MetricFilter is a cli type query1
 // could be entrypoint for REST endpoint
-func (cant *Client) QueryMetricFilter(ds, geo, geoType, code string) (geoq, catsQL Pairs, values IntValues, err error) {
+func (cant *Client) QueryMetricFilter(ctx context.Context, ds, geo, geoType, code string) (geoq, catsQL Pairs, values IntValues, err error) {
 	geos := strings.Split(geo, ",")
 
 	if ds == "" {
@@ -156,7 +156,7 @@ func (cant *Client) QueryMetricFilter(ds, geo, geoType, code string) (geoq, cats
 		"var":     graphql.String(ShortVarMap()[code]),
 	}
 
-	if err = cant.SendQueryVars(&query, vars); err != nil {
+	if err = cant.SendQueryVars(ctx, &query, vars); err != nil {
 		return
 	}
 
@@ -186,7 +186,7 @@ func (cant *Client) QueryMetricFilter(ds, geo, geoType, code string) (geoq, cats
 */
 // QueryMetric is is a cli query2
 // could be entrypoint for REST endpoint
-func (cant *Client) QueryMetric(ds, geoType, code string) (geoq, catsQL Pairs, values IntValues, err error) {
+func (cant *Client) QueryMetric(ctx context.Context, ds, geoType, code string) (geoq, catsQL Pairs, values IntValues, err error) {
 	if ds == "" {
 		ds = GetDataSet(code)
 	}
@@ -198,7 +198,7 @@ func (cant *Client) QueryMetric(ds, geoType, code string) (geoq, catsQL Pairs, v
 	}
 
 	var query Metric
-	if err = cant.SendQueryVars(&query, vars); err != nil {
+	if err = cant.SendQueryVars(ctx, &query, vars); err != nil {
 		return
 	}
 
@@ -212,7 +212,7 @@ func (cant *Client) QueryMetric(ds, geoType, code string) (geoq, catsQL Pairs, v
 // QueryMetaData does some multiple data queries to get data structure
 // XXX a poor work around for a lack of metadata.
 
-func (cant *Client) QueryMetaData(ds string, nomis bool) (string, error) {
+func (cant *Client) QueryMetaData(ctx context.Context, ds string, nomis bool) (string, error) {
 	if ds == "" {
 		ds = GetDataSet("")
 	}
@@ -227,7 +227,7 @@ func (cant *Client) QueryMetaData(ds string, nomis bool) (string, error) {
 	vars := map[string]interface{}{
 		"ds": graphql.String(ds),
 	}
-	if err := cant.SendQueryVars(&query, vars); err != nil {
+	if err := cant.SendQueryVars(ctx, &query, vars); err != nil {
 		return "", err
 	}
 
@@ -255,7 +255,7 @@ func (cant *Client) QueryMetaData(ds string, nomis bool) (string, error) {
 			"ds":   graphql.String(ds),
 			"vars": graphql.String(v.Node.Name),
 		}
-		if err := cant.SendQueryVars(&query2, vars); err != nil {
+		if err := cant.SendQueryVars(ctx, &query2, vars); err != nil {
 			return "", err
 		}
 		for _, v2 := range query2.Dataset.Table.Dimensions {
@@ -280,8 +280,8 @@ func (cant *Client) QueryMetaData(ds string, nomis bool) (string, error) {
 	return string(bs), nil
 }
 
-func (cant *Client) SendQueryVars(query interface{}, vars map[string]interface{}) error {
-	return cant.client.Query(context.Background(), query, vars) // XXX use request-specific context
+func (cant *Client) SendQueryVars(ctx context.Context, query interface{}, vars map[string]interface{}) error {
+	return cant.client.Query(ctx, query, vars)
 }
 
 // ParseResp is used for the command line investigate API commands
