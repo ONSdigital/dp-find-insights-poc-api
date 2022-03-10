@@ -158,14 +158,14 @@ func (cant *Client) QueryMetricFilter(ctx context.Context, ds, geo, geoType, cod
 	}
 
 	if err = cant.SendQueryVars(ctx, &query, vars); err != nil {
-		return
+		return nil, nil, nil, err
 	}
 
 	geoq = query.Dataset.Table.Dimensions[0].Categories
 	catsQL = query.Dataset.Table.Dimensions[1].Categories
 	values = query.Dataset.Table.Values
 
-	return
+	return geoq, catsQL, values, nil
 }
 
 /*
@@ -200,14 +200,14 @@ func (cant *Client) QueryMetric(ctx context.Context, ds, geoType, code string) (
 
 	var query Metric
 	if err = cant.SendQueryVars(ctx, &query, vars); err != nil {
-		return
+		return nil, nil, nil, err
 	}
 
 	geoq = query.Dataset.Table.Dimensions[0].Categories
 	catsQL = query.Dataset.Table.Dimensions[1].Categories
 	values = query.Dataset.Table.Values
 
-	return
+	return geoq, catsQL, values, nil
 }
 
 // QueryMetaData does some multiple data queries to get data structure
