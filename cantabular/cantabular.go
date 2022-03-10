@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/shurcooL/graphql"
 )
 
@@ -412,4 +413,19 @@ func GetDataSet(varCode string) string {
 	}
 
 	return "Usual-Residents"
+}
+
+func (cant *Client) Checker(ctx context.Context, state *healthcheck.CheckState) error {
+	// any basic query can work as a health check
+	var query struct {
+		Typename graphql.String `graphql:"__typename"`
+	}
+
+	err := cant.SendQueryVars(ctx, &query, nil)
+	if err != nil {
+		state.Update(healthcheck.StatusCritical, err.Error(), 0)
+		return nil
+	}
+	state.Update(healthcheck.StatusOK, "cantabular healthy", 0)
+	return nil
 }

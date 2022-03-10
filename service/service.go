@@ -113,7 +113,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		log.Fatal(ctx, "could not instantiate healthcheck", err)
 		return nil, err
 	}
-	if err := registerCheckers(ctx, hc, db, md); err != nil {
+	if err := registerCheckers(ctx, hc, db, md, cant); err != nil {
 		return nil, errors.Wrap(err, "unable to register checkers")
 	}
 	hc.Start(ctx)
@@ -196,12 +196,16 @@ func registerCheckers(ctx context.Context,
 	hc HealthChecker,
 	db *database.Database,
 	md *metadata.Metadata,
+	cant *cantabular.Client,
 ) (err error) {
 	if db != nil {
 		err = hc.AddCheck("postgres", db.Checker)
 	}
 	if md != nil {
 		err = hc.AddCheck("gorm", md.Checker)
+	}
+	if cant != nil {
+		err = hc.AddCheck("cantabular", cant.Checker)
 	}
 	return err
 }
