@@ -8,6 +8,7 @@ const (
 	ErrTooManyMetrics = Sentinel("too many metrics")
 	ErrNoContent      = Sentinel("no data found")
 	ErrPartialContent = Sentinel("insufficient data found")
+	ErrNotSupported   = Sentinel("not supported")
 )
 
 func (e Sentinel) Error() string {

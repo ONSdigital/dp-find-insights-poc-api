@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytes"
 	"encoding/csv"
+	"fmt"
 	"net/http"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/api"
@@ -74,7 +75,14 @@ func (svr *Server) GetQuery(w http.ResponseWriter, r *http.Request, year int, pa
 			return geocodeCSV(geocodes)
 		}
 
-		return svr.querygeodata.PGMetrics(r.Context(), year, geocodes, catset, include, censustable)
+		if year == 2011 {
+			return svr.querygeodata.PGMetrics(r.Context(), year, geocodes, catset, include, censustable)
+		}
+		if len(geotype) != 1 {
+			return nil, fmt.Errorf("%w: cantabular queries require a single geotype", geodata.ErrInvalidParams)
+		}
+
+		return svr.querygeodata.CantabularMetrics(r.Context(), geocodes, catset, geotype[0])
 	}
 
 	svr.respond(w, r, mimeCSV, generate)

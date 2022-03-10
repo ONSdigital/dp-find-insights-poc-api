@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/ONSdigital/dp-find-insights-poc-api/cantabular"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/table"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/timer"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/where"
@@ -13,7 +14,6 @@ import (
 )
 
 // Retrieve metrics from postgres.
-// Additional methods could be written to grab metrics from cantabular.
 func (app *Geodata) PGMetrics(ctx context.Context, year int, geocodes []string, catset *where.ValueSet, include []string, censustable string) ([]byte, error) {
 	sql, include, err := app.metricsSQL(ctx, year, geocodes, catset, include, censustable)
 	if err != nil {
@@ -155,4 +155,28 @@ func quoteCodes(geocodes []string) string {
 		quoted = append(quoted, pq.QuoteLiteral(code))
 	}
 	return strings.Join(quoted, ",")
+}
+
+// Retrieve metrics from Cantabular.
+func (app *Geodata) CantabularMetrics(ctx context.Context, geocodes []string, catset *where.ValueSet, geotype string) ([]byte, error) {
+	if app.cant == nil {
+		return nil, fmt.Errorf("%w: cantabular not enabled", ErrNotSupported)
+	}
+
+	// the current cantabular queries accept a single category code
+	if len(catset.Singles) != 1 {
+		return nil, fmt.Errorf("%w: cantabular queries only accept a single category code", ErrInvalidParams)
+	}
+	if len(catset.Ranges) != 0 {
+		return nil, fmt.Errorf("%w: cantabular queries do not accept category code ranges", ErrInvalidParams)
+	}
+	if geotype == "" {
+		return nil, fmt.Errorf("%w: cantabular queries require geotype", ErrMissingParams)
+	}
+
+	geoq, catsQL, values, err := app.cant.QueryMetricFilter(ctx, "", strings.Join(geocodes, ","), geotype, catset.Singles[0])
+	if err != nil {
+		return nil, err
+	}
+	return []byte(cantabular.ParseMetric(geoq, catsQL, values)), nil
 }

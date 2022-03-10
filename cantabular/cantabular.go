@@ -3,19 +3,25 @@ package cantabular
 import (
 	"context"
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"reflect"
 	"strings"
 
+	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/shurcooL/graphql"
 )
 
 const URL = "https://ftb-api-ext.ons.sensiblecode.io/graphql"
 
 //const URL = "http://127.0.0.1:8080"
+
+type Client struct {
+	url    string // graphql server we are querying
+	client *graphql.Client
+}
 
 type AuthTripper struct {
 	User string
@@ -84,6 +90,31 @@ type MetricFilter struct {
 	} `graphql:"dataset(name: $ds)"`
 }
 
+// Metadata is a slow, tactical solution
+type Metadata struct {
+	Code       string
+	Name       string
+	Categories []struct {
+		Code string
+		Name string
+	} `json:"categories"`
+}
+
+// New returns a reusable Client to be used for Metric and Metadata queries.
+func New(url, user, pass string) *Client {
+	hclient := &http.Client{
+		Transport: AuthTripper{
+			User: user,
+			Pass: pass,
+		},
+	}
+	client := graphql.NewClient(url, hclient)
+	return &Client{
+		url:    url,
+		client: client,
+	}
+}
+
 /*
 { dataset(name: "Usual-Residents") {
     table(
@@ -104,7 +135,7 @@ type MetricFilter struct {
 */
 // MetricFilter is a cli type query1
 // could be entrypoint for REST endpoint
-func QueryMetricFilter(ds, geo, geoType, code string) (geoq, catsQL Pairs, values IntValues) {
+func (cant *Client) QueryMetricFilter(ctx context.Context, ds, geo, geoType, code string) (geoq, catsQL Pairs, values IntValues, err error) {
 	geos := strings.Split(geo, ",")
 
 	if ds == "" {
@@ -126,13 +157,15 @@ func QueryMetricFilter(ds, geo, geoType, code string) (geoq, catsQL Pairs, value
 		"var":     graphql.String(ShortVarMap()[code]),
 	}
 
-	SendQueryVars(&query, vars)
+	if err = cant.SendQueryVars(ctx, &query, vars); err != nil {
+		return nil, nil, nil, err
+	}
 
 	geoq = query.Dataset.Table.Dimensions[0].Categories
 	catsQL = query.Dataset.Table.Dimensions[1].Categories
 	values = query.Dataset.Table.Values
 
-	return geoq, catsQL, values
+	return geoq, catsQL, values, nil
 }
 
 /*
@@ -154,7 +187,7 @@ func QueryMetricFilter(ds, geo, geoType, code string) (geoq, catsQL Pairs, value
 */
 // QueryMetric is is a cli query2
 // could be entrypoint for REST endpoint
-func QueryMetric(ds, geoType, code string) (geoq, catsQL Pairs, values IntValues) {
+func (cant *Client) QueryMetric(ctx context.Context, ds, geoType, code string) (geoq, catsQL Pairs, values IntValues, err error) {
 	if ds == "" {
 		ds = GetDataSet(code)
 	}
@@ -166,25 +199,90 @@ func QueryMetric(ds, geoType, code string) (geoq, catsQL Pairs, values IntValues
 	}
 
 	var query Metric
-	SendQueryVars(&query, vars)
+	if err = cant.SendQueryVars(ctx, &query, vars); err != nil {
+		return nil, nil, nil, err
+	}
 
 	geoq = query.Dataset.Table.Dimensions[0].Categories
 	catsQL = query.Dataset.Table.Dimensions[1].Categories
 	values = query.Dataset.Table.Values
 
-	return geoq, catsQL, values
+	return geoq, catsQL, values, nil
 }
 
-func SendQueryVars(query interface{}, vars map[string]interface{}) interface{} {
-	if os.Getenv("CANT_USER") == "" || os.Getenv("CANT_PW") == "" {
-		log.Fatal("define CANT_USER & CANT_PW")
+// QueryMetaData does some multiple data queries to get data structure
+// XXX a poor work around for a lack of metadata.
+
+func (cant *Client) QueryMetaData(ctx context.Context, ds string, nomis bool) (string, error) {
+	if ds == "" {
+		ds = GetDataSet("")
 	}
-	hclient := &http.Client{Transport: AuthTripper{User: os.Getenv("CANT_USER"), Pass: os.Getenv("CANT_PW")}}
-	client := graphql.NewClient(URL, hclient)
-	if err := client.Query(context.Background(), query, vars); err != nil {
-		log.Fatal(err)
+
+	revMap := make(map[string]string)
+	for k, v := range ShortVarMap() {
+		revMap[v] = k
+
 	}
-	return query
+
+	var query VariableCodes
+	vars := map[string]interface{}{
+		"ds": graphql.String(ds),
+	}
+	if err := cant.SendQueryVars(ctx, &query, vars); err != nil {
+		return "", err
+	}
+
+	var metadata []Metadata
+
+	for _, v := range query.Dataset.Variables.Edges {
+		if revMap[string(v.Node.Name)] == "" {
+			continue
+		}
+
+		var name string
+		if nomis {
+			name = revMap[string(v.Node.Name)]
+		} else {
+			name = string(v.Node.Name)
+
+		}
+		md := Metadata{
+			Code: name,
+			//Code: string(v.Node.Name),
+			Name: string(v.Node.Label),
+		}
+		var query2 ClassCodes
+		vars := map[string]interface{}{
+			"ds":   graphql.String(ds),
+			"vars": graphql.String(v.Node.Name),
+		}
+		if err := cant.SendQueryVars(ctx, &query2, vars); err != nil {
+			return "", err
+		}
+		for _, v2 := range query2.Dataset.Table.Dimensions {
+			for _, v3 := range v2.Categories { // XXX not ordered!
+				md.Categories = append(md.Categories, struct {
+					Code string
+					Name string
+				}{Code: string(v3.Code), Name: string(v3.Label)})
+
+			}
+		}
+
+		metadata = append(metadata, md)
+
+	}
+
+	bs, err := json.Marshal(metadata)
+	if err != nil {
+		return "", nil
+	}
+
+	return string(bs), nil
+}
+
+func (cant *Client) SendQueryVars(ctx context.Context, query interface{}, vars map[string]interface{}) error {
+	return cant.client.Query(ctx, query, vars)
 }
 
 // ParseResp is used for the command line investigate API commands
@@ -263,25 +361,27 @@ func GeoTypeMap() map[string]string {
 }
 
 func ShortVarMap() map[string]string {
+	// "matching" via command output and eg.
+	// SELECT  nd.name,nc.* FROM nomis_desc nd, nomis_category nc where nd.short_nomis_code='KS103EW' and nd.id=nc.nomis_desc_id and nc.measurement_unit='Count' and nc.long_nomis_code not like '%0001';
 
-	// maybe this should be in the database?
-	// although list is short & likely to change..
-
+	// these are syn2011 "keys" which we pretend, temporarily, are NOMIS short codes
 	return map[string]string{
 		"KS102EW": "AGE_T009A",
+		"KS103EW": "MARSTAT_T006A",
 		"KS202EW": "NATID_ALL_T009A",
 		"KS206EW": "WELSHPUK112_T007A",
 		"KS207WA": "WELSHPUK112_R003A",
 		"KS208WA": "WELSHPUK112_R003A",
+		"QS101EW": "RESIDTYPE",
 		"QS104EW": "SEX",
-		"QS113EW": "MARSTAT_T006A",
 		"QS201EW": "ETHPUK11_T009A",
 		"QS203EW": "COB_R010A",
-		"QS208EW": "RELPUK11_R005A",
-		"QS301EW": "CARER_R003A",
+		"QS208EW": "RELIGIONEW",
+		"QS301EW": "CARER",
 		"QS302EW": "HEALTH_T004A", // HEALTH
 		"QS303EW": "DISABILITY_T003B",
 		"QS402EW": "TYPACCOM_T009A",
+		"QS403EW": "TENHUK11_T010A",
 		"QS406EW": "SIZHUK11_T007A",
 		"QS415EW": "CENHEATHUK11_T003A",
 		"QS416EW": "CARSNO_T004A",
@@ -292,10 +392,6 @@ func ShortVarMap() map[string]string {
 		"QS606EW": "OCCPUK113_T010A",
 		"QS701EW": "TRANSPORT_R005A",
 		"QS702EW": "AGGDTWPEW11_R010A",
-		//"DC6102EW": "STUDENT_AGE_T002A",
-		//"QS402EW":  "TENHUK11_T007B",
-		//"QS411EW": "BEDROOMS_T006A",
-		//"QS501EW":  "HLQPUK11_T007A",
 	}
 
 }
@@ -304,6 +400,7 @@ func ShortVarMap() map[string]string {
 func GetDataSet(varCode string) string {
 
 	mappy := map[string]string{
+		"QS403EW": "People-Households",
 		"QS406EW": "People-Households",
 		"KS206EW": "People-Households",
 		"QS402EW": "People-Households",
@@ -316,4 +413,19 @@ func GetDataSet(varCode string) string {
 	}
 
 	return "Usual-Residents"
+}
+
+func (cant *Client) Checker(ctx context.Context, state *healthcheck.CheckState) error {
+	// any basic query can work as a health check
+	var query struct {
+		Typename graphql.String `graphql:"__typename"`
+	}
+
+	err := cant.SendQueryVars(ctx, &query, nil)
+	if err != nil {
+		state.Update(healthcheck.StatusCritical, err.Error(), 0)
+		return nil
+	}
+	state.Update(healthcheck.StatusOK, "cantabular healthy", 0)
+	return nil
 }

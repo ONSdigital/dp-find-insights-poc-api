@@ -9,14 +9,18 @@ services:
 
     # These defaults are for the local container postgres.
     # To use a different postgres instance, either set PG
-    # environment variables before running compose, or
-    # create docker-compose.override.yml.
+    # and Cantabular environment variables before running
+    # compose, or create docker-compose.override.yml.
     environment:
       PGHOST: ${PGHOST_INTERNAL:-$PGHOST}
       PGPORT: ${PGPORT_INTERNAL:-$PGPORT}
       PGDATABASE: ${PGDATABASE:-census}
       PGUSER: ${PGUSER:-insights}
       PGPASSWORD: ${PGPASSWORD:-insights}
+      ENABLE_CANTABULAR: ${ENABLE_CANTABULAR:-0}
+      CANT_URL: ${CANT_URL:-}
+      CANT_USER: ${CANT_USER:-}
+      CANT_PW: ${CANT_PW:-}
 
     # We started using port 25252 before we claimed the
     # 'official' 12550.

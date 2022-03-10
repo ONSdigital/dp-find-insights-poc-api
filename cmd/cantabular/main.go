@@ -3,6 +3,7 @@ package main
 // adhoc query tool to investigate cantabular 2011 instance
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
@@ -26,7 +27,35 @@ func main() {
 	ds := flag.String("ds", "Usual-Residents", "set dataset to query")
 	class := flag.String("class", "", "classifications under variables eg. pass AGE_T022A (or MSOA) to get categories under it (like old longcodes)")
 	variables := flag.Bool("variables", false, "list variables, results eg. 'AGE_T022A : Age of individual (21 categories)' (like old short codes)")
+	cmetadata := flag.Bool("cmetadata", false, "display cant-like tactical metadata slowly")
+	nmetadata := flag.Bool("nmetadata", false, "display NOMIS-like tactical metadata slowly")
 	flag.Parse()
+
+	if *nmetadata && *cmetadata {
+		fmt.Println("you can't select both cant-like  & NOMIS-like metadata")
+		os.Exit(0)
+	}
+
+	ctx := context.Background()
+
+	cant := cantabular.New(cantabular.URL, os.Getenv("CANT_USER"), os.Getenv("CANT_PW"))
+	if *nmetadata {
+		buf, err := cant.QueryMetaData(ctx, *ds, true)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println(buf)
+		os.Exit(0)
+	}
+
+	if *cmetadata {
+		buf, err := cant.QueryMetaData(ctx, *ds, false)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println(buf)
+		os.Exit(0)
+	}
 
 	// MetricFilter type query
 	if *query1 {
@@ -37,7 +66,10 @@ func main() {
 			os.Exit(1)
 		}
 
-		geoq, catsq, values := cantabular.QueryMetricFilter("", *geo, *geotype, *code)
+		geoq, catsq, values, err := cant.QueryMetricFilter(ctx, "", *geo, *geotype, *code)
+		if err != nil {
+			log.Fatal(err)
+		}
 		got := cantabular.ParseMetric(geoq, catsq, values)
 
 		fmt.Println(got)
@@ -54,7 +86,10 @@ func main() {
 			os.Exit(1)
 		}
 
-		geoq, catsq, values := cantabular.QueryMetric("", *geotype, *code)
+		geoq, catsq, values, err := cant.QueryMetric(ctx, "", *geotype, *code)
+		if err != nil {
+			log.Fatal(err)
+		}
 		got := cantabular.ParseMetric(geoq, catsq, values)
 
 		fmt.Println(got)
@@ -63,7 +98,9 @@ func main() {
 
 	if *datasets {
 		var query cantabular.DataSets
-		cantabular.SendQueryVars(&query, nil)
+		if err := cant.SendQueryVars(ctx, &query, nil); err != nil {
+			log.Fatal(err)
+		}
 		cantabular.ParseResp(&query)
 		os.Exit(0)
 	}
@@ -73,7 +110,9 @@ func main() {
 		vars := map[string]interface{}{
 			"ds": graphql.String(*ds),
 		}
-		cantabular.SendQueryVars(&query, vars)
+		if err := cant.SendQueryVars(ctx, &query, vars); err != nil {
+			log.Fatal(err)
+		}
 		cantabular.ParseResp(&query)
 		fmt.Println("\nUSED: '" + *ds + "'")
 		os.Exit(0)
@@ -85,7 +124,9 @@ func main() {
 			"ds":   graphql.String(*ds),
 			"vars": graphql.String(*class),
 		}
-		cantabular.SendQueryVars(&query, vars)
+		if err := cant.SendQueryVars(ctx, &query, vars); err != nil {
+			log.Fatal(err)
+		}
 		cantabular.ParseResp(&query)
 		fmt.Println("\nUSED: '" + *ds + "'")
 

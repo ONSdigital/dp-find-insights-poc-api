@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/ONSdigital/dp-find-insights-poc-api/cantabular"
 	"github.com/ONSdigital/dp-find-insights-poc-api/model"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/database"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/table"
@@ -19,12 +20,14 @@ const allRowsToken = "ALL" // rows= token that means grab all rows, as in rows=A
 
 type Geodata struct {
 	db         *database.Database
+	cant       *cantabular.Client
 	maxMetrics int
 }
 
-func New(db *database.Database, maxMetrics int) (*Geodata, error) {
+func New(db *database.Database, cant *cantabular.Client, maxMetrics int) (*Geodata, error) {
 	return &Geodata{
 		db:         db,
+		cant:       cant,
 		maxMetrics: maxMetrics,
 	}, nil
 }

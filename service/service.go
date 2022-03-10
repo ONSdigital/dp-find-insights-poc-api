@@ -9,6 +9,7 @@ import (
 	"github.com/ONSdigital/dp-api-clients-go/middleware"
 	"github.com/ONSdigital/dp-find-insights-poc-api/api"
 	"github.com/ONSdigital/dp-find-insights-poc-api/cache"
+	"github.com/ONSdigital/dp-find-insights-poc-api/cantabular"
 	"github.com/ONSdigital/dp-find-insights-poc-api/config"
 	"github.com/ONSdigital/dp-find-insights-poc-api/handlers"
 	"github.com/ONSdigital/dp-find-insights-poc-api/metadata"
@@ -36,6 +37,11 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 
 	log.Info(ctx, "using service configuration", log.Data{"config": cfg})
 
+	var cant *cantabular.Client
+	if cfg.EnableCantabular {
+		cant = cantabular.New(cfg.CantabularURL, cfg.CantabularUser, os.Getenv("CANT_PW"))
+	}
+
 	var db *database.Database
 	var queryGeodata *geodata.Geodata
 	var md *metadata.Metadata
@@ -62,7 +68,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		}
 
 		// set up our query functionality if we have a db
-		queryGeodata, err = geodata.New(db, cfg.MaxMetrics)
+		queryGeodata, err = geodata.New(db, cant, cfg.MaxMetrics)
 		if err != nil {
 			return nil, err
 		}
@@ -107,7 +113,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		log.Fatal(ctx, "could not instantiate healthcheck", err)
 		return nil, err
 	}
-	if err := registerCheckers(ctx, hc, db, md); err != nil {
+	if err := registerCheckers(ctx, hc, db, md, cant); err != nil {
 		return nil, errors.Wrap(err, "unable to register checkers")
 	}
 	hc.Start(ctx)
@@ -190,12 +196,16 @@ func registerCheckers(ctx context.Context,
 	hc HealthChecker,
 	db *database.Database,
 	md *metadata.Metadata,
+	cant *cantabular.Client,
 ) (err error) {
 	if db != nil {
 		err = hc.AddCheck("postgres", db.Checker)
 	}
 	if md != nil {
 		err = hc.AddCheck("gorm", md.Checker)
+	}
+	if cant != nil {
+		err = hc.AddCheck("cantabular", cant.Checker)
 	}
 	return err
 }
