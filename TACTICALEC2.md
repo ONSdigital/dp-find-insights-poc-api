@@ -1,5 +1,18 @@
 # Tactical EC2 solution 
 
+## March 2021 EC2 instance
+
+Following issues with resources and the original free tier instance a new one
+was launched.  Note this is arm64 (aarch64) based and needs an arm64 binary!
+
+Access via
+
+```
+ssh -i swaggerui/frank-ec2-dev0.pem ubuntu@ec2-35-158-105-228.eu-central-1.compute.amazonaws.com
+```
+
+## Old instance
+
 http://ec2-18-193-78-190.eu-central-1.compute.amazonaws.com:25252/swaggerui
 
 This is a Temporary Fix (TM) until we move fully to ONS EC2.
