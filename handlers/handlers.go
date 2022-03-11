@@ -22,14 +22,16 @@ type Server struct {
 	querygeodata *geodata.Geodata // if nil, database not available
 	md           *metadata.Metadata
 	cm           *cache.Manager
+	pc           *postcode.Postcode
 }
 
-func New(private bool, querygeodata *geodata.Geodata, md *metadata.Metadata, cm *cache.Manager) *Server {
+func New(private bool, querygeodata *geodata.Geodata, md *metadata.Metadata, cm *cache.Manager, pc *postcode.Postcode) *Server {
 	return &Server{
 		private:      private,
 		querygeodata: querygeodata,
 		md:           md,
 		cm:           cm,
+		pc:           pc,
 	}
 }
 
@@ -83,12 +85,12 @@ func (svr *Server) GetMetadataYear(w http.ResponseWriter, r *http.Request, year 
 func (svr *Server) GetMsoaPostcode(w http.ResponseWriter, r *http.Request, pc string) {
 
 	generate := func() ([]byte, error) {
-		code, name, err := postcode.GetMSOA(pc)
+		code, name, err := svr.pc.GetMSOA(pc)
 		if err != nil {
 			return nil, err
 		}
 		// JSON?
-		return []byte(code + ", " + name), nil
+		return []byte(code + ", " + name + "\r\n"), nil
 	}
 
 	svr.respond(w, r, mimeCSV, generate)
