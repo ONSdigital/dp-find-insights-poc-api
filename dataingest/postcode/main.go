@@ -1,7 +1,5 @@
 package main
 
-//https://geoportal.statistics.gov.uk/datasets/a8d42df48f374a52907fe7d4f804a662/about
-
 import (
 	"encoding/csv"
 	"fmt"
@@ -50,7 +48,7 @@ func main() {
 
 	t0 := time.Now()
 	parsePostcodeCSV(db, "PCD_OA_LSOA_MSOA_LAD_MAY20_UK_LU.csv")
-	fmt.Printf("%#v\n", time.Since(t0).Seconds())
+	fmt.Printf("%d min(s)\n", int(time.Since(t0).Minutes()))
 }
 
 func parsePostcodeCSV(db *gorm.DB, file string) {
@@ -67,12 +65,6 @@ func parsePostcodeCSV(db *gorm.DB, file string) {
 		if i == 0 {
 			continue
 		}
-
-		/*
-			pcd: 7-character version of the postcode (e.g. 'BT1 1AA', 'BT486PL')
-			pcd2: 8-character version of the postcode (e.g. 'BT1  1AA', 'BT48 6PL')
-			pcds: one space between the district and sector-unit part of the postcode (e.g. 'BT1 1AA', 'BT48 6PL') - possibly the most common formatting of postcodes.
-		*/
 
 		pcds := line[field["pcds"]]
 		msoa11cd := line[field["msoa11cd"]]
@@ -92,11 +84,11 @@ func parsePostcodeCSV(db *gorm.DB, file string) {
 
 			j++
 			if j%100000 == 0 {
-				fmt.Printf("~%0f%% ...\n", (float64(j)/2300000)*100)
+				fmt.Printf("~%.1f%% ... ", (float64(j)/2300000)*100)
 			}
 		}
 
 	}
 
-	log.Println(j)
+	fmt.Printf("%d rows\n", j)
 }
