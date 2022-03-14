@@ -3,6 +3,14 @@
 help: ## This help
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-z0-9A-Z_-]+:.*?## / {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
+# DEV_HOST and INT_HOST are the EC2 instances running the API for backend testing
+# and for front-end development.
+# We have to change these hostnames whenever an instance is rebooted because the
+# names are based on non-static IPs.
+DEV_HOST=ec2-18-193-6-194.eu-central-1.compute.amazonaws.com
+INT_HOST=ec2-35-158-105-228.eu-central-1.compute.amazonaws.com
+SSH_KEY=swaggerui/frank-ec2-dev0.pem
+
 BINPATH ?= build
 
 BUILD_TIME=$(shell date +%s)
@@ -139,3 +147,13 @@ run-update-schema:	## run update-schema in a local container
 		--rm \
 		update-schema
 
+#
+# ssh to EC2 instances
+#
+ssh-dev:	## ssh to dev EC2 instance
+	chmod 0600 $(SSH_KEY)
+	ssh -i $(SSH_KEY) ubuntu@$(DEV_HOST)
+
+ssh-int:	## ssh to integration EC2 instance
+	chmod 0600 $(SSH_KEY)
+	ssh -i $(SSH_KEY) ubuntu@$(INT_HOST)
