@@ -10,7 +10,7 @@ is also stored at `s3://find-insights-input-data-files/postcode/PCD_OA_LSOA_MSOA
 go run .
 ```
 
-Note: this takes quite a long time ~40mins to populate about 2.3 million rows
+Note: this takes quite a long time ~20mins to populate about 2.3 million rows
 and adds a FK relationship with existing `geo` records (and names).
 
 ## CSV
