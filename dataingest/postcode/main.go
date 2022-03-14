@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/model"
@@ -13,6 +14,8 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
+
+const MAX = 8
 
 func readCsvFile(filePath string) (records [][]string) {
 	func() {
@@ -61,6 +64,10 @@ func parsePostcodeCSV(db *gorm.DB, file string) {
 	}
 
 	j := 0
+
+	sem := make(chan int, MAX)
+
+	wg := new(sync.WaitGroup)
 	for i, line := range records {
 		if i == 0 {
 			continue
@@ -71,24 +78,34 @@ func parsePostcodeCSV(db *gorm.DB, file string) {
 		// Scotland isn't of interest nor Northern Ireland nor Channel Islands nor Isle of Man
 		if !strings.HasPrefix(msoa11cd, "S") && !strings.HasPrefix(msoa11cd, "N") && !strings.HasPrefix(msoa11cd, "L") && !strings.HasPrefix(msoa11cd, "M") && msoa11cd != "" {
 
-			var geos model.Geo
-			db.Where("type_id = 5 and code=?", msoa11cd).Find(&geos) // limit by MSOA
-			if geos.ID == 0 {
-				log.Fatalf("not found: %s", msoa11cd)
-			}
+			sem <- 1
+			wg.Add(1)
+			go func(pcds, msoa11cd string) {
+				defer func() {
+					wg.Done()
+					<-sem
+				}()
+				var geos model.Geo
+				db.Where("type_id = 5 and code=?", msoa11cd).Find(&geos) // limit by MSOA
+				if geos.ID == 0 {
+					log.Fatalf("not found: %s", msoa11cd)
+				}
 
-			var pc model.PostCode
-			pc.GeoID = geos.ID
-			pc.Pcds = pcds
-			db.Save(&pc)
+				var pc model.PostCode
+				pc.GeoID = geos.ID
+				pc.Pcds = pcds
+				db.Save(&pc)
 
-			j++
-			if j%100000 == 0 {
-				fmt.Printf("~%.1f%% ... ", (float64(j)/2300000)*100)
-			}
+				j++
+				//			println(j)
+				if j%100000 == 0 {
+					fmt.Printf("~%.1f%% ... ", (float64(j)/2300000)*100)
+				}
+			}(pcds, msoa11cd)
 		}
 
 	}
 
+	wg.Wait()
 	fmt.Printf("%d rows\n", j)
 }
