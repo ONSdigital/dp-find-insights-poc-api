@@ -22,7 +22,7 @@ type APITest = struct {
 	query        string
 }
 
-const baseURL = `http://ec2-18-193-78-190.eu-central-1.compute.amazonaws.com:25252`
+const baseURL = `http://ec2-18-193-6-194.eu-central-1.compute.amazonaws.com:25252`
 const baseURLLocal = `http://localhost:25252`
 const censusEndpoint = `query/2011`
 const metadataEndpoint = `metadata/2011`

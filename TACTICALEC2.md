@@ -13,7 +13,7 @@ ssh -i swaggerui/frank-ec2-dev0.pem ubuntu@ec2-35-158-105-228.eu-central-1.compu
 
 ## Old instance
 
-http://ec2-18-193-78-190.eu-central-1.compute.amazonaws.com:25252/swaggerui
+http://ec2-18-193-6-194.eu-central-1.compute.amazonaws.com:25252/swaggerui
 
 This is a Temporary Fix (TM) until we move fully to ONS EC2.
 
@@ -25,7 +25,7 @@ TODO: should be replaced by terraform
 Access via
 
 ```
-$ ssh -i swaggerui/frank-ec2-dev0.pem ubuntu@ec2-18-193-78-190.eu-central-1.compute.amazonaws.com
+$ ssh -i swaggerui/frank-ec2-dev0.pem ubuntu@ec2-18-193-6-194.eu-central-1.compute.amazonaws.com
 ```
 
 An encrypted copy of the private key is in this repo.
@@ -40,18 +40,18 @@ environment for config.
     *Do not copy to `dp-find-insights-poc-api` itself*
 
         make build-linux-amd
-        scp -i swaggerui/frank-ec2-dev0.pem  build/dp-find-insights-poc-api ubuntu@ec2-18-193-78-190.eu-central-1.compute.amazonaws.com:dp-find-insights-poc-api.new
+        scp -i swaggerui/frank-ec2-dev0.pem  build/dp-find-insights-poc-api ubuntu@ec2-18-193-6-194.eu-central-1.compute.amazonaws.com:dp-find-insights-poc-api.new
 
 * ssh into the remote system and run `./deploy.sh` to install the new binary; hit `^C`  or `q` after log displayed
 
-        ssh -i swaggerui/frank-ec2-dev0.pem ubuntu@ec2-18-193-78-190.eu-central-1.compute.amazonaws.com
+        ssh -i swaggerui/frank-ec2-dev0.pem ubuntu@ec2-18-193-6-194.eu-central-1.compute.amazonaws.com
         ./deploy.sh dp-find-insights-poc-api.new
 
 ## Rollback
 
 You can rollback to the previously installed binary:
 
-        ssh -i swaggerui/frank-ec2-dev0.pem ubuntu@ec2-18-193-78-190.eu-central-1.compute.amazonaws.com
+        ssh -i swaggerui/frank-ec2-dev0.pem ubuntu@ec2-18-193-6-194.eu-central-1.compute.amazonaws.com
         ./deploy.sh previous
 
 ## Log monitoring
@@ -89,7 +89,7 @@ Environment added via `systemctl edit dp-find-insights-poc-api`
 ```
 [Service]
 Environment="ENABLE_DATABASE=1
-Environment="BIND_ADDR=ec2-18-193-78-190.eu-central-1.compute.amazonaws.com:25252"
+Environment="BIND_ADDR=0.0.0.0:25252"
 Environment="PGUSER=insights"
 Environment="PGPASSWORD=XXXXXXXXXXX"
 Environment="PGHOST=fi-database-2.cbhpmcuqy9vo.eu-central-1.rds.amazonaws.com"
