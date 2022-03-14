@@ -15,6 +15,7 @@ import (
 	"github.com/ONSdigital/dp-find-insights-poc-api/metadata"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/database"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/geodata"
+	"github.com/ONSdigital/dp-find-insights-poc-api/postcode"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/justinas/alice"
 	"github.com/pkg/errors"
@@ -45,6 +46,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	var db *database.Database
 	var queryGeodata *geodata.Geodata
 	var md *metadata.Metadata
+	var pc *postcode.Postcode
 	var err error
 	if cfg.EnableDatabase {
 		// figure out postgres password
@@ -97,6 +99,9 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		if err != nil {
 			return nil, err
 		}
+
+		pc = postcode.New(gdb)
+
 	}
 
 	cm, err := cache.New(cfg.CacheTTL, cfg.CacheSize)
@@ -105,7 +110,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	}
 
 	// Setup the API
-	a := handlers.New(true, queryGeodata, md, cm) // always include private handlers for now
+	a := handlers.New(true, queryGeodata, md, cm, pc) // always include private handlers for now
 
 	// Setup health checks
 	hc, err := serviceList.GetHealthCheck(cfg, buildTime, gitCommit, version)

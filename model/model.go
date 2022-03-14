@@ -67,6 +67,7 @@ type Geo struct {
 	// wkb_geometry - added via ALTER
 	// wkb_long_lat_geom - added via ALTER
 	GoMetrics []GeoMetric `gorm:"foreignKey:GeoID;references:ID"`
+	PostCodes []PostCode  `gorm:"foreignKey:GeoID;references:ID"`
 }
 
 // don't pluralise table name
@@ -129,6 +130,18 @@ type NomisTopic struct {
 // don't pluralise table name
 func (NomisTopic) TableName() string {
 	return "nomis_topic"
+}
+
+type PostCode struct {
+	ID    int32 `gorm:"primaryKey"`
+	GeoID int32 `gorm:"index"`
+	Pcds  string
+	Geo   Geo // XXX
+}
+
+// don't pluralise table name
+func (PostCode) TableName() string {
+	return "postcode"
 }
 
 // data prepopulated in Postgres database

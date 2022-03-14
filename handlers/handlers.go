@@ -13,6 +13,7 @@ import (
 	"github.com/ONSdigital/dp-find-insights-poc-api/config"
 	"github.com/ONSdigital/dp-find-insights-poc-api/metadata"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/geodata"
+	"github.com/ONSdigital/dp-find-insights-poc-api/postcode"
 	Swagger "github.com/ONSdigital/dp-find-insights-poc-api/swagger"
 )
 
@@ -21,14 +22,16 @@ type Server struct {
 	querygeodata *geodata.Geodata // if nil, database not available
 	md           *metadata.Metadata
 	cm           *cache.Manager
+	pc           *postcode.Postcode
 }
 
-func New(private bool, querygeodata *geodata.Geodata, md *metadata.Metadata, cm *cache.Manager) *Server {
+func New(private bool, querygeodata *geodata.Geodata, md *metadata.Metadata, cm *cache.Manager, pc *postcode.Postcode) *Server {
 	return &Server{
 		private:      private,
 		querygeodata: querygeodata,
 		md:           md,
 		cm:           cm,
+		pc:           pc,
 	}
 }
 
@@ -74,6 +77,20 @@ func (svr *Server) GetMetadataYear(w http.ResponseWriter, r *http.Request, year 
 		}
 
 		return svr.md.Get(year, filtertotals)
+	}
+
+	svr.respond(w, r, mimeCSV, generate)
+}
+
+func (svr *Server) GetMsoaPostcode(w http.ResponseWriter, r *http.Request, pc string) {
+
+	generate := func() ([]byte, error) {
+		code, name, err := svr.pc.GetMSOA(pc)
+		if err != nil {
+			return nil, err
+		}
+		// JSON?
+		return []byte(code + ", " + name + "\r\n"), nil
 	}
 
 	svr.respond(w, r, mimeCSV, generate)
