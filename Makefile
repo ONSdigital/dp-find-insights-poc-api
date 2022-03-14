@@ -38,11 +38,11 @@ build:	## build poc service
 
 .PHONY: build-linux-amd
 build-linux-amd:	## build poc service specifically for linux on amd64 (used for EC2 deploy)
-	GOOS=linux GOARCH=amd64 go build -tags 'production' $(LDFLAGS) -o $(BINPATH)/dp-find-insights-poc-api ./cmd/dp-find-insights-poc-api
+	GOOS=linux GOARCH=amd64 go build -tags 'production' $(LDFLAGS) -o $(BINPATH)/dp-find-insights-poc-api.amd ./cmd/dp-find-insights-poc-api
 
 .PHONY: build-linux-arm
 build-linux-arm:	## build poc service specifically for linux on arm64 (used for EC2 deploy)
-	GOOS=linux GOARCH=arm64 go build -tags 'production' $(LDFLAGS) -o $(BINPATH)/dp-find-insights-poc-api ./cmd/dp-find-insights-poc-api
+	GOOS=linux GOARCH=arm64 go build -tags 'production' $(LDFLAGS) -o $(BINPATH)/dp-find-insights-poc-api.arm ./cmd/dp-find-insights-poc-api
 
 .PHONY: debug
 debug:	## run poc service in debug mode
@@ -157,3 +157,47 @@ ssh-dev:	## ssh to dev EC2 instance
 ssh-int:	## ssh to integration EC2 instance
 	chmod 0600 $(SSH_KEY)
 	ssh -i $(SSH_KEY) ubuntu@$(INT_HOST)
+
+#
+# deploy to EC2 instances
+#
+deploy-dev:	## deploy build/dp-find-insights-poc-api.amd to dev EC2 instance
+	scp -i $(SSH_KEY) build/dp-find-insights-poc-api.amd ubuntu@$(DEV_HOST):dp-find-insights-poc-api.new
+	ssh -i $(SSH_KEY) ubuntu@$(DEV_HOST) ./deploy.sh dp-find-insights-poc-api.new
+
+deploy-int:	## deploy build/dp-find-insights-poc-api.arm to F/E EC2 instance
+	scp -i $(SSH_KEY) build/dp-find-insights-poc-api.arm ubuntu@$(INT_HOST):dp-find-insights-poc-api.new
+	ssh -i $(SSH_KEY) ubuntu@$(INT_HOST) ./deploy.sh dp-find-insights-poc-api.new
+
+# integration tests
+#
+# If you want to run anything other than "make test" in inttests/,
+# then you should set $TEST_TARGET_URL in your environment, and then
+# run make directly from within inttests/.
+# These targets are just shortcuts for post-deploy sanity tests.
+test-local: ## run integration tests against local instance
+	cd inttests && make test-local
+
+test-dev:	## run integration tests against dev EC2 instance
+	cd inttests && TEST_TARGET_URL=http://$(DEV_HOST):25252 make test
+
+test-int:	## run integration tests against F/E EC2 instance
+	cd inttests && TEST_TARGET_URL=http://$(INT_HOST):25252 make test
+
+#
+# rollback API on EC2 instances
+#
+rollback-dev:	## rollback API on dev EC2 instance
+	ssh -i $(SSH_KEY) ubuntu@$(DEV_HOST) ./deploy.sh previous
+
+rollback-int:	## rollback API on F/E EC2 instance
+	ssh -i $(SSH_KEY) ubuntu@$(INT_HOST) ./deploy.sh previous
+
+#
+# get healthcheck from EC2 instances
+#
+health-dev:	## get healthcheck from dev EC2 instance
+	curl -s http://$(DEV_HOST):25252/health | jq
+
+health-int:	## get healthcheck from F/E EC2 instance
+	curl -s http://$(INT_HOST):25252/health | jq

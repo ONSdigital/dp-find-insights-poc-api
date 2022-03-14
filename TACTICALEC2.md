@@ -1,64 +1,92 @@
 # Tactical EC2 solution 
 
-## March 2021 EC2 instance
+## EC2 instances
 
-Following issues with resources and the original free tier instance a new one
-was launched.  Note this is arm64 (aarch64) based and needs an arm64 binary!
-
-Access via
-
-```
-ssh -i swaggerui/frank-ec2-dev0.pem ubuntu@ec2-35-158-105-228.eu-central-1.compute.amazonaws.com
-```
-
-## Old instance
-
-http://ec2-18-193-6-194.eu-central-1.compute.amazonaws.com:25252/swaggerui
-
+We are currently running the API on two EC2 instances.
 This is a Temporary Fix (TM) until we move fully to ONS EC2.
 
-A micro EC2 instance on the free tier was provisioned via the web with an
-encrypted version of the private key in this directory.
+Purpose | Architecture | Instance Hostname
+--|--|--
+backend dev | amd64 | ec2-18-193-6-194.eu-central-1.compute.amazonaws.com
+f/e integration | aarch64 | ec2-35-158-105-228.eu-central-1.compute.amazonaws.com
 
-TODO: should be replaced by terraform
+Unfortunately the instance hostnames will change if the instances are rebooted.
+When this happens, the hostnames in the following locations must be updated:
 
-Access via
+* this doc
+* [Makefile](./Makefile)
+* the systemd environment for the dp-find-insights-poc-api service (see below)
 
-```
-$ ssh -i swaggerui/frank-ec2-dev0.pem ubuntu@ec2-18-193-6-194.eu-central-1.compute.amazonaws.com
-```
-
-An encrypted copy of the private key is in this repo.
-
-dp-find-insights-poc-api is running under systemd as the ubuntu user, using the
+dp-find-insights-poc-api is running under systemd as the `ubuntu` user, using the
 environment for config.
 
-## Update
+TODO: these instances have been provisioned manually; we should use terraform
 
-* build binary locally and scp the freshly compiled binary to the EC2 instance
 
-    *Do not copy to `dp-find-insights-poc-api` itself*
+## Shell access
+
+The ssh private key is encrypted in `swaggerui/frank-ec2-dev0.pem.gpg`.
+Decrypt this into `swaggerui/frank-ec2-dev0.pem`.
+
+To get a shell into the dev instance:
+
+        make ssh-dev
+
+And for the integration instance:
+
+        make ssh-int
+
+
+## HTTP access
+
+Both instances listen on HTTP port 25252, so you can hit
+
+dev: http://ec2-18-193-6-194.eu-central-1.compute.amazonaws.com:25252/swaggerui
+
+int: http://ec2-35-158-105-228.eu-central-1.compute.amazonaws.com:25252/swaggerui
+
+
+## How to update the dev EC2 instance
+
+* build binary locally
 
         make build-linux-amd
-        scp -i swaggerui/frank-ec2-dev0.pem  build/dp-find-insights-poc-api ubuntu@ec2-18-193-6-194.eu-central-1.compute.amazonaws.com:dp-find-insights-poc-api.new
 
-* ssh into the remote system and run `./deploy.sh` to install the new binary; hit `^C`  or `q` after log displayed
+* push binary and deploy
 
-        ssh -i swaggerui/frank-ec2-dev0.pem ubuntu@ec2-18-193-6-194.eu-central-1.compute.amazonaws.com
-        ./deploy.sh dp-find-insights-poc-api.new
+        make deploy-dev
 
-## Rollback
+* run integration tests
 
-You can rollback to the previously installed binary:
+        make test-dev
 
-        ssh -i swaggerui/frank-ec2-dev0.pem ubuntu@ec2-18-193-6-194.eu-central-1.compute.amazonaws.com
-        ./deploy.sh previous
+If tests do not pass, you can rollback to the previous version:
+
+        make rollback-dev
+
+
+## How to update the f/e integration EC2 instance
+
+* build binary locally
+
+        make build-linux-arm
+
+* push binary and deploy
+
+        make deploy-int
+
+* run integration tests
+
+        make test-int
+
+If tests do not pass, you can rollback to the previous version:
+
+        make rollback-int
 
 ## Log monitoring
 
-```
-$ journalctl -fu dp-find-insights-poc-api
-```
+        make ssh-dev
+        journalctl -fu dp-find-insights-poc-api
 
 ### SERVICE SETUP
 
@@ -89,10 +117,14 @@ Environment added via `systemctl edit dp-find-insights-poc-api`
 ```
 [Service]
 Environment="ENABLE_DATABASE=1
-Environment="BIND_ADDR=0.0.0.0:25252"
+Environment="BIND_ADDR=ec2-18-193-6-194.eu-central-1.compute.amazonaws.com:25252"
 Environment="PGUSER=insights"
 Environment="PGPASSWORD=XXXXXXXXXXX"
 Environment="PGHOST=fi-database-2.cbhpmcuqy9vo.eu-central-1.rds.amazonaws.com"
 Environment="PGPORT=54322"
 Environment="PGDATABASE=census"
+Environment="ENABLE_CANTABULAR=true"
+Environment="CANT_URL=https://ftb-api-ext.ons.sensiblecode.io/graphql"
+Environment="CANT_USER=XXXXXXXXXXX"
+Environment="CANT_PW=XXXXXXXXXXX"
 ```

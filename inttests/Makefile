@@ -1,3 +1,6 @@
+# Unless you set $TEST_TARGET_URL, non-local test targets run against
+# the dev EC2 instance, as defined in main.go.
+
 .PHONY: all
 all:
 	@echo "see README.md or read the Makefile"

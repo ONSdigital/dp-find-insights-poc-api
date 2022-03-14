@@ -32,9 +32,9 @@ func parseURL(test APITest) (string, string) {
 
 	var base string
 	if *local {
-		base = test.baseURLLocal
+		base = baseURLLocal
 	} else {
-		base = test.baseURL
+		base = baseURL
 	}
 
 	var queryURL, query2URL string
