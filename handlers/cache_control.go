@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/cache"
-	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/geodata"
+	"github.com/ONSdigital/dp-find-insights-poc-api/sentinel"
 )
 
 const (
@@ -67,13 +67,13 @@ func (svr *Server) respond(w http.ResponseWriter, r *http.Request, contentType s
 
 	code := http.StatusInternalServerError
 	switch {
-	case errors.Is(err, geodata.ErrMissingParams) || errors.Is(err, geodata.ErrInvalidParams):
+	case errors.Is(err, sentinel.ErrMissingParams), errors.Is(err, sentinel.ErrInvalidParams):
 		code = http.StatusBadRequest
-	case errors.Is(err, geodata.ErrNoContent):
+	case errors.Is(err, sentinel.ErrNoContent):
 		code = http.StatusNoContent
-	case errors.Is(err, geodata.ErrTooManyMetrics):
+	case errors.Is(err, sentinel.ErrTooManyMetrics):
 		code = http.StatusForbidden
-	case errors.Is(err, geodata.ErrNotSupported):
+	case errors.Is(err, sentinel.ErrNotSupported):
 		code = http.StatusNotFound
 	}
 	sendError(w, code, err.Error())

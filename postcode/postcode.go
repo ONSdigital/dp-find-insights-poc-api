@@ -1,11 +1,12 @@
 package postcode
 
 import (
-	"errors"
+	"fmt"
 	"regexp"
 	"strings"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/model"
+	"github.com/ONSdigital/dp-find-insights-poc-api/sentinel"
 	"gorm.io/gorm"
 )
 
@@ -38,7 +39,7 @@ func normalisePostcode(s string) (string, error) {
 	match := re.FindStringSubmatch(s)
 
 	if len(match) != 3 || match[0] != s {
-		return "", errors.New("invalid format")
+		return "", fmt.Errorf("%w: invalid format", sentinel.ErrInvalidParams)
 	}
 
 	return re.ReplaceAllString(s, "$1 $2"), nil

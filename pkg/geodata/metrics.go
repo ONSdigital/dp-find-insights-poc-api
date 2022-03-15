@@ -10,6 +10,7 @@ import (
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/table"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/timer"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/where"
+	"github.com/ONSdigital/dp-find-insights-poc-api/sentinel"
 	"github.com/lib/pq"
 )
 
@@ -49,7 +50,7 @@ func (app *Geodata) PGMetrics(ctx context.Context, year int, geocodes []string, 
 		nmetrics++
 		if app.maxMetrics > 0 {
 			if nmetrics > app.maxMetrics {
-				return nil, fmt.Errorf("%w: limit is %d", ErrTooManyMetrics, app.maxMetrics)
+				return nil, fmt.Errorf("%w: limit is %d", sentinel.ErrTooManyMetrics, app.maxMetrics)
 			}
 		}
 
@@ -75,7 +76,7 @@ func (app *Geodata) PGMetrics(ctx context.Context, year int, geocodes []string, 
 	}
 
 	if nmetrics == 0 {
-		return nil, ErrNoContent
+		return nil, sentinel.ErrNoContent
 	}
 
 	tgen := timer.New("generate")
@@ -160,18 +161,18 @@ func quoteCodes(geocodes []string) string {
 // Retrieve metrics from Cantabular.
 func (app *Geodata) CantabularMetrics(ctx context.Context, geocodes []string, catset *where.ValueSet, geotype string) ([]byte, error) {
 	if app.cant == nil {
-		return nil, fmt.Errorf("%w: cantabular not enabled", ErrNotSupported)
+		return nil, fmt.Errorf("%w: cantabular not enabled", sentinel.ErrNotSupported)
 	}
 
 	// the current cantabular queries accept a single category code
 	if len(catset.Singles) != 1 {
-		return nil, fmt.Errorf("%w: cantabular queries only accept a single category code", ErrInvalidParams)
+		return nil, fmt.Errorf("%w: cantabular queries only accept a single category code", sentinel.ErrInvalidParams)
 	}
 	if len(catset.Ranges) != 0 {
-		return nil, fmt.Errorf("%w: cantabular queries do not accept category code ranges", ErrInvalidParams)
+		return nil, fmt.Errorf("%w: cantabular queries do not accept category code ranges", sentinel.ErrInvalidParams)
 	}
 	if geotype == "" {
-		return nil, fmt.Errorf("%w: cantabular queries require geotype", ErrMissingParams)
+		return nil, fmt.Errorf("%w: cantabular queries require geotype", sentinel.ErrMissingParams)
 	}
 
 	geoq, catsQL, values, err := app.cant.QueryMetricFilter(ctx, "", strings.Join(geocodes, ","), geotype, catset.Singles[0])

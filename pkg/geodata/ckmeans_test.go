@@ -13,6 +13,7 @@ import (
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/comptests"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/database"
+	"github.com/ONSdigital/dp-find-insights-poc-api/sentinel"
 )
 
 // ---------------------------------------------------- Helpers ----------------------------------------------------- //
@@ -351,8 +352,8 @@ func TestCkmeansNoData(t *testing.T) {
 			t.Errorf("got %#v, wanted %#v", result, wantBreaks)
 		}
 		// AND THEN we expect to receive an ErrNoContent error
-		if !errors.Is(err, ErrNoContent) {
-			t.Errorf("got this error = '%s', wanted '%s'", err, ErrNoContent)
+		if !errors.Is(err, sentinel.ErrNoContent) {
+			t.Errorf("got this error = '%s', wanted '%s'", err, sentinel.ErrNoContent)
 		}
 	}()
 }
@@ -542,8 +543,8 @@ func TestCkmeansRatiosPartialDataOneCategoryMissing(t *testing.T) {
 		}
 
 		// AND THEN we expect to receive an ErrPartialContent error
-		if !errors.Is(err, ErrPartialContent) {
-			t.Errorf("got this error = '%s', wanted '%s'", err, ErrPartialContent)
+		if !errors.Is(err, sentinel.ErrPartialContent) {
+			t.Errorf("got this error = '%s', wanted '%s'", err, sentinel.ErrPartialContent)
 		}
 	}()
 }
@@ -599,8 +600,8 @@ func TestCkmeansRatiosPartialDataOneCategoryPartialDataOnly(t *testing.T) {
 		}
 
 		// AND THEN we expect to receive an ErrPartialContent error
-		if !errors.Is(err, ErrPartialContent) {
-			t.Errorf("got this error = '%s', wanted '%s'", err, ErrPartialContent)
+		if !errors.Is(err, sentinel.ErrPartialContent) {
+			t.Errorf("got this error = '%s', wanted '%s'", err, sentinel.ErrPartialContent)
 		}
 	}()
 }
@@ -643,8 +644,8 @@ func TestCkmeansRatiosNoData(t *testing.T) {
 		}
 
 		// AND THEN we expect to receive an ErrNoContent error
-		if !errors.Is(err, ErrNoContent) {
-			t.Errorf("got this error = '%s', wanted '%s'", err, ErrNoContent)
+		if !errors.Is(err, sentinel.ErrNoContent) {
+			t.Errorf("got this error = '%s', wanted '%s'", err, sentinel.ErrNoContent)
 		}
 	}()
 }
@@ -753,8 +754,8 @@ func TestCkmeansArgParsingAndValidation(t *testing.T) {
 		}
 
 		// AND THEN we expect to receive an ErrInvalidParams error
-		if !errors.Is(err, ErrInvalidParams) {
-			t.Errorf("got this error = '%s', wanted '%s'", err, ErrInvalidParams)
+		if !errors.Is(err, sentinel.ErrInvalidParams) {
+			t.Errorf("got this error = '%s', wanted '%s'", err, sentinel.ErrInvalidParams)
 		}
 	}()
 }

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/timer"
+	"github.com/ONSdigital/dp-find-insights-poc-api/sentinel"
 )
 
 // Proposed replacement for Query.
@@ -71,7 +72,7 @@ func (app *Geodata) Query2(ctx context.Context, year int, bbox, location string,
 	}
 
 	if len(result) == 0 {
-		return nil, ErrNoContent
+		return nil, sentinel.ErrNoContent
 	}
 	return result, nil
 }
