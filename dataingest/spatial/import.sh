@@ -4,7 +4,7 @@ set -e
 
 tables='
 lsoa_gis|Lower_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.geojson
-lad_gis|Local_Authority_Districts_(December_2017)_Boundaries_in_the_UK_(WGS84).geojson
+lad_gis|LAD2011ish.geojson
 msoa_gis|Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.geojson
 '
 
@@ -61,12 +61,5 @@ EOT3
 psql -c "DROP TABLE lsoa_gis"
 psql -c "DROP TABLE lad_gis"
 psql -c "DROP TABLE msoa_gis"
-
-# These were valid in 2011 (where our data comes from) but aren't anymore
-# XXX probably incomplete list
-psql <<EOT3
-\x
-UPDATE geo SET valid=false WHERE code IN ('E06000048','E07000097','E07000100','E07000101','E07000104','E08000020')
-EOT3
 
 psql -c "VACUUM ANALYZE geo"
