@@ -10,7 +10,7 @@ fi
 
 otime=$SECONDS
 set -e -x
-dropdb $PGDATABASE
+dropdb "$PGDATABASE"
 yes | make update-schema
 go run ./dataingest/addtodb
 (yes | make update-schema) 
@@ -18,5 +18,6 @@ cd dataingest/geoname && go run .
 cd ../spatial && ./lad2011ish.sh && go build ./geo2sql.go && ./import.sh
 cd longlatgeom  && go run .    
 cd ../../postcode  && go run . 
-echo "sec(s) elapsed: " $(($SECONDS-$otime))
+delta=$((SECONDS-otime))
+echo "about" $((delta/60)) "min(s) elapsed"
 cd ../../dataingest && make test
