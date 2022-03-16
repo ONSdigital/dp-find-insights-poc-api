@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/model"
+	"github.com/ONSdigital/dp-find-insights-poc-api/postcode"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/database"
 	"github.com/spf13/cast"
 	"gorm.io/driver/postgres"
@@ -289,6 +290,21 @@ func TestLongNomisCode(t *testing.T) {
 	if len(length) > 1 {
 		t.Errorf("got unexpected row(s) %v", length)
 	}
+}
+
+func TestPostCode(t *testing.T ) {
+
+	code, _, err := postcode.New(db).GetMSOA("SA3 3DW")
+
+	if err != nil {
+		t.Errorf(err.Error())
+	} 
+
+	if code != "W02000195" {
+		t.Errorf(code)
+	}
+
+
 }
 
 // check short nomis
