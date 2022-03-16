@@ -17,5 +17,6 @@ go run ./dataingest/addtodb
 cd dataingest/geoname && go run .  
 cd ../spatial && ./lad2011ish.sh && go build ./geo2sql.go && ./import.sh
 cd longlatgeom  && go run .    
+cd ../../postcode  && go run . 
 echo "sec(s) elapsed: " $(($SECONDS-$otime))
-cd ../../../dataingest && make test
+cd ../../dataingest && make test
