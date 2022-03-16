@@ -243,6 +243,38 @@ func TestSomeValues(t *testing.T) {
 
 }
 
+// valid=false was used for none existing geo codes
+// with all current 2011-ish data there are none
+func TestAllValid(t *testing.T) {
+	var count int
+	if err := db.Raw(`
+    SELECT count(*)
+	FROM geo WHERE valid=false
+	`).Scan(&count).Error; err != nil {
+		t.Error(err)
+	}
+
+	if count > 0 {
+		t.Errorf("got unexpected row(s) %v", count)
+	}
+}
+
+// check all lag and long ingested for LAD and MSOA
+func TestAllGeoLatLong(t *testing.T) {
+	var count int
+	if err := db.Raw(`
+    SELECT count(*)
+	FROM geo 
+	WHERE (lat=0 OR long=0 OR lat=null OR long=null) AND (type_id=4 OR type_id=5)
+	`).Scan(&count).Error; err != nil {
+		t.Error(err)
+	}
+
+	if count > 0 {
+		t.Errorf("got unexpected row(s) %v", count)
+	}
+}
+
 // bulk data long nomis codes have different length to API ones!
 func TestLongNomisCode(t *testing.T) {
 	var length []int
