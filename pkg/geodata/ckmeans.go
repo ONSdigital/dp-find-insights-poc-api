@@ -8,6 +8,7 @@ import (
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/timer"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/where"
+	"github.com/ONSdigital/dp-find-insights-poc-api/sentinel"
 	"github.com/jtrim-ons/ckmeans/pkg/ckmeans"
 )
 
@@ -102,7 +103,7 @@ func (app *Geodata) CKmeans(ctx context.Context, year int, cat []string, geotype
 		// if we've got the end of the rows, check we got any data at all
 		if !ok {
 			if ckparser.nmetrics == 0 {
-				return nil, fmt.Errorf("No data found for %s: %w", strings.Join(ckparser.catcodes, ", "), ErrNoContent)
+				return nil, fmt.Errorf("No data found for %s: %w", strings.Join(ckparser.catcodes, ", "), sentinel.ErrNoContent)
 			}
 			break
 		}
@@ -137,7 +138,7 @@ func (ckparser *CkmeansParser) parseCat(cat []string) error {
 		return err
 	}
 	if catset.Ranges != nil {
-		return fmt.Errorf("%w: ckmeans endpoint does not accept range values for cats", ErrInvalidParams)
+		return fmt.Errorf("%w: ckmeans endpoint does not accept range values for cats", sentinel.ErrInvalidParams)
 	}
 	ckparser.catcodes = catset.Singles
 	return nil
@@ -203,7 +204,7 @@ func (ckparser *CkmeansParser) processChunk() error {
 	// check divideBy if doing ratios
 	metricDenominator, prs := ckparser.chunk.metrics[ckparser.divideBy]
 	if !prs && ckparser.divideBy != "" {
-		return fmt.Errorf("Incomplete data for category %s: %w", ckparser.divideBy, ErrPartialContent)
+		return fmt.Errorf("Incomplete data for category %s: %w", ckparser.divideBy, sentinel.ErrPartialContent)
 	}
 
 	// process all other required catcodes
@@ -212,7 +213,7 @@ func (ckparser *CkmeansParser) processChunk() error {
 		// check catcode has metric
 		metricCatcode, prs := ckparser.chunk.metrics[catcode]
 		if !prs {
-			return fmt.Errorf("Incomplete data for category %s: %w", catcode, ErrPartialContent)
+			return fmt.Errorf("Incomplete data for category %s: %w", catcode, sentinel.ErrPartialContent)
 		}
 
 		// derive or get metric
@@ -424,17 +425,17 @@ AND data_ver.ver_string = '2.2'
 	}
 
 	if nmetricsCat1 == 0 && nmetricsCat2 == 0 {
-		return nil, ErrNoContent
+		return nil, sentinel.ErrNoContent
 	}
 	if nmetricsCat1 != nmetricsCat2 {
-		return nil, ErrPartialContent
+		return nil, sentinel.ErrPartialContent
 	}
 
 	var metrics []float64
 	for geoID, metricCat1 := range metricsCat1 {
 		metricCat2, prs := metricsCat2[geoID]
 		if !prs {
-			return nil, ErrPartialContent
+			return nil, sentinel.ErrPartialContent
 		}
 		metrics = append(metrics, metricCat1/metricCat2)
 	}

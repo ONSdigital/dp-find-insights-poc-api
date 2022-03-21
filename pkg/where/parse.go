@@ -1,8 +1,10 @@
 package where
 
 import (
-	"errors"
+	"fmt"
 	"strings"
+
+	"github.com/ONSdigital/dp-find-insights-poc-api/sentinel"
 )
 
 // ParseMultiArgs generates a ValueSet from multi value query parameters.
@@ -19,17 +21,17 @@ func ParseMultiArgs(args []string) (*ValueSet, error) {
 			// each token may be a single value or a range
 			if !strings.Contains(token, "...") {
 				if token == "" {
-					return nil, errors.New("value must not be empty")
+					return nil, fmt.Errorf("%w: value must not be empty", sentinel.ErrInvalidParams)
 				}
 				set.AddSingle(token)
 
 			} else {
 				r := strings.Split(token, "...")
 				if len(r) != 2 {
-					return nil, errors.New("range must be low...high")
+					return nil, fmt.Errorf("%w: range must be low...high", sentinel.ErrInvalidParams)
 				}
 				if r[0] == "" || r[1] == "" {
-					return nil, errors.New("range values must not be empty")
+					return nil, fmt.Errorf("%w: range values must not be empty", sentinel.ErrInvalidParams)
 				}
 				set.AddRange(r[0], r[1])
 			}

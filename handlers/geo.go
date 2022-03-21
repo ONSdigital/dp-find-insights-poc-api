@@ -19,11 +19,11 @@ func (svr *Server) GetGeo(w http.ResponseWriter, r *http.Request, year int, para
 	}
 
 	generate := func() ([]byte, error) {
-		geo, err := svr.querygeodata.Geo(r.Context(), year, *params.Geocode)
+		resp, err := svr.querygeodata.Geo(r.Context(), year, *params.Geocode)
 		if err != nil {
 			return nil, err
 		}
-		buf, err := toJSON(geo)
+		buf, err := toJSON(resp)
 		if err != nil {
 			return nil, err
 		}

@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/ONSdigital/dp-find-insights-poc-api/sentinel"
 	geom "github.com/twpayne/go-geom"
 )
 
@@ -22,7 +23,7 @@ func parseCoords(s string) ([]float64, error) {
 	for _, tok := range strings.Split(s, ",") {
 		coord, err := strconv.ParseFloat(tok, 64)
 		if err != nil {
-			return nil, fmt.Errorf("%w: error parsing coordinate %q: %s", ErrInvalidParams, s, err)
+			return nil, fmt.Errorf("%w: error parsing coordinate %q: %s", sentinel.ErrInvalidParams, s, err)
 		}
 		coords = append(coords, coord)
 	}
@@ -33,14 +34,14 @@ func parseCoords(s string) ([]float64, error) {
 // Returns nil if all points are valid geographic coordinates.
 func checkValidCoords(coords []float64) error {
 	if len(coords)%2 != 0 {
-		return fmt.Errorf("%w: must be even number of coordinates", ErrInvalidParams)
+		return fmt.Errorf("%w: must be even number of coordinates", sentinel.ErrInvalidParams)
 	}
 	for i := 0; i < len(coords); i += 2 {
 		if !isValidLon(coords[i]) {
-			return fmt.Errorf("%w: longitude %g out of range", ErrInvalidParams, coords[i])
+			return fmt.Errorf("%w: longitude %g out of range", sentinel.ErrInvalidParams, coords[i])
 		}
 		if !isValidLat(coords[i+1]) {
-			return fmt.Errorf("%w: latitude %g out of range", ErrInvalidParams, coords[i+1])
+			return fmt.Errorf("%w: latitude %g out of range", sentinel.ErrInvalidParams, coords[i+1])
 		}
 	}
 	return nil
@@ -62,7 +63,7 @@ func isValidLat(lat float64) bool {
 // Must be an even number of elements in coords.
 func asLineString(coords []float64) (string, error) {
 	if len(coords)%2 != 0 {
-		return "", fmt.Errorf("%w: uneven number of coords for LINESTRING", ErrInvalidParams)
+		return "", fmt.Errorf("%w: uneven number of coords for LINESTRING", sentinel.ErrInvalidParams)
 	}
 	var a []string
 	for i := 0; i < len(coords); i += 2 {

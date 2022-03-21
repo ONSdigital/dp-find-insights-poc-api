@@ -15,6 +15,7 @@ import (
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/geodata"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/table"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/where"
+	"github.com/ONSdigital/dp-find-insights-poc-api/sentinel"
 )
 
 func TestGetCensusQuery(t *testing.T) {
@@ -28,7 +29,7 @@ func TestGetCensusQuery(t *testing.T) {
 		{
 			desc:    "no arguments",
 			args:    geodata.CensusQuerySQLArgs{},
-			wantErr: geodata.ErrMissingParams,
+			wantErr: sentinel.ErrMissingParams,
 		},
 		// Rows
 		{
@@ -106,17 +107,17 @@ AND nomis_category.year = data_ver.census_year
 		{
 			desc:    "bbox error - non-numeric data",
 			args:    geodata.CensusQuerySQLArgs{BBox: "X,51.3624781092781,0.17687729439413147,51.673778133460246"},
-			wantErr: geodata.ErrInvalidParams,
+			wantErr: sentinel.ErrInvalidParams,
 		},
 		{
 			desc:    "bbox error - too few coords",
 			args:    geodata.CensusQuerySQLArgs{BBox: "-0.370947083400182,51.3624781092781"},
-			wantErr: geodata.ErrInvalidParams,
+			wantErr: sentinel.ErrInvalidParams,
 		},
 		{
 			desc:    "bbox error - too many coords",
 			args:    geodata.CensusQuerySQLArgs{BBox: "-0.370947083400182,51.3624781092781,0.17687729439413147,51.673778133460246,-0.370947083400182,0.17687729439413147,51.673778133460246"},
-			wantErr: geodata.ErrInvalidParams,
+			wantErr: sentinel.ErrInvalidParams,
 		},
 		// Columns
 		{
@@ -383,7 +384,7 @@ AND (
 		{
 			desc:    "all rows, too many tokens",
 			args:    geodata.CensusQuerySQLArgs{Geos: []string{"x", "all"}},
-			wantErr: geodata.ErrInvalidParams,
+			wantErr: sentinel.ErrInvalidParams,
 		},
 		{
 			desc: "all rows, all categories",

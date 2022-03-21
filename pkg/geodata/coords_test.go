@@ -4,6 +4,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/ONSdigital/dp-find-insights-poc-api/sentinel"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,8 +19,8 @@ func Test_ParseCoords_Err(t *testing.T) {
 	for name, s := range tests {
 		t.Run(name, func(t *testing.T) {
 			_, err := parseCoords(s)
-			if !errors.Is(err, ErrInvalidParams) {
-				t.Errorf("%s, want %s", err, ErrInvalidParams)
+			if !errors.Is(err, sentinel.ErrInvalidParams) {
+				t.Errorf("%s, want %s", err, sentinel.ErrInvalidParams)
 			}
 		})
 	}
@@ -87,8 +88,8 @@ func Test_CheckValidCoords(t *testing.T) {
 
 func Test_asLineString_Err(t *testing.T) {
 	_, err := asLineString([]float64{0})
-	if !errors.Is(err, ErrInvalidParams) {
-		t.Errorf("got %s, expected %s", err, ErrInvalidParams)
+	if !errors.Is(err, sentinel.ErrInvalidParams) {
+		t.Errorf("got %s, expected %s", err, sentinel.ErrInvalidParams)
 	}
 }
 

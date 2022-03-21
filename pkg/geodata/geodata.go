@@ -11,9 +11,9 @@ import (
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/table"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/timer"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/where"
-	geom "github.com/twpayne/go-geom"
-
+	"github.com/ONSdigital/dp-find-insights-poc-api/sentinel"
 	_ "github.com/jackc/pgx/v4/stdlib"
+	geom "github.com/twpayne/go-geom"
 )
 
 const allRowsToken = "ALL" // rows= token that means grab all rows, as in rows=ALL
@@ -76,7 +76,7 @@ func (app *Geodata) collectCells(ctx context.Context, sql string, include []stri
 		nmetrics++
 		if app.maxMetrics > 0 {
 			if nmetrics > app.maxMetrics {
-				return "", fmt.Errorf("%w: limit is %d", ErrTooManyMetrics, app.maxMetrics)
+				return "", fmt.Errorf("%w: limit is %d", sentinel.ErrTooManyMetrics, app.maxMetrics)
 			}
 		}
 
@@ -102,7 +102,7 @@ func (app *Geodata) collectCells(ctx context.Context, sql string, include []stri
 	}
 
 	if nmetrics == 0 {
-		return "", ErrNoContent
+		return "", sentinel.ErrNoContent
 	}
 
 	tgen := timer.New("generate")
@@ -282,7 +282,7 @@ func validateCensusQuery(args CensusQuerySQLArgs) error {
 		args.Location == "" &&
 		args.Radius == 0 &&
 		args.Polygon == "" {
-		return fmt.Errorf("%w: must specify a condition (rows, bbox, location/radius, and/or polygon)", ErrMissingParams)
+		return fmt.Errorf("%w: must specify a condition (rows, bbox, location/radius, and/or polygon)", sentinel.ErrMissingParams)
 	}
 
 	set, err := where.ParseMultiArgs(args.Geos)
@@ -305,7 +305,7 @@ func ValidateAllToken(set *where.ValueSet) error {
 			}
 		} else {
 			if isAll(*low) || isAll(*high) {
-				err = fmt.Errorf("%w: ALL cannot be part of a range", ErrInvalidParams)
+				err = fmt.Errorf("%w: ALL cannot be part of a range", sentinel.ErrInvalidParams)
 			}
 		}
 		// we're only interested in the err status
@@ -323,7 +323,7 @@ func ValidateAllToken(set *where.ValueSet) error {
 	if all == 1 && tokens == 1 {
 		return nil
 	}
-	return fmt.Errorf("%w: if used, ALL must be first and only rows= token", ErrInvalidParams)
+	return fmt.Errorf("%w: if used, ALL must be first and only rows= token", sentinel.ErrInvalidParams)
 }
 
 // wantAllRows is true if rows=ALL
@@ -354,7 +354,7 @@ func bboxSQL(bbox string) (string, error) {
 		return "", err
 	}
 	if len(coords) != 4 {
-		return "", fmt.Errorf("%w: valid bbox is 'lon,lat,lon,lat', received %q", ErrInvalidParams, bbox)
+		return "", fmt.Errorf("%w: valid bbox is 'lon,lat,lon,lat', received %q", sentinel.ErrInvalidParams, bbox)
 	}
 	if err := checkValidCoords(coords); err != nil {
 		return "", err
@@ -383,7 +383,7 @@ func radiusSQL(location string, radius int) (string, error) {
 	}
 
 	if location == "" || radius == 0 {
-		return "", fmt.Errorf("%w: radius queries require both location (%s) and radius (%d)", ErrInvalidParams, location, radius)
+		return "", fmt.Errorf("%w: radius queries require both location (%s) and radius (%d)", sentinel.ErrInvalidParams, location, radius)
 	}
 
 	coords, err := parseCoords(location)
@@ -391,7 +391,7 @@ func radiusSQL(location string, radius int) (string, error) {
 		return "", err
 	}
 	if len(coords) != 2 {
-		return "", fmt.Errorf("%w: location must be a single point", ErrInvalidParams)
+		return "", fmt.Errorf("%w: location must be a single point", sentinel.ErrInvalidParams)
 	}
 	if err := checkValidCoords(coords); err != nil {
 		return "", err
@@ -402,7 +402,7 @@ func radiusSQL(location string, radius int) (string, error) {
 		return "", err
 	}
 	if radius < 1 || radius > maxRadius {
-		return "", fmt.Errorf("%w: radius must be 1..%d: %d", ErrInvalidParams, maxRadius, radius)
+		return "", fmt.Errorf("%w: radius must be 1..%d: %d", sentinel.ErrInvalidParams, maxRadius, radius)
 	}
 
 	sql := fmt.Sprintf(`
@@ -432,10 +432,10 @@ func polygonSQL(polygon string) (string, error) {
 		return "", err
 	}
 	if len(coords) < 8 {
-		return "", fmt.Errorf("%w: polygon must have at least 4 points", ErrInvalidParams)
+		return "", fmt.Errorf("%w: polygon must have at least 4 points", sentinel.ErrInvalidParams)
 	}
 	if coords[0] != coords[len(coords)-2] || coords[1] != coords[len(coords)-1] {
-		return "", fmt.Errorf("%w: polygon first and last points must be the same", ErrInvalidParams)
+		return "", fmt.Errorf("%w: polygon first and last points must be the same", sentinel.ErrInvalidParams)
 	}
 	if err := checkValidCoords(coords); err != nil {
 		return "", err
@@ -515,7 +515,7 @@ func ExtractSpecialCols(set *where.ValueSet) ([]string, *where.ValueSet, error) 
 			}
 		} else {
 			if isSpecialCol(*low) || isSpecialCol(*high) {
-				err = fmt.Errorf("%w: special columns cannot be part of a range", ErrInvalidParams)
+				err = fmt.Errorf("%w: special columns cannot be part of a range", sentinel.ErrInvalidParams)
 			}
 		}
 		if err != nil {
@@ -566,7 +566,7 @@ func FixGeotype(token string) (string, error) {
 			return geotype, nil
 		}
 	}
-	return "", fmt.Errorf("%w: %q is not a geotype", ErrInvalidParams, token)
+	return "", fmt.Errorf("%w: %q is not a geotype", sentinel.ErrInvalidParams, token)
 }
 
 // MapGeotypes changes case-insensitive geotypes given in query strings to the specific
@@ -578,7 +578,7 @@ func MapGeotypes(set *where.ValueSet) (*where.ValueSet, error) {
 		var err error
 
 		if single == nil {
-			err = fmt.Errorf("%w: cannot have ranges of geotypes", ErrInvalidParams)
+			err = fmt.Errorf("%w: cannot have ranges of geotypes", sentinel.ErrInvalidParams)
 		} else {
 			var geotype string
 			geotype, err = FixGeotype(*single)
@@ -601,7 +601,7 @@ func CheckOverlapsUK(coords []float64) error {
 	ends := []int{len(coords)}
 	poly := geom.NewPolygonFlat(geom.XY, coords, ends)
 	if !poly.Bounds().Overlaps(geom.XY, ukbbox) {
-		return fmt.Errorf("%w: bounding box does not overlap UK bounding box", ErrInvalidParams)
+		return fmt.Errorf("%w: bounding box does not overlap UK bounding box", sentinel.ErrInvalidParams)
 	}
 	return nil
 }

@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/geodata"
+	"github.com/ONSdigital/dp-find-insights-poc-api/sentinel"
 	"github.com/lib/pq"
 	"github.com/twpayne/go-geom/encoding/geojson"
 	"github.com/twpayne/go-geom/encoding/wkt"
@@ -23,17 +23,11 @@ type Table struct {
 	writer   io.Writer               // print SQL to this writer
 }
 
-const (
-	ErrTableName         = geodata.Sentinel("empty table name")
-	ErrInconsistentTypes = geodata.Sentinel("inconsistent property types")
-	ErrUnusableType      = geodata.Sentinel("unusable property type")
-)
-
 // New creates a Table that holds column names and types extracted from features.
 // Generated SQL will be written to w.
 func New(name string, features []geojson.Feature, keepcase bool, w io.Writer) (*Table, error) {
 	if name == "" {
-		return nil, ErrTableName
+		return nil, sentinel.ErrTableName
 	}
 
 	// extract column names and types from features
@@ -70,7 +64,7 @@ func (tab *Table) CreateTable() error {
 		case reflect.Float64:
 			sqltype = "double precision"
 		default:
-			return fmt.Errorf("%w: %s kind must be string or float64", ErrUnusableType, sqltype)
+			return fmt.Errorf("%w: %s kind must be string or float64", sentinel.ErrUnusableType, sqltype)
 		}
 		if !tab.keepcase {
 			name = strings.ToLower(name)
@@ -227,7 +221,7 @@ func getColumnTypes(features []geojson.Feature) (map[string]reflect.Kind, error)
 			if !seen {
 				cols[name] = thisKind
 			} else if thisKind != kind {
-				return nil, fmt.Errorf("%w: property %s: %s and %s", ErrInconsistentTypes, name, kind, thisKind)
+				return nil, fmt.Errorf("%w: property %s: %s and %s", sentinel.ErrInconsistentTypes, name, kind, thisKind)
 			}
 		}
 	}
@@ -270,7 +264,7 @@ func (tab *Table) genSQLvalues(properties map[string]interface{}) (map[string]st
 			case float64:
 				sql = strconv.FormatFloat(v, 'g', -1, 64)
 			default:
-				return nil, fmt.Errorf("%w: %s type must be nil, string or float64", ErrUnusableType, name)
+				return nil, fmt.Errorf("%w: %s type must be nil, string or float64", sentinel.ErrUnusableType, name)
 			}
 		}
 		values[name] = sql
@@ -297,7 +291,7 @@ func (tab *Table) genCOPYvalues(properties map[string]interface{}) (map[string]s
 			case float64:
 				copy = strconv.FormatFloat(v, 'g', -1, 64)
 			default:
-				return nil, fmt.Errorf("%w: %s type must be nil, string or float64", ErrUnusableType, name)
+				return nil, fmt.Errorf("%w: %s type must be nil, string or float64", sentinel.ErrUnusableType, name)
 			}
 		}
 		values[name] = copy

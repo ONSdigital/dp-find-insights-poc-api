@@ -10,6 +10,7 @@ import (
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/geodata"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/table"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/where"
+	"github.com/ONSdigital/dp-find-insights-poc-api/sentinel"
 )
 
 func (svr *Server) GetQuery(w http.ResponseWriter, r *http.Request, year int, params api.GetQueryParams) {
@@ -79,7 +80,7 @@ func (svr *Server) GetQuery(w http.ResponseWriter, r *http.Request, year int, pa
 			return svr.querygeodata.PGMetrics(r.Context(), year, geocodes, catset, include, censustable)
 		}
 		if len(geotype) != 1 {
-			return nil, fmt.Errorf("%w: cantabular queries require a single geotype", geodata.ErrInvalidParams)
+			return nil, fmt.Errorf("%w: cantabular queries require a single geotype", sentinel.ErrInvalidParams)
 		}
 
 		return svr.querygeodata.CantabularMetrics(r.Context(), geocodes, catset, geotype[0])

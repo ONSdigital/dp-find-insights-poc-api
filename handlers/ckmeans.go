@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/api"
-	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/geodata"
+	"github.com/ONSdigital/dp-find-insights-poc-api/sentinel"
 )
 
 func (svr *Server) GetCkmeansYear(w http.ResponseWriter, r *http.Request, year int, params api.GetCkmeansYearParams) {
@@ -30,7 +30,7 @@ func (svr *Server) GetCkmeansYear(w http.ResponseWriter, r *http.Request, year i
 			divideBy = *params.DivideBy
 		}
 		if cat == nil || geotype == nil || k == 0 {
-			return nil, fmt.Errorf("%w: cat, geotype and k required", geodata.ErrMissingParams)
+			return nil, fmt.Errorf("%w: cat, geotype and k required", sentinel.ErrMissingParams)
 		}
 
 		ctx := r.Context()
@@ -67,7 +67,7 @@ func (svr *Server) GetCkmeansratioYear(w http.ResponseWriter, r *http.Request, y
 			k = *params.K
 		}
 		if cat1 == "" || cat2 == "" || geotype == "" || k == 0 {
-			return nil, fmt.Errorf("%w: cat1, cat2, geotype and k required", geodata.ErrMissingParams)
+			return nil, fmt.Errorf("%w: cat1, cat2, geotype and k required", sentinel.ErrMissingParams)
 		}
 
 		ctx := r.Context()
