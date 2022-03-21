@@ -9,12 +9,22 @@ import (
 	"github.com/twpayne/go-geom/encoding/wkb"
 )
 
-func (app *Geodata) Geo(ctx context.Context, year int, geocode string) (*geojson.FeatureCollection, error) {
+type Resp struct {
+	Meta struct {
+		Name string `json:"name"`
+		Code string `json:"code"`
+	} `json:"meta"`
+	GeoJSON *geojson.FeatureCollection `json:"geo_json"`
+}
+
+func (app *Geodata) Geo(ctx context.Context, year int, geocode string) (*Resp, error) {
 	template := `
 		SELECT
 			ST_AsBinary(wkb_long_lat_geom),
 			ST_AsBinary(wkb_geometry),
-			ST_AsBinary(ST_BoundingDiagonal(wkb_geometry))
+			ST_AsBinary(ST_BoundingDiagonal(wkb_geometry)),
+			name,
+			code
 		FROM geo
 		WHERE code = $1 
 		`
@@ -26,7 +36,8 @@ func (app *Geodata) Geo(ctx context.Context, year int, geocode string) (*geojson
 	defer stmt.Close()
 
 	var centroid, boundary, bbox []byte
-	err = stmt.QueryRowContext(ctx, geocode).Scan(&centroid, &boundary, &bbox)
+	var name, code string
+	err = stmt.QueryRowContext(ctx, geocode).Scan(&centroid, &boundary, &bbox, &name, &code)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, sentinel.ErrNoContent
@@ -55,5 +66,9 @@ func (app *Geodata) Geo(ctx context.Context, year int, geocode string) (*geojson
 		},
 	}
 
-	return collection, nil
+	r := &Resp{GeoJSON: collection}
+	r.Meta.Name = name
+	r.Meta.Code = code
+
+	return r, nil
 }
