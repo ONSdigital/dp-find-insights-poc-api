@@ -1,6 +1,12 @@
 package model
 
-import "gorm.io/gorm"
+import (
+	"encoding/binary"
+
+	"github.com/twpayne/go-geom"
+	"github.com/twpayne/go-geom/encoding/ewkbhex"
+	"gorm.io/gorm"
+)
 
 // this is the schema for Postgres database)
 
@@ -51,7 +57,7 @@ type GeoType struct {
 	Geos []Geo `gorm:"foreignKey:TypeID;references:ID"`
 }
 
-// don't pluralise table name
+// don't pluralise table
 func (GeoType) TableName() string {
 	return "geo_type"
 }
@@ -61,11 +67,20 @@ type Geo struct {
 	TypeID int32
 	Code   string `gorm:"index:unique"`
 	Name   string
-	Lat    float64
-	Long   float64
-	Valid  bool `gorm:"DEFAULT:true"`
-	// wkb_geometry - added via ALTER
-	// wkb_long_lat_geom - added via ALTER
+	Lat    float64 // probably redundant
+	Long   float64 // probably redundant
+	Valid  bool    `gorm:"DEFAULT:true"`
+
+	// wkb_geometry - added via ALTER don't migrate
+	Wkb_geometry string `gorm:"column:wkb_geometry;-:migration"`
+	// decoded wkb_geometry
+	Geometry geom.T `gorm:"-:all"`
+
+	// wkb_long_lat_geom - added via ALTER don't migrate
+	WkbLongLatGeom string `gorm:"column:wkb_long_lat_geom;-:migration"`
+	// decoded wkb_long_lat_geom
+	LongLatGeom geom.T `gorm:"-:all"`
+
 	GoMetrics []GeoMetric `gorm:"foreignKey:GeoID;references:ID"`
 	PostCodes []PostCode  `gorm:"foreignKey:GeoID;references:ID"`
 }
@@ -73,6 +88,40 @@ type Geo struct {
 // don't pluralise table name
 func (Geo) TableName() string {
 	return "geo"
+}
+
+// decode
+func (geo *Geo) AfterFind(tx *gorm.DB) error {
+	geomt, err := ewkbhex.Decode(geo.Wkb_geometry)
+	if err != nil {
+		return err
+	}
+	geo.Geometry = geomt
+	longLatGeomt, err := ewkbhex.Decode(geo.WkbLongLatGeom)
+
+	if err != nil {
+		return err
+	}
+	geo.LongLatGeom = longLatGeomt
+
+	return nil
+}
+
+// encode
+func (geo *Geo) BeforeSave(tx *gorm.DB) error {
+	geomt, err := ewkbhex.Encode(geo.Geometry, binary.LittleEndian)
+	if err != nil {
+		return err
+	}
+	geo.Wkb_geometry = geomt
+
+	longLatGeomt, err := ewkbhex.Encode(geo.LongLatGeom, binary.LittleEndian)
+	if err != nil {
+		return err
+	}
+	geo.WkbLongLatGeom = longLatGeomt
+
+	return nil
 }
 
 type GeoMetric struct {

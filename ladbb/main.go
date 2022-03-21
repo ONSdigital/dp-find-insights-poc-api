@@ -1,4 +1,4 @@
-package main
+package ladbb
 
 import (
 	"bytes"
@@ -7,10 +7,6 @@ import (
 	"log"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/model"
-	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/database"
-	"github.com/spf13/cast"
-	"github.com/twpayne/go-geom/encoding/ewkbhex"
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
@@ -26,36 +22,35 @@ type LadBBValues struct {
 
 type LadBB map[string]LadBBValues
 
-func main() {
+type LadGeom struct {
+	Gdb *gorm.DB
+}
 
-	gdb, err := gorm.Open(postgres.Open(database.GetDSN()), &gorm.Config{})
-	if err != nil {
+func (g *LadGeom) AsJSON() string {
+	var geos []model.Geo
+	if err := g.Gdb.Where("type_id=4").Find(&geos).Error; err != nil {
 		log.Print(err)
 	}
 
-	var geos []model.Geo
-	gdb.Where("type_id=4").Find(&geos)
-
 	j := make(LadBB)
 	for _, geo := range geos {
+		geomt := geo.Geometry
 
-		// as gorm create hook?
-		geomt, err := ewkbhex.Decode(geo.Wkb_geometry)
-		if err != nil {
-			log.Print(err)
+		if geomt == nil {
+			continue
 		}
 
-		if geomt.Bounds().Layout().String() == "XY" {
-			j[geo.Code] = LadBBValues{Name: geo.Name,
-				Lat:  cast.ToString(geo.Lat),
-				Lon:  cast.ToString(geo.Long),
-				MaxX: cast.ToString(geomt.Bounds().Max(0)),
-				MaxY: cast.ToString(geomt.Bounds().Max(1)),
-				MinX: cast.ToString(geomt.Bounds().Min(0)),
-				MinY: cast.ToString(geomt.Bounds().Min(1)),
-			}
-		} else {
-			log.Fatal("unsupported layout")
+		x, y := GetXYOrder(geomt.Bounds().Layout().String())
+
+		f := "%.5f"
+
+		j[geo.Code] = LadBBValues{Name: geo.Name,
+			Lat:  fmt.Sprintf(f, geo.Lat),
+			Lon:  fmt.Sprintf(f, geo.Long),
+			MaxX: fmt.Sprintf(f, geomt.Bounds().Max(x)),
+			MaxY: fmt.Sprintf(f, geomt.Bounds().Max(y)),
+			MinX: fmt.Sprintf(f, geomt.Bounds().Min(x)),
+			MinY: fmt.Sprintf(f, geomt.Bounds().Min(y)),
 		}
 
 	}
@@ -70,5 +65,14 @@ func main() {
 		log.Print(err)
 	}
 
-	fmt.Println(out.String())
+	return out.String()
+}
+
+func GetXYOrder(xy string) (x, y int) {
+
+	if xy == "XY" {
+		return 0, 1
+	}
+
+	return 1, 0
 }
