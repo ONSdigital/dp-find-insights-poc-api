@@ -222,26 +222,22 @@ func main() {
 
 func HTTPget(s string) (b []byte, h map[string][]string, err error) {
 	resp, err := http.Get(s)
-
 	if err != nil {
 		return b, h, err
 	}
-
 	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		err := errors.New(fmt.Sprintf("API responded with status code %v", resp.StatusCode))
-		return b, h, err
-	}
 
 	// or just io. in go 1.16+
 	b, err = ioutil.ReadAll(resp.Body)
-
 	if err != nil {
 		return b, h, err
 	}
 
 	h = resp.Header
+
+	if resp.StatusCode != 200 {
+		err = errors.New(fmt.Sprintf("API responded with status code %v (%s)", resp.StatusCode, b))
+	}
 
 	return b, h, err
 }

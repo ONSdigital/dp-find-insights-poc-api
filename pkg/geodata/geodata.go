@@ -3,7 +3,6 @@ package geodata
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/cantabular"
@@ -13,8 +12,8 @@ import (
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/timer"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/where"
 	"github.com/ONSdigital/dp-find-insights-poc-api/sentinel"
-
 	_ "github.com/jackc/pgx/v4/stdlib"
+	geom "github.com/twpayne/go-geom"
 )
 
 const allRowsToken = "ALL" // rows= token that means grab all rows, as in rows=ALL
@@ -346,51 +345,67 @@ func geoSQL(geos []string) (string, error) {
 }
 
 func bboxSQL(bbox string) (string, error) {
-	if bbox != "" {
-		coords := []float64{}
-		for _, coordStr := range strings.Split(bbox, ",") {
-			coord, err := strconv.ParseFloat(coordStr, 64)
-			if err != nil {
-				return "", fmt.Errorf("%w: error parsing bbox %q: %s", sentinel.ErrInvalidParams, bbox, err)
-			}
-			coords = append(coords, coord)
-		}
-		if len(coords) != 4 {
-			return "", fmt.Errorf("%w: valid bbox is 'lon,lat,lon,lat', received %q", sentinel.ErrInvalidParams, bbox)
-		}
-		sql := fmt.Sprintf(`
+	if bbox == "" {
+		return "", nil
+	}
+
+	coords, err := parseCoords(bbox)
+	if err != nil {
+		return "", err
+	}
+	if len(coords) != 4 {
+		return "", fmt.Errorf("%w: valid bbox is 'lon,lat,lon,lat', received %q", sentinel.ErrInvalidParams, bbox)
+	}
+	if err := checkValidCoords(coords); err != nil {
+		return "", err
+	}
+	if err := CheckOverlapsUK(coords); err != nil {
+		return "", err
+	}
+
+	sql := fmt.Sprintf(`
 geo.wkb_geometry && ST_GeomFromText(
 	'MULTIPOINT(%f %f, %f %f)',
 	4326
 )
 `,
-			coords[0],
-			coords[1],
-			coords[2],
-			coords[3],
-		)
-		return sql, nil
-	}
-	return "", nil
+		coords[0],
+		coords[1],
+		coords[2],
+		coords[3],
+	)
+	return sql, nil
 }
 
 func radiusSQL(location string, radius int) (string, error) {
-	if location != "" || radius > 0 {
-		if location == "" || radius == 0 {
-			return "", fmt.Errorf("%w: radius queries require both location (%s) and radius (%d)", sentinel.ErrInvalidParams, location, radius)
-		}
-		var lon, lat float64
-		fields, err := fmt.Sscanf(location, "%f,%f", &lon, &lat)
-		if err != nil {
-			return "", fmt.Errorf("%w: scanning location %q: %s", sentinel.ErrInvalidParams, location, err)
-		}
-		if fields != 2 {
-			return "", fmt.Errorf("%w: location missing a number", sentinel.ErrMissingParams)
-		}
-		if radius < 1 {
-			return "", fmt.Errorf("%w: radius must be >0: %q", sentinel.ErrInvalidParams, radius)
-		}
-		sql := fmt.Sprintf(`
+	if location == "" && radius == 0 {
+		return "", nil
+	}
+
+	if location == "" || radius == 0 {
+		return "", fmt.Errorf("%w: radius queries require both location (%s) and radius (%d)", sentinel.ErrInvalidParams, location, radius)
+	}
+
+	coords, err := parseCoords(location)
+	if err != nil {
+		return "", err
+	}
+	if len(coords) != 2 {
+		return "", fmt.Errorf("%w: location must be a single point", sentinel.ErrInvalidParams)
+	}
+	if err := checkValidCoords(coords); err != nil {
+		return "", err
+	}
+	// A circle "overlaps" the UK bounding box if its location point is within the UK bounding box.
+	// This isn't correct, but is useful as a basic sanity check.
+	if err := CheckOverlapsUK(coords); err != nil {
+		return "", err
+	}
+	if radius < 1 || radius > maxRadius {
+		return "", fmt.Errorf("%w: radius must be 1..%d: %d", sentinel.ErrInvalidParams, maxRadius, radius)
+	}
+
+	sql := fmt.Sprintf(`
 ST_DWithin(
 	geo.wkb_long_lat_geom::geography,
 	ST_SetSRID(
@@ -400,29 +415,40 @@ ST_DWithin(
 	%d
 )
 `,
-			lon,
-			lat,
-			radius,
-		)
-		return sql, nil
-	}
-	return "", nil
+		coords[0],
+		coords[1],
+		radius,
+	)
+	return sql, nil
 }
 
 func polygonSQL(polygon string) (string, error) {
-	if polygon != "" {
-		points, err := ParsePolygon(polygon)
-		if err != nil {
-			return "", fmt.Errorf("%w: parsing polygon: %q", err, polygon)
-		}
-		// convert the slice of Points to a slice of strings holding coordinates like "lon lat"
-		var coords []string
-		for _, point := range points {
-			coords = append(coords, point.String())
-		}
-		// join the coordinate strings into a form usable in LINESTRING(...)
-		linestring := strings.Join(coords, ",")
-		sql := fmt.Sprintf(`
+	if polygon == "" {
+		return "", nil
+	}
+
+	coords, err := parseCoords(polygon)
+	if err != nil {
+		return "", err
+	}
+	if len(coords) < 8 {
+		return "", fmt.Errorf("%w: polygon must have at least 4 points", sentinel.ErrInvalidParams)
+	}
+	if coords[0] != coords[len(coords)-2] || coords[1] != coords[len(coords)-1] {
+		return "", fmt.Errorf("%w: polygon first and last points must be the same", sentinel.ErrInvalidParams)
+	}
+	if err := checkValidCoords(coords); err != nil {
+		return "", err
+	}
+	if err := CheckOverlapsUK(coords); err != nil {
+		return "", err
+	}
+	linestring, err := asLineString(coords)
+	if err != nil {
+		return "", err
+	}
+
+	sql := fmt.Sprintf(`
 ST_COVERS(
 	ST_Polygon(
 		'LINESTRING (%s)'::geometry,
@@ -431,11 +457,9 @@ ST_COVERS(
 	geo.wkb_geometry
 )
 `,
-			linestring,
-		)
-		return sql, nil
-	}
-	return "", nil
+		linestring,
+	)
+	return sql, nil
 }
 
 func censusTableFromAndSQL(censustable string) (string, string) {
@@ -566,4 +590,18 @@ func MapGeotypes(set *where.ValueSet) (*where.ValueSet, error) {
 	}
 
 	return set.Walk(callback)
+}
+
+// CheckOverlapsUK validates each point in the flat coordinate list.
+// Each point must be a valid lon/lat and the bounding box of all coordinates in the list must overlap the UK bounding box.
+func CheckOverlapsUK(coords []float64) error {
+	if err := checkValidCoords(coords); err != nil {
+		return nil
+	}
+	ends := []int{len(coords)}
+	poly := geom.NewPolygonFlat(geom.XY, coords, ends)
+	if !poly.Bounds().Overlaps(geom.XY, ukbbox) {
+		return fmt.Errorf("%w: bounding box does not overlap UK bounding box", sentinel.ErrInvalidParams)
+	}
+	return nil
 }

@@ -22,12 +22,12 @@ func init() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 }
 
-// parseURL returns a test's URL and possibly a second url that should return the same results.
+// makeURL returns a test's URL and possibly a second url that should return the same results.
 // The second url is because /query2 should return the same as /query until switch switch over.
-func parseURL(test APITest) (string, string) {
+func makeURL(endpoint, query string) (string, string) {
 	var queryString string
-	if test.query != "" {
-		queryString = "?" + test.query
+	if query != "" {
+		queryString = "?" + query
 	}
 
 	var base string
@@ -38,8 +38,8 @@ func parseURL(test APITest) (string, string) {
 	}
 
 	var queryURL, query2URL string
-	queryURL = fmt.Sprintf(`%s/%s%s`, base, test.endpoint, queryString)
-	if test.endpoint == censusEndpoint {
+	queryURL = fmt.Sprintf(`%s/%s%s`, base, endpoint, queryString)
+	if endpoint == censusEndpoint {
 		query2URL = fmt.Sprintf(`%s/%s%s`, base, query2Endpoint, queryString)
 	}
 	return queryURL, query2URL
@@ -50,7 +50,7 @@ func TestAPI(t *testing.T) {
 
 		t.Run(test.desc, func(t *testing.T) {
 
-			url, q2url := parseURL(test)
+			url, q2url := makeURL(test.endpoint, test.query)
 			b, header, err := HTTPget(url)
 
 			if err != nil {
@@ -129,7 +129,7 @@ func assertAPIResponse(b []byte, test APITest, t *testing.T, url string) {
 func BenchmarkAllTestAPI(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		for _, test := range Tests {
-			url, _ := parseURL(test) // ignoring query2 for now
+			url, _ := makeURL(test.endpoint, test.query) // ignoring query2 for now
 			_, _, err := HTTPget(url)
 			if err != nil {
 				panic(err)
@@ -152,11 +152,123 @@ func BenchmarkAllConcurrentTestAPI(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		for _, test := range Tests {
 			<-ticker.C
-			url, _ := parseURL(test) // ignoring query2 for now
+			url, _ := makeURL(test.endpoint, test.query) // ignoring query2 for now
 			go func(s string) {
 				HTTPget(s)
 			}(url)
 
 		}
+	}
+}
+
+// Verify API responds with non-200 when there is a problem with the query.
+func Test_API_Error_Detection(t *testing.T) {
+	var (
+		msf      = "-3.280,54.911"
+		guinness = "-6.286840,53.341738"
+		askja    = "-16.73041,65.03272"
+		tenerife = "-16.577575,28.047316"
+		porsche  = "9.152403,48.834302"
+		santa    = "25.84677,66.54384"
+		galway   = "-9.054191,53.272517"
+		eiffel   = "2.294532,48.8582722"
+		twilight = "181,0" //
+	)
+	var tests = map[string]struct {
+		endpoint string
+		query    string
+	}{
+		"non-numeric bbox coordinate": {
+			censusEndpoint,
+			"bbox=x,y",
+		},
+		"incomplete bbox coordinates": {
+			censusEndpoint,
+			fmt.Sprintf("bbox=%s,0", msf),
+		},
+		"bbox not two points": {
+			censusEndpoint,
+			fmt.Sprintf("bbox=%s,%s,%s", msf, guinness, galway),
+		},
+		"bbox in the twilight zone": {
+			censusEndpoint,
+			fmt.Sprintf("bbox=%s,%s", twilight, porsche),
+		},
+		"bbox not in UK": {
+			censusEndpoint,
+			fmt.Sprintf("bbox=%s,%s", santa, eiffel),
+		},
+
+		"missing circle location": {
+			censusEndpoint,
+			"radius=1000",
+		},
+		"non-numeric circle location": {
+			censusEndpoint,
+			"location=x,y&radius=1000",
+		},
+		"incomplete circle coordinates": {
+			censusEndpoint,
+			"location=1&radius=1000",
+		},
+		"too many circle coordinates": {
+			censusEndpoint,
+			fmt.Sprintf("location=%s,%s&radius=1000", msf, guinness),
+		},
+		"circle in twilight zone": {
+			censusEndpoint,
+			fmt.Sprintf("location=%s&radius=1000", twilight),
+		},
+		"circle not in UK": {
+			censusEndpoint,
+			fmt.Sprintf("location=%s&radius=1000", tenerife),
+		},
+		"small circle radius": {
+			censusEndpoint,
+			fmt.Sprintf("location=%s&radius=0", msf),
+		},
+		"huge circle radius": {
+			censusEndpoint,
+			fmt.Sprintf("location=%s&radius=1000001", msf),
+		},
+
+		"non-numeric polygon coordinate": {
+			censusEndpoint,
+			fmt.Sprintf("polygon=x,y,%s,%s,%s,x,y", askja, msf, santa),
+		},
+		"not enough polygon coordinates": {
+			censusEndpoint,
+			fmt.Sprintf("polygon=%s,%s,%s", eiffel, porsche, eiffel),
+		},
+		"first and last polygon coordinates don't match": {
+			censusEndpoint,
+			fmt.Sprintf("polygon=%s,%s,%s,%s", galway, tenerife, porsche, santa),
+		},
+		"polygon coordinate in the twilight zone": {
+			censusEndpoint,
+			fmt.Sprintf("polygon=%s,%s,%s,%s", galway, twilight, porsche, galway),
+		},
+		"polygon not in UK": {
+			censusEndpoint,
+			fmt.Sprintf("polygon=%s,%s,%s,%s", tenerife, porsche, eiffel, tenerife),
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			url, q2url := makeURL(test.endpoint, test.query)
+			var err error
+			if _, _, err = HTTPget(url); err == nil {
+				t.Errorf("%s: expected API to return error", url)
+			}
+			t.Logf("%s: %s", url, err)
+			if q2url == "" {
+				return
+			}
+			if _, _, err = HTTPget(q2url); err == nil {
+				t.Errorf("%s: expected API to return error", url)
+			}
+			t.Logf("%s: %s", q2url, err)
+		})
 	}
 }
