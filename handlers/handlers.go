@@ -155,6 +155,11 @@ func (svr *Server) GetClearCache(w http.ResponseWriter, r *http.Request) {
 	sendError(w, http.StatusInternalServerError, fmt.Sprintf("problem clearing cache: %s", err.Error()))
 }
 
+func (svr *Server) Preflight(w http.ResponseWriter, r *http.Request, path string, year int) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Cache-Control")
+}
+
 // assertPrivate sends an error to the client if private endpoints are not enabled.
 // Returns true if private endpoints are enabled.
 func (svr *Server) assertPrivate(w http.ResponseWriter) bool {

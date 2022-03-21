@@ -240,6 +240,9 @@ type ServerInterface interface {
 	// spec
 	// (GET /swaggerui)
 	GetSwaggerui(w http.ResponseWriter, r *http.Request)
+	// CORS preflight OPTIONS request
+	// (OPTIONS /{path}/{year})
+	Preflight(w http.ResponseWriter, r *http.Request, path string, year int)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -781,6 +784,41 @@ func (siw *ServerInterfaceWrapper) GetSwaggerui(w http.ResponseWriter, r *http.R
 	handler(w, r.WithContext(ctx))
 }
 
+// Preflight operation middleware
+func (siw *ServerInterfaceWrapper) Preflight(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var err error
+
+	// ------------- Path parameter "path" -------------
+	var path string
+
+	err = runtime.BindStyledParameter("simple", false, "path", chi.URLParam(r, "path"), &path)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid format for parameter path: %s", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Path parameter "year" -------------
+	var year int
+
+	err = runtime.BindStyledParameter("simple", false, "year", chi.URLParam(r, "year"), &year)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid format for parameter year: %s", err), http.StatusBadRequest)
+		return
+	}
+
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.Preflight(w, r, path, year)
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler(w, r.WithContext(ctx))
+}
+
 // Handler creates http.Handler with routing matching OpenAPI spec.
 func Handler(si ServerInterface) http.Handler {
 	return HandlerWithOptions(si, ChiServerOptions{})
@@ -847,6 +885,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/swaggerui", wrapper.GetSwaggerui)
+	})
+	r.Group(func(r chi.Router) {
+		r.Options(options.BaseURL+"/{path}/{year}", wrapper.Preflight)
 	})
 
 	return r

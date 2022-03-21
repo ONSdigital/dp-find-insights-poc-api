@@ -12,6 +12,25 @@ info:
     url: "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
 
 paths:
+  /{path}/{year}:
+    options:
+      operationId: Preflight
+      tags:
+        - public
+      summary: CORS preflight OPTIONS request
+      parameters:
+        - in: path
+          name: path
+          schema:
+            type: string
+        - in: path
+          name: year
+          schema:
+            type: integer
+      responses:
+        200:
+          description: response
+
   /metadata/{year}:
     get:
       tags:
