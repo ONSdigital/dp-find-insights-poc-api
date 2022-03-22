@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/ONSdigital/dp-find-insights-poc-api/sentinel"
 	"github.com/twpayne/go-geom/encoding/geojson"
 	"github.com/twpayne/go-geom/encoding/wkb"
 )
@@ -40,7 +39,7 @@ func (app *Geodata) Geo(ctx context.Context, year int, geocode string) (*Resp, e
 	err = stmt.QueryRowContext(ctx, geocode).Scan(&centroid, &boundary, &bbox, &name, &code)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, sentinel.ErrNoContent
+			return &Resp{}, nil
 		}
 		return nil, err
 	}

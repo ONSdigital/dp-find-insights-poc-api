@@ -193,6 +193,11 @@ var Tests = []APITest{
 		geoEndpoint,
 		"geocode=E09000004",
 	},
+	{
+		"geo empty response",
+		geoEndpoint,
+		"geocode=noexist",
+	},
 }
 
 var DataPref = "resp/"
