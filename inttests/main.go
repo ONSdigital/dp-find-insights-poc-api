@@ -41,6 +41,18 @@ func init() {
 
 var Tests = []APITest{
 	// skinny is deprecated
+	// no rows found; expect csv headings only
+	{
+		"no rows found",
+		censusEndpoint,
+		`rows=noexist&cols=geography_code,geotype`,
+	},
+	// no cols found; expect csv headings only
+	{
+		"no cols found",
+		censusEndpoint,
+		`rows=E01002111&cols=geography_code,geotype,noexist`,
+	},
 	// all cols single row no geography census
 	{
 		"census tables all cols single row no geography",

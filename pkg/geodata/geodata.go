@@ -101,10 +101,6 @@ func (app *Geodata) collectCells(ctx context.Context, sql string, include []stri
 		return "", err
 	}
 
-	if nmetrics == 0 {
-		return "", sentinel.ErrNoContent
-	}
-
 	tgen := timer.New("generate")
 	tgen.Start()
 	err = tbl.Generate(&body, include)

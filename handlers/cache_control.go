@@ -69,8 +69,6 @@ func (svr *Server) respond(w http.ResponseWriter, r *http.Request, contentType s
 	switch {
 	case errors.Is(err, sentinel.ErrMissingParams), errors.Is(err, sentinel.ErrInvalidParams):
 		code = http.StatusBadRequest
-	case errors.Is(err, sentinel.ErrNoContent):
-		code = http.StatusNoContent
 	case errors.Is(err, sentinel.ErrTooManyMetrics):
 		code = http.StatusForbidden
 	case errors.Is(err, sentinel.ErrNotSupported):

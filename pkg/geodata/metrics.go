@@ -16,15 +16,23 @@ import (
 
 // Retrieve metrics from postgres.
 func (app *Geodata) PGMetrics(ctx context.Context, year int, geocodes []string, catset *where.ValueSet, include []string, censustable string) ([]byte, error) {
-	sql, include, err := app.metricsSQL(ctx, year, geocodes, catset, include, censustable)
-	if err != nil {
-		return nil, err
-	}
-
 	tbl := table.New()
 
 	var body bytes.Buffer
 	body.Grow(1000000)
+
+	// If there are no geocodes, skip the db query, and just return an empty csv.
+	if len(geocodes) == 0 {
+		if err := tbl.Generate(&body, include); err != nil {
+			return nil, err
+		}
+		return body.Bytes(), nil
+	}
+
+	sql, include, err := app.metricsSQL(ctx, year, geocodes, catset, include, censustable)
+	if err != nil {
+		return nil, err
+	}
 
 	t := timer.New("query")
 	t.Start()
@@ -73,10 +81,6 @@ func (app *Geodata) PGMetrics(ctx context.Context, year int, geocodes []string, 
 
 	if err := rows.Err(); err != nil {
 		return nil, err
-	}
-
-	if nmetrics == 0 {
-		return nil, sentinel.ErrNoContent
 	}
 
 	tgen := timer.New("generate")
