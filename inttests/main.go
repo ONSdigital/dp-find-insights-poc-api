@@ -182,6 +182,11 @@ var Tests = []APITest{
 		ckmeansEndpoint,
 		"cat=QS208EW0002&geotype=LSOA&k=5",
 	},
+	{
+		"ckmeans empty response",
+		ckmeansEndpoint,
+		"cat=noexist&geotype=LSOA&k=5",
+	},
 	// geo
 	{
 		"geo",

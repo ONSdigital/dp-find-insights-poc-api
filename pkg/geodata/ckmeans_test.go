@@ -347,13 +347,13 @@ func TestCkmeansNoData(t *testing.T) {
 		)
 
 		// THEN we expect to receive no data
-		var wantBreaks map[string]map[string][]float64
+		wantBreaks := map[string]map[string][]float64{}
 		if !reflect.DeepEqual(result, wantBreaks) {
 			t.Errorf("got %#v, wanted %#v", result, wantBreaks)
 		}
-		// AND THEN we expect to receive an ErrNoContent error
-		if !errors.Is(err, sentinel.ErrNoContent) {
-			t.Errorf("got this error = '%s', wanted '%s'", err, sentinel.ErrNoContent)
+		// AND THEN we expect to receive no error
+		if err != nil {
+			t.Errorf("got this error = '%s', wanted nil", err)
 		}
 	}()
 }
@@ -638,14 +638,14 @@ func TestCkmeansRatiosNoData(t *testing.T) {
 		)
 
 		// THEN we expect to receive no data
-		var wantBreaks map[string]map[string][]float64
+		wantBreaks := map[string]map[string][]float64{}
 		if !reflect.DeepEqual(result, wantBreaks) {
 			t.Errorf("got %#v, wanted %#v", result, wantBreaks)
 		}
 
-		// AND THEN we expect to receive an ErrNoContent error
-		if !errors.Is(err, sentinel.ErrNoContent) {
-			t.Errorf("got this error = '%s', wanted '%s'", err, sentinel.ErrNoContent)
+		// AND THEN we expect to receive no error
+		if err != nil {
+			t.Errorf("got this error = '%s', wanted nil", err)
 		}
 	}()
 }

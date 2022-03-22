@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"strings"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/timer"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/where"
@@ -100,11 +99,7 @@ func (app *Geodata) CKmeans(ctx context.Context, year int, cat []string, geotype
 		ok := rows.Next()
 		tnext.Stop()
 
-		// if we've got the end of the rows, check we got any data at all
 		if !ok {
-			if ckparser.nmetrics == 0 {
-				return nil, fmt.Errorf("No data found for %s: %w", strings.Join(ckparser.catcodes, ", "), sentinel.ErrNoContent)
-			}
 			break
 		}
 
@@ -119,7 +114,6 @@ func (app *Geodata) CKmeans(ctx context.Context, year int, cat []string, geotype
 		return nil, err
 	}
 
-	// process all breaks and return
 	if err = ckparser.processBreaks(); err != nil {
 		return nil, err
 	}
@@ -268,6 +262,9 @@ func (ckparser *CkmeansParser) resetChunk() {
 // category, storing the results in CkmeansParser.breaks
 //
 func (ckparser *CkmeansParser) processBreaks() error {
+	if ckparser.nmetrics == 0 {
+		return nil
+	}
 	for _, catcode := range ckparser.catcodes {
 		for _, geotype := range ckparser.geotypes {
 			catBreaks, err := getBreaks(ckparser.metrics[catcode][geotype], ckparser.k)
@@ -425,7 +422,7 @@ AND data_ver.ver_string = '2.2'
 	}
 
 	if nmetricsCat1 == 0 && nmetricsCat2 == 0 {
-		return nil, sentinel.ErrNoContent
+		return []float64{}, nil
 	}
 	if nmetricsCat1 != nmetricsCat2 {
 		return nil, sentinel.ErrPartialContent
