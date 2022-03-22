@@ -17,17 +17,34 @@ type Resp struct {
 	GeoJSON *geojson.FeatureCollection `json:"geo_json"`
 }
 
-func (app *Geodata) Geo(ctx context.Context, year int, geocode string) (*Resp, error) {
-	template := `
-		SELECT
-			ST_AsBinary(wkb_long_lat_geom),
-			ST_AsBinary(wkb_geometry),
-			ST_AsBinary(ST_BoundingDiagonal(wkb_geometry)),
-			name,
-			code
-		FROM geo
-		WHERE code = $1 
-		`
+func (app *Geodata) Geo(ctx context.Context, year int, geocode string, geoname string) (*Resp, error) {
+	var template string
+	var queryCondition string
+	if geocode != "" {
+		template = `
+			SELECT
+				ST_AsBinary(wkb_long_lat_geom),
+				ST_AsBinary(wkb_geometry),
+				ST_AsBinary(ST_BoundingDiagonal(wkb_geometry)),
+				name,
+				code
+			FROM geo
+			WHERE code = $1
+			`
+		queryCondition = geocode
+	} else {
+		template = `
+			SELECT
+				ST_AsBinary(wkb_long_lat_geom),
+				ST_AsBinary(wkb_geometry),
+				ST_AsBinary(ST_BoundingDiagonal(wkb_geometry)),
+				name,
+				code
+			FROM geo
+			WHERE name = $1
+			`
+		queryCondition = geoname
+	}
 
 	stmt, err := app.db.DB().PrepareContext(ctx, template)
 	if err != nil {
@@ -37,7 +54,7 @@ func (app *Geodata) Geo(ctx context.Context, year int, geocode string) (*Resp, e
 
 	var centroid, boundary, bbox []byte
 	var name, code string
-	err = stmt.QueryRowContext(ctx, geocode).Scan(&centroid, &boundary, &bbox, &name, &code)
+	err = stmt.QueryRowContext(ctx, queryCondition).Scan(&centroid, &boundary, &bbox, &name, &code)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, sentinel.ErrNoContent
