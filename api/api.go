@@ -104,6 +104,9 @@ type GetCkmeansratioYearParams struct {
 type GetGeoParams struct {
 	// Geography code, eg E09000004
 	Geocode *string `json:"geocode,omitempty"`
+
+	// Geography name, eg Bexley
+	Geoname *string `json:"geoname,omitempty"`
 }
 
 // GetMetadataYearParams defines parameters for GetMetadataYear.
@@ -219,7 +222,7 @@ type ServerInterface interface {
 	// remove all entries from request cache
 	// (GET /clear-cache)
 	GetClearCache(w http.ResponseWriter, r *http.Request)
-	// Get geographic info about an area
+	// Get geographic info about an area. Queryable with either geocode or geoname (but not both)
 	// (GET /geo/{year})
 	GetGeo(w http.ResponseWriter, r *http.Request, year int, params GetGeoParams)
 	// Get Metadata
@@ -440,6 +443,17 @@ func (siw *ServerInterfaceWrapper) GetGeo(w http.ResponseWriter, r *http.Request
 	err = runtime.BindQueryParameter("form", true, false, "geocode", r.URL.Query(), &params.Geocode)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Invalid format for parameter geocode: %s", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "geoname" -------------
+	if paramValue := r.URL.Query().Get("geoname"); paramValue != "" {
+
+	}
+
+	err = runtime.BindQueryParameter("form", true, false, "geoname", r.URL.Query(), &params.Geoname)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid format for parameter geoname: %s", err), http.StatusBadRequest)
 		return
 	}
 
