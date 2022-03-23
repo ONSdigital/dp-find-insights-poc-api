@@ -1,7 +1,8 @@
 {
     "meta": {
         "name": "Bexley",
-        "code": "E09000004"
+        "code": "E09000004",
+        "geotype": "LAD"
     },
     "geo_json": {
         "type": "FeatureCollection",

@@ -466,7 +466,7 @@ paths:
       operationId: GetGeo
       tags:
         - public
-      summary: Get geographic info about an area
+      summary: Get geographic info about an area. Queryable with either geocode or geoname (but not both)
       parameters:
         - in: path
           name: year
@@ -480,6 +480,12 @@ paths:
           name: geocode
           description: |
             Geography code, eg E09000004
+          schema:
+            type: string
+        - in: query
+          name: geoname
+          description: |
+            Geography name, eg Bexley 
           schema:
             type: string
       responses:
