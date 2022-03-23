@@ -1,4 +1,4 @@
-package ladbb
+package geobb
 
 import (
 	"fmt"
@@ -8,8 +8,10 @@ import (
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/comptests"
 	"github.com/ONSdigital/dp-find-insights-poc-api/model"
+	"github.com/ryboe/q"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 // comptest
@@ -27,7 +29,7 @@ func init() {
 
 	var err error
 	gdb, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
-		//Logger: logger.Default.LogMode(logger.Info),
+		Logger: logger.Default.LogMode(logger.Info),
 	})
 
 	if err != nil {
@@ -85,6 +87,8 @@ func TestGeometryFetchSave(t *testing.T) {
 		if err := tx.Where("code=?", "dummy").First(&res).Error; err != nil {
 			t.Fatalf(err.Error())
 		}
+
+		q.Q(res)
 		// are we getting a geom.T from a GORM write/read?
 		if res.Geometry.SRID() != 4326 {
 			t.Fail()
@@ -93,6 +97,21 @@ func TestGeometryFetchSave(t *testing.T) {
 		if !reflect.DeepEqual(res.LongLatGeom.FlatCoords(), []float64{-0.09197, 51.51868}) {
 			t.Fail()
 		}
+
+		/*
+			// nil case
+			if err := tx.Save(&model.Geo{
+				Name: "nuldummy",
+				Code: "nuldummy",
+				//Geometry:    g.Geometry,
+				//LongLatGeom: g.LongLatGeom,
+				TypeID: 4,
+				Valid:  false,
+			}).Error; err != nil {
+				t.Fatalf(err.Error())
+			}
+		*/
+
 	}()
 
 }

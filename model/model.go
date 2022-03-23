@@ -1,8 +1,10 @@
 package model
 
 import (
+	"database/sql"
 	"encoding/binary"
 
+	"github.com/ryboe/q"
 	"github.com/twpayne/go-geom"
 	"github.com/twpayne/go-geom/encoding/ewkbhex"
 	"gorm.io/gorm"
@@ -72,12 +74,14 @@ type Geo struct {
 	Valid  bool    `gorm:"DEFAULT:true"`
 
 	// wkb_geometry - added via ALTER don't migrate
-	Wkb_geometry string `gorm:"column:wkb_geometry;-:migration"`
+	//Wkb_geometry string `gorm:"column:wkb_geometry;-:migration"` // FIX NAME
+	Wkb_geometry sql.NullString `gorm:"column:wkb_geometry;-:migration"` // FIX NAME
 	// decoded wkb_geometry
 	Geometry geom.T `gorm:"-:all"`
 
 	// wkb_long_lat_geom - added via ALTER don't migrate
-	WkbLongLatGeom string `gorm:"column:wkb_long_lat_geom;-:migration"`
+	//WkbLongLatGeom string `gorm:"column:wkb_long_lat_geom;-:migration"`
+	WkbLongLatGeom sql.NullString `gorm:"column:wkb_long_lat_geom;-:migration"`
 	// decoded wkb_long_lat_geom
 	LongLatGeom geom.T `gorm:"-:all"`
 
@@ -90,36 +94,54 @@ func (Geo) TableName() string {
 	return "geo"
 }
 
+// BROKENNNNNNNNNNNNNNNNNNNNNNNNNNNN
 // decode
 func (geo *Geo) AfterFind(tx *gorm.DB) error {
-	geomt, err := ewkbhex.Decode(geo.Wkb_geometry)
-	if err != nil {
-		return err
+	var nulGeomt geom.T
+	if geo.Wkb_geometry.Valid {
+		q.Q(geo.Wkb_geometry)
+		geomt, err := ewkbhex.Decode(geo.Wkb_geometry.String)
+		if err != nil {
+			return err
+		}
+		q.Q(geomt)
+		geo.Geometry = geomt
+	} else {
+		geo.Geometry = nulGeomt
 	}
-	geo.Geometry = geomt
-	longLatGeomt, err := ewkbhex.Decode(geo.WkbLongLatGeom)
+	if geo.WkbLongLatGeom.Valid {
+		q.Q(geo.WkbLongLatGeom)
+		longLatGeomt, err := ewkbhex.Decode(geo.WkbLongLatGeom.String)
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
+		q.Q(longLatGeomt)
+		geo.LongLatGeom = longLatGeomt
+	} else {
+		geo.LongLatGeom = nulGeomt
 	}
-	geo.LongLatGeom = longLatGeomt
-
 	return nil
 }
 
 // encode
 func (geo *Geo) BeforeSave(tx *gorm.DB) error {
-	geomt, err := ewkbhex.Encode(geo.Geometry, binary.LittleEndian)
-	if err != nil {
-		return err
-	}
-	geo.Wkb_geometry = geomt
 
-	longLatGeomt, err := ewkbhex.Encode(geo.LongLatGeom, binary.LittleEndian)
-	if err != nil {
-		return err
+	if geo.Wkb_geometry.Valid {
+		geomt, err := ewkbhex.Encode(geo.Geometry, binary.LittleEndian)
+		if err != nil {
+			return err
+		}
+		geo.Wkb_geometry = sql.NullString{String: geomt, Valid: true}
 	}
-	geo.WkbLongLatGeom = longLatGeomt
+
+	if geo.Wkb_geometry.Valid {
+		longLatGeomt, err := ewkbhex.Encode(geo.LongLatGeom, binary.LittleEndian)
+		if err != nil {
+			return err
+		}
+		geo.WkbLongLatGeom = sql.NullString{String: longLatGeomt, Valid: true}
+	}
 
 	return nil
 }
