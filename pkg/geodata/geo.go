@@ -64,7 +64,7 @@ func (app *Geodata) Geo(ctx context.Context, year int, geocode string, geoname s
 
 	// return no data if there is no geometry (this is the case for England and Wales, Regions, and other geotypes)
 	if centroid == nil || boundary == nil || bbox == nil {
-		return nil, sentinel.ErrNoContent
+		return &Resp{}, nil
 	}
 
 	geomCentroid, err := wkb.Unmarshal(centroid)

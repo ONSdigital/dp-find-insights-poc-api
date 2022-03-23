@@ -1,7 +1,8 @@
 {
     "meta": {
         "name": "",
-        "code": ""
+        "code": "",
+        "geotype": ""
     },
     "geo_json": null
 }
