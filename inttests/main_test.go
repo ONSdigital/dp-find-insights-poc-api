@@ -4,10 +4,13 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -43,6 +46,34 @@ func makeURL(endpoint, query string) (string, string) {
 		query2URL = fmt.Sprintf(`%s/%s%s`, base, query2Endpoint, queryString)
 	}
 	return queryURL, query2URL
+}
+
+func TestOPTIONS(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	url, _ := makeURL(geoEndpoint, "")
+	req, err := http.NewRequestWithContext(ctx, "OPTIONS", url, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+
+	headers := resp.Header.Values("Access-Control-Allow-Headers")
+	for _, h := range headers {
+		for _, tok := range strings.Split(h, ",") {
+			if strings.EqualFold(tok, "Cache-Control") {
+				return
+			}
+		}
+	}
+	t.Fatal("expected Cache-Control in Access-Control-Allow-Headers")
 }
 
 func TestAPI(t *testing.T) {
