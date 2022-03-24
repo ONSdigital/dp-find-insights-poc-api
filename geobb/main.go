@@ -35,7 +35,7 @@ var geotype = map[string]int{
 
 func (g *GeoBB) AsJSON(params Params) string {
 	var geos []model.Geo
-	if err := g.Gdb.Where("type_id in (?,?)", geotype[params.Geos[0]], geotype[params.Geos[1]]).Find(&geos).Error; err != nil {
+	if err := g.Gdb.Order("code").Where("type_id in (?,?)", geotype[params.Geos[0]], geotype[params.Geos[1]]).Find(&geos).Error; err != nil {
 		log.Print(err)
 	}
 
