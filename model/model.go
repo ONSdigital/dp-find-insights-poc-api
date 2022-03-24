@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/binary"
 
-	"github.com/ryboe/q"
 	"github.com/twpayne/go-geom"
 	"github.com/twpayne/go-geom/encoding/ewkbhex"
 	"gorm.io/gorm"
@@ -74,8 +73,8 @@ type Geo struct {
 	Valid  bool    `gorm:"DEFAULT:true"`
 
 	// wkb_geometry - added via ALTER don't migrate
-	//Wkb_geometry string `gorm:"column:wkb_geometry;-:migration"` // FIX NAME
-	Wkb_geometry sql.NullString `gorm:"column:wkb_geometry;-:migration"` // FIX NAME
+	//Wkbgeometry string `gorm:"column:wkb_geometry;-:migration"` // FIX NAME
+	Wkbgeometry sql.NullString `gorm:"column:wkb_geometry;-:migration"` // FIX NAME
 	// decoded wkb_geometry
 	Geometry geom.T `gorm:"-:all"`
 
@@ -94,32 +93,26 @@ func (Geo) TableName() string {
 	return "geo"
 }
 
-// BROKENNNNNNNNNNNNNNNNNNNNNNNNNNNN
 // decode
 func (geo *Geo) AfterFind(tx *gorm.DB) error {
-	var nulGeomt geom.T
-	if geo.Wkb_geometry.Valid {
-		q.Q(geo.Wkb_geometry)
-		geomt, err := ewkbhex.Decode(geo.Wkb_geometry.String)
+	if geo.Wkbgeometry.Valid {
+		geomt, err := ewkbhex.Decode(geo.Wkbgeometry.String)
 		if err != nil {
 			return err
 		}
-		q.Q(geomt)
 		geo.Geometry = geomt
 	} else {
-		geo.Geometry = nulGeomt
+		geo.Geometry = nil
 	}
 	if geo.WkbLongLatGeom.Valid {
-		q.Q(geo.WkbLongLatGeom)
 		longLatGeomt, err := ewkbhex.Decode(geo.WkbLongLatGeom.String)
 
 		if err != nil {
 			return err
 		}
-		q.Q(longLatGeomt)
 		geo.LongLatGeom = longLatGeomt
 	} else {
-		geo.LongLatGeom = nulGeomt
+		geo.LongLatGeom = nil
 	}
 	return nil
 }
@@ -127,15 +120,15 @@ func (geo *Geo) AfterFind(tx *gorm.DB) error {
 // encode
 func (geo *Geo) BeforeSave(tx *gorm.DB) error {
 
-	if geo.Wkb_geometry.Valid {
+	if geo.Geometry != nil {
 		geomt, err := ewkbhex.Encode(geo.Geometry, binary.LittleEndian)
 		if err != nil {
 			return err
 		}
-		geo.Wkb_geometry = sql.NullString{String: geomt, Valid: true}
+		geo.Wkbgeometry = sql.NullString{String: geomt, Valid: true}
 	}
 
-	if geo.Wkb_geometry.Valid {
+	if geo.LongLatGeom != nil {
 		longLatGeomt, err := ewkbhex.Encode(geo.LongLatGeom, binary.LittleEndian)
 		if err != nil {
 			return err

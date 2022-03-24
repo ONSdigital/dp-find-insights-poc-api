@@ -1,14 +1,12 @@
 package geobb
 
 import (
-	"fmt"
 	"log"
 	"reflect"
 	"testing"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/comptests"
 	"github.com/ONSdigital/dp-find-insights-poc-api/model"
-	"github.com/ryboe/q"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -66,11 +64,10 @@ func TestGeometryFetchSave(t *testing.T) {
 			t.Fail()
 		}
 
-		fmt.Printf("g=%#v\n", g)
-
+		// write to database
 		ng := model.Geo{
-			Name:        "dummy",
-			Code:        "dummy",
+			Name:        "dummy2",
+			Code:        "dummy2",
 			Geometry:    g.Geometry,
 			LongLatGeom: g.LongLatGeom,
 			TypeID:      g.TypeID,
@@ -82,36 +79,49 @@ func TestGeometryFetchSave(t *testing.T) {
 		}
 
 		// explicit read
-		var res model.Geo
+		{
+			var res model.Geo
 
-		if err := tx.Where("code=?", "dummy").First(&res).Error; err != nil {
-			t.Fatalf(err.Error())
+			if err := tx.Where("code=?", "dummy2").First(&res).Error; err != nil {
+				t.Fatalf(err.Error())
+			}
+
+			// are we getting a geom.T from a GORM write/read?
+			if res.Geometry.SRID() != 4326 { // XXX
+				t.Fail()
+			}
+			// are we getting a geom.T from a GORM read for .LongLatGeom?
+			if !reflect.DeepEqual(res.LongLatGeom.FlatCoords(), []float64{-0.09197, 51.51868}) {
+				t.Fail()
+			}
 		}
 
-		q.Q(res)
-		// are we getting a geom.T from a GORM write/read?
-		if res.Geometry.SRID() != 4326 {
-			t.Fail()
-		}
-		// are we getting a geom.T from a GORM read for .LongLatGeom?
-		if !reflect.DeepEqual(res.LongLatGeom.FlatCoords(), []float64{-0.09197, 51.51868}) {
-			t.Fail()
-		}
-
-		/*
-			// nil case
+		{
+			// write nils
+			var res model.Geo
 			if err := tx.Save(&model.Geo{
-				Name: "nuldummy",
-				Code: "nuldummy",
-				//Geometry:    g.Geometry,
-				//LongLatGeom: g.LongLatGeom,
-				TypeID: 4,
+				Name:   "nuldummy",
+				Code:   "nuldummy",
+				TypeID: 6,
 				Valid:  false,
 			}).Error; err != nil {
 				t.Fatalf(err.Error())
 			}
-		*/
 
+			// read nils
+			if err := tx.Where("code=?", "nuldummy").First(&res).Error; err != nil {
+				t.Fatalf(err.Error())
+			}
+
+			if res.Wkbgeometry.Valid {
+				t.Fail()
+			}
+
+			if res.Wkbgeometry.Valid {
+				t.Fail()
+			}
+
+		}
 	}()
 
 }
