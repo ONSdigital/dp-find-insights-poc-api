@@ -68,18 +68,16 @@ type Geo struct {
 	TypeID int32
 	Code   string `gorm:"index:unique"`
 	Name   string
-	Lat    float64 // probably redundant
-	Long   float64 // probably redundant
+	Lat    float64 // probably redundant use LongLatGeom
+	Long   float64 // probably redundant use LongLatGeom
 	Valid  bool    `gorm:"DEFAULT:true"`
 
-	// wkb_geometry - added via ALTER don't migrate
-	//Wkbgeometry string `gorm:"column:wkb_geometry;-:migration"` // FIX NAME
-	Wkbgeometry sql.NullString `gorm:"column:wkb_geometry;-:migration"` // FIX NAME
+	// wkb_geometry - added via ALTER don't migrate - use Geometry from gorm
+	Wkbgeometry sql.NullString `gorm:"column:wkb_geometry;-:migration"`
 	// decoded wkb_geometry
 	Geometry geom.T `gorm:"-:all"`
 
-	// wkb_long_lat_geom - added via ALTER don't migrate
-	//WkbLongLatGeom string `gorm:"column:wkb_long_lat_geom;-:migration"`
+	// wkb_long_lat_geom - added via ALTER don't migrate - use LongLatGeom from gorm
 	WkbLongLatGeom sql.NullString `gorm:"column:wkb_long_lat_geom;-:migration"`
 	// decoded wkb_long_lat_geom
 	LongLatGeom geom.T `gorm:"-:all"`
