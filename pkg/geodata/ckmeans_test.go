@@ -52,8 +52,9 @@ func ckmeansTestSetup(t *testing.T, db *database.Database, metrics map[string]ma
 	var nGeos int
 	for _, cats := range metrics {
 		for _, catValues := range cats {
-			nGeos = len(catValues)
-			break
+			if len(catValues) > nGeos {
+				nGeos = len(catValues)
+			}
 		}
 	}
 	geoIDs := make(map[string][]int)
