@@ -1,11 +1,10 @@
 package model
 
 import (
-	"fmt"
 	"log"
 	"os"
-	"regexp"
 
+	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/database"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -17,10 +16,10 @@ import (
 // It's OK to call this more than once on the same DB
 func SetupUpdateDB(dsn string) {
 
-	_, _, host, port, db := ParseDSN(dsn)
+	_, _, host, port, db := database.ParseDSN(dsn)
 
 	{
-		gdb, err := gorm.Open(postgres.Open(CreatDSN("postgres", os.Getenv("POSTGRES_PASSWORD"), host, port, "postgres")), &gorm.Config{})
+		gdb, err := gorm.Open(postgres.Open(database.CreatDSN("postgres", os.Getenv("POSTGRES_PASSWORD"), host, port, "postgres")), &gorm.Config{})
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -32,7 +31,7 @@ func SetupUpdateDB(dsn string) {
 	}
 
 	{
-		gdb, err := gorm.Open(postgres.Open(CreatDSN("postgres", os.Getenv("POSTGRES_PASSWORD"), host, port, db)), &gorm.Config{})
+		gdb, err := gorm.Open(postgres.Open(database.CreatDSN("postgres", os.Getenv("POSTGRES_PASSWORD"), host, port, db)), &gorm.Config{})
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -63,10 +62,10 @@ func SetupUpdateDB(dsn string) {
 // special case for use in comptests - only setup db if it has not already been set up. This is safe to call multiple times against the same db.
 func SetupDBOnceOnly(dsn string) {
 	// assume if censustest db exists, the work is done
-	_, _, host, port, _ := ParseDSN(dsn)
+	_, _, host, port, _ := database.ParseDSN(dsn)
 
 	{
-		db, err := gorm.Open(postgres.Open(CreatDSN("postgres", os.Getenv("POSTGRES_PASSWORD"), host, port, "postgres")), &gorm.Config{})
+		db, err := gorm.Open(postgres.Open(database.CreatDSN("postgres", os.Getenv("POSTGRES_PASSWORD"), host, port, "postgres")), &gorm.Config{})
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -166,19 +165,4 @@ func execSQL(db *gorm.DB, ss []string) {
 			log.Print(err)
 		}
 	}
-}
-
-func ParseDSN(dsn string) (user, pw, host, port, db string) {
-	re := regexp.MustCompile(`postgres://(.*):(.*)@(.*):(.*)/(.*)`)
-	match := re.FindStringSubmatch(dsn)
-
-	if len(match) != 6 {
-		log.Fatal("match fail")
-	}
-
-	return match[1], match[2], match[3], match[4], match[5]
-}
-
-func CreatDSN(user, pw, host, port, db string) (dsn string) {
-	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s", user, pw, host, port, db)
 }
