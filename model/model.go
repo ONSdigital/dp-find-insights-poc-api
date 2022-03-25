@@ -63,6 +63,8 @@ func (GeoType) TableName() string {
 	return "geo_type"
 }
 
+// Don't use Geo.Wkbgeometry or Geo.WkbLongLatGeom directly (wish these could be private)
+// Use Geo.Geometry & Geo.LongLatGeom
 type Geo struct {
 	ID     int32 `gorm:"primaryKey"`
 	TypeID int32
