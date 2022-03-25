@@ -112,6 +112,10 @@ func ckmeansTestSetup(t *testing.T, db *database.Database, metrics map[string]ma
 	for geoType, geoTypeMetrics := range metrics {
 		for catCode, catValues := range geoTypeMetrics {
 			for i, catValue := range catValues {
+				catid, ok := catIDs[geoType][catCode]
+				if !ok {
+					continue
+				}
 				comptests.DoSQL(
 					t,
 					db,
@@ -119,7 +123,7 @@ func ckmeansTestSetup(t *testing.T, db *database.Database, metrics map[string]ma
 						"INSERT INTO geo_metric (id,geo_id,category_id,metric,data_ver_id) VALUES (%d,%d,%d,%f,1)",
 						metricID,
 						geoIDs[geoType][i],
-						catIDs[geoType][catCode],
+						catid,
 						catValue,
 					),
 				)
