@@ -1,4 +1,7 @@
-package geobb
+//go:build comptest
+// +build comptest
+
+package model
 
 import (
 	"log"
@@ -6,16 +9,10 @@ import (
 	"testing"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/comptests"
-	"github.com/ONSdigital/dp-find-insights-poc-api/model"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
-
-// comptest
-
-// This should probably really be under "model" namespace but there is an
-// import loop!
 
 const dsn = comptests.DefaultDSN
 
@@ -23,7 +20,7 @@ var gdb *gorm.DB
 
 func init() {
 	comptests.SetupDockerDB(dsn)
-	model.SetupUpdateDB(dsn)
+	SetupUpdateDB(dsn)
 
 	var err error
 	gdb, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
@@ -35,6 +32,7 @@ func init() {
 	}
 }
 
+// TestGeometryFetchSave tests the hooks used to integrate GORM with geo-geom
 func TestGeometryFetchSave(t *testing.T) {
 	// inside transaction rolled back
 	func() {
@@ -49,7 +47,7 @@ func TestGeometryFetchSave(t *testing.T) {
 			t.Errorf(err.Error())
 		}
 
-		var g model.Geo
+		var g Geo
 		if err := tx.Where("code=?", "E01000002").First(&g).Error; err != nil {
 			t.Fatalf(err.Error())
 		}
@@ -65,7 +63,7 @@ func TestGeometryFetchSave(t *testing.T) {
 		}
 
 		// write to database
-		ng := model.Geo{
+		ng := Geo{
 			Name:        "dummy2",
 			Code:        "dummy2",
 			Geometry:    g.Geometry,
@@ -80,7 +78,7 @@ func TestGeometryFetchSave(t *testing.T) {
 
 		// explicit read
 		{
-			var res model.Geo
+			var res Geo
 
 			if err := tx.Where("code=?", "dummy2").First(&res).Error; err != nil {
 				t.Fatalf(err.Error())
@@ -98,8 +96,8 @@ func TestGeometryFetchSave(t *testing.T) {
 
 		{
 			// write nils
-			var res model.Geo
-			if err := tx.Save(&model.Geo{
+			var res Geo
+			if err := tx.Save(&Geo{
 				Name:   "nuldummy",
 				Code:   "nuldummy",
 				TypeID: 6,
