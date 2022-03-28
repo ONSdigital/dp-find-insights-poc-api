@@ -118,7 +118,7 @@ func (geo *Geo) AfterFind(tx *gorm.DB) error {
 }
 
 // encode
-func (geo *Geo) BeforeSave(tx *gorm.DB) error {
+func (geo *Geo) BeforeCreate(tx *gorm.DB) error {
 
 	if geo.Geometry != nil {
 		geomt, err := ewkbhex.Encode(geo.Geometry, binary.LittleEndian)
