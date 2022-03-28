@@ -7,6 +7,7 @@ import (
 	"math"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/model"
+	"github.com/twpayne/go-geom/encoding/ewkbhex"
 	"gorm.io/gorm"
 )
 
@@ -42,10 +43,18 @@ func (g *GeoBB) AsJSON(params Params) string {
 	var lads GeoObjs
 
 	for _, geo := range geos {
-		geomt := geo.Geometry
 
-		if geomt == nil {
+		wkb := geo.Wkbgeometry
+
+		// null
+		if !wkb.Valid {
 			continue
+		}
+
+		// as gorm create hook?
+		geomt, err := ewkbhex.Decode(wkb.String)
+		if err != nil {
+			log.Print(err)
 		}
 
 		// x = long/0 y = lat/1

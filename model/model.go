@@ -2,10 +2,7 @@ package model
 
 import (
 	"database/sql"
-	"encoding/binary"
 
-	"github.com/twpayne/go-geom"
-	"github.com/twpayne/go-geom/encoding/ewkbhex"
 	"gorm.io/gorm"
 )
 
@@ -63,8 +60,6 @@ func (GeoType) TableName() string {
 	return "geo_type"
 }
 
-// Don't use Geo.Wkbgeometry or Geo.WkbLongLatGeom directly (wish these could be private)
-// Use Geo.Geometry & Geo.LongLatGeom
 type Geo struct {
 	ID     int32 `gorm:"primaryKey"`
 	TypeID int32
@@ -74,15 +69,11 @@ type Geo struct {
 	Long   float64 // probably redundant use LongLatGeom
 	Valid  bool    `gorm:"DEFAULT:true"`
 
-	// wkb_geometry - added via ALTER don't migrate - use Geometry from gorm
+	// wkb_geometry - added via ALTER don't migrate
 	Wkbgeometry sql.NullString `gorm:"column:wkb_geometry;-:migration"`
-	// decoded wkb_geometry
-	Geometry geom.T `gorm:"-:all"`
 
-	// wkb_long_lat_geom - added via ALTER don't migrate - use LongLatGeom from gorm
+	// wkb_long_lat_geom - added via ALTER don't migrate
 	WkbLongLatGeom sql.NullString `gorm:"column:wkb_long_lat_geom;-:migration"`
-	// decoded wkb_long_lat_geom
-	LongLatGeom geom.T `gorm:"-:all"`
 
 	GoMetrics []GeoMetric `gorm:"foreignKey:GeoID;references:ID"`
 	PostCodes []PostCode  `gorm:"foreignKey:GeoID;references:ID"`
@@ -91,52 +82,6 @@ type Geo struct {
 // don't pluralise table name
 func (Geo) TableName() string {
 	return "geo"
-}
-
-// decode
-func (geo *Geo) AfterFind(tx *gorm.DB) error {
-	if geo.Wkbgeometry.Valid {
-		geomt, err := ewkbhex.Decode(geo.Wkbgeometry.String)
-		if err != nil {
-			return err
-		}
-		geo.Geometry = geomt
-	} else {
-		geo.Geometry = nil
-	}
-	if geo.WkbLongLatGeom.Valid {
-		longLatGeomt, err := ewkbhex.Decode(geo.WkbLongLatGeom.String)
-
-		if err != nil {
-			return err
-		}
-		geo.LongLatGeom = longLatGeomt
-	} else {
-		geo.LongLatGeom = nil
-	}
-	return nil
-}
-
-// encode
-func (geo *Geo) BeforeCreate(tx *gorm.DB) error {
-
-	if geo.Geometry != nil {
-		geomt, err := ewkbhex.Encode(geo.Geometry, binary.LittleEndian)
-		if err != nil {
-			return err
-		}
-		geo.Wkbgeometry = sql.NullString{String: geomt, Valid: true}
-	}
-
-	if geo.LongLatGeom != nil {
-		longLatGeomt, err := ewkbhex.Encode(geo.LongLatGeom, binary.LittleEndian)
-		if err != nil {
-			return err
-		}
-		geo.WkbLongLatGeom = sql.NullString{String: longLatGeomt, Valid: true}
-	}
-
-	return nil
 }
 
 type GeoMetric struct {
