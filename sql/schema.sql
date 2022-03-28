@@ -62,6 +62,7 @@ CREATE TABLE public.geo (
     type_id integer,
     code text,
     name text,
+    welsh_name text,
     lat numeric,
     long numeric,
     valid boolean DEFAULT true,

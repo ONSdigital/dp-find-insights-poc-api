@@ -61,13 +61,14 @@ func (GeoType) TableName() string {
 }
 
 type Geo struct {
-	ID     int32 `gorm:"primaryKey"`
-	TypeID int32
-	Code   string `gorm:"index:unique"`
-	Name   string
-	Lat    float64 // probably redundant use LongLatGeom
-	Long   float64 // probably redundant use LongLatGeom
-	Valid  bool    `gorm:"DEFAULT:true"`
+	ID        int32 `gorm:"primaryKey"`
+	TypeID    int32
+	Code      string `gorm:"index:unique"`
+	Name      string
+	WelshName string
+	Lat       float64 // probably redundant use LongLatGeom
+	Long      float64 // probably redundant use LongLatGeom
+	Valid     bool    `gorm:"DEFAULT:true"`
 
 	// wkb_geometry - added via ALTER don't migrate
 	Wkbgeometry sql.NullString `gorm:"column:wkb_geometry;-:migration"`
