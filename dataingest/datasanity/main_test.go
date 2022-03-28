@@ -307,6 +307,23 @@ func TestPostCode(t *testing.T ) {
 
 }
 
+func TestWelsh(t *testing.T ) {
+
+	var name string
+	if err := db.Raw(`
+	SELECT name 
+	FROM geo 
+	WHERE welsh_name='Abertawe';
+	`).Scan(&name).Error; err != nil {
+		t.Error(err)
+	}
+
+	if name!="Swansea" {
+		 t.Errorf("got unexpected %s", name)
+	}
+
+}
+
 // check short nomis
 func TestShortNomisCode(t *testing.T) {
 
