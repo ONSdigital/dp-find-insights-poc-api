@@ -62,9 +62,9 @@ CREATE TABLE public.geo (
     type_id integer,
     code text,
     name text,
-    valid boolean DEFAULT true,
     lat numeric,
     long numeric,
+    valid boolean DEFAULT true,
     wkb_geometry public.geometry(Geometry,4326),
     wkb_long_lat_geom public.geometry(Geometry,4326)
 );
@@ -223,11 +223,11 @@ ALTER SEQUENCE public.nomis_category_id_seq OWNED BY public.nomis_category.id;
 
 CREATE TABLE public.nomis_desc (
     id integer NOT NULL,
+    nomis_topic_id integer NOT NULL,
     name text,
     pop_stat text,
     short_nomis_code text,
-    year integer,
-    nomis_topic_id integer
+    year integer
 );
 
 
@@ -288,6 +288,41 @@ ALTER TABLE public.nomis_topic_id_seq OWNER TO insights;
 --
 
 ALTER SEQUENCE public.nomis_topic_id_seq OWNED BY public.nomis_topic.id;
+
+
+--
+-- Name: postcode; Type: TABLE; Schema: public; Owner: insights
+--
+
+CREATE TABLE public.postcode (
+    id integer NOT NULL,
+    geo_id integer,
+    pcds text
+);
+
+
+ALTER TABLE public.postcode OWNER TO insights;
+
+--
+-- Name: postcode_id_seq; Type: SEQUENCE; Schema: public; Owner: insights
+--
+
+CREATE SEQUENCE public.postcode_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.postcode_id_seq OWNER TO insights;
+
+--
+-- Name: postcode_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: insights
+--
+
+ALTER SEQUENCE public.postcode_id_seq OWNED BY public.postcode.id;
 
 
 --
@@ -371,6 +406,13 @@ ALTER TABLE ONLY public.nomis_topic ALTER COLUMN id SET DEFAULT nextval('public.
 
 
 --
+-- Name: postcode id; Type: DEFAULT; Schema: public; Owner: insights
+--
+
+ALTER TABLE ONLY public.postcode ALTER COLUMN id SET DEFAULT nextval('public.postcode_id_seq'::regclass);
+
+
+--
 -- Name: schema_ver id; Type: DEFAULT; Schema: public; Owner: insights
 --
 
@@ -430,7 +472,7 @@ ALTER TABLE ONLY public.nomis_category
 --
 
 ALTER TABLE ONLY public.nomis_desc
-    ADD CONSTRAINT nomis_desc_pkey PRIMARY KEY (id);
+    ADD CONSTRAINT nomis_desc_pkey PRIMARY KEY (id, nomis_topic_id);
 
 
 --
@@ -442,27 +484,19 @@ ALTER TABLE ONLY public.nomis_topic
 
 
 --
+-- Name: postcode postcode_pkey; Type: CONSTRAINT; Schema: public; Owner: insights
+--
+
+ALTER TABLE ONLY public.postcode
+    ADD CONSTRAINT postcode_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: schema_ver schema_ver_pkey; Type: CONSTRAINT; Schema: public; Owner: insights
 --
 
 ALTER TABLE ONLY public.schema_ver
     ADD CONSTRAINT schema_ver_pkey PRIMARY KEY (id);
-
-
---
--- Name: nomis_category uq_long_nomis_code; Type: CONSTRAINT; Schema: public; Owner: insights
---
-
-ALTER TABLE ONLY public.nomis_category
-    ADD CONSTRAINT uq_long_nomis_code UNIQUE (long_nomis_code);
-
-
---
--- Name: nomis_desc uq_short_nomis_code; Type: CONSTRAINT; Schema: public; Owner: insights
---
-
-ALTER TABLE ONLY public.nomis_desc
-    ADD CONSTRAINT uq_short_nomis_code UNIQUE (short_nomis_code);
 
 
 --
@@ -477,13 +511,6 @@ CREATE INDEX geo_long_lat_geom_idx ON public.geo USING gist (wkb_long_lat_geom);
 --
 
 CREATE INDEX geo_wkb_geometry_geom_idx ON public.geo USING gist (wkb_geometry);
-
-
---
--- Name: idx_category_id; Type: INDEX; Schema: public; Owner: insights
---
-
-CREATE INDEX idx_category_id ON public.geo_metric USING btree (category_id);
 
 
 --
@@ -512,6 +539,34 @@ CREATE INDEX idx_geo_metric_geo_id ON public.geo_metric USING btree (geo_id);
 --
 
 CREATE UNIQUE INDEX idx_nomis_category_id ON public.nomis_category USING btree (id);
+
+
+--
+-- Name: idx_nomis_category_long_nomis_code; Type: INDEX; Schema: public; Owner: insights
+--
+
+CREATE UNIQUE INDEX idx_nomis_category_long_nomis_code ON public.nomis_category USING btree (long_nomis_code);
+
+
+--
+-- Name: idx_nomis_desc_id; Type: INDEX; Schema: public; Owner: insights
+--
+
+CREATE UNIQUE INDEX idx_nomis_desc_id ON public.nomis_desc USING btree (id);
+
+
+--
+-- Name: idx_nomis_desc_short_nomis_code; Type: INDEX; Schema: public; Owner: insights
+--
+
+CREATE UNIQUE INDEX idx_nomis_desc_short_nomis_code ON public.nomis_desc USING btree (short_nomis_code);
+
+
+--
+-- Name: idx_postcode_geo_id; Type: INDEX; Schema: public; Owner: insights
+--
+
+CREATE INDEX idx_postcode_geo_id ON public.postcode USING btree (geo_id);
 
 
 --
@@ -545,6 +600,14 @@ ALTER TABLE ONLY public.geo_metric
 
 
 --
+-- Name: postcode fk_geo_post_codes; Type: FK CONSTRAINT; Schema: public; Owner: insights
+--
+
+ALTER TABLE ONLY public.postcode
+    ADD CONSTRAINT fk_geo_post_codes FOREIGN KEY (geo_id) REFERENCES public.geo(id);
+
+
+--
 -- Name: geo fk_geo_type_geos; Type: FK CONSTRAINT; Schema: public; Owner: insights
 --
 
@@ -574,16 +637,6 @@ ALTER TABLE ONLY public.nomis_category
 
 ALTER TABLE ONLY public.nomis_desc
     ADD CONSTRAINT fk_nomis_topic_nomis_descs FOREIGN KEY (nomis_topic_id) REFERENCES public.nomis_topic(id);
-
-
---
--- Name: SCHEMA public; Type: ACL; Schema: -; Owner: postgres
---
-
-REVOKE ALL ON SCHEMA public FROM rdsadmin;
-REVOKE ALL ON SCHEMA public FROM PUBLIC;
-GRANT ALL ON SCHEMA public TO postgres;
-GRANT ALL ON SCHEMA public TO PUBLIC;
 
 
 --
