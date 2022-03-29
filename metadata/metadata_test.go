@@ -4,6 +4,7 @@
 package metadata
 
 import (
+	"context"
 	"log"
 	"testing"
 
@@ -47,7 +48,7 @@ func TestMetaDataTest(t *testing.T) {
 		md, _ := New(tx)
 
 		filterTotals := false
-		b, err := md.Get(2011, filterTotals)
+		b, err := md.Get(context.Background(), 2011, filterTotals)
 		if err != nil {
 			t.Error(err)
 		}
@@ -80,7 +81,7 @@ func TestMetaDataFiltertotals(t *testing.T) {
 		md, _ := New(tx)
 
 		filterTotals := true
-		b, err := md.Get(2011, filterTotals)
+		b, err := md.Get(context.Background(), 2011, filterTotals)
 		if err != nil {
 			t.Error(err)
 		}

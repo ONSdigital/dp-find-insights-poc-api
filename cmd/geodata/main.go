@@ -117,7 +117,7 @@ func mdquery(ctx context.Context, md *metadata.Metadata, argv []string) {
 	filtertotals := flagset.Bool("filtertotals", false, "include totals")
 	flagset.Parse(argv)
 
-	result, err := md.Get(*year, *filtertotals)
+	result, err := md.Get(ctx, *year, *filtertotals)
 	if err != nil {
 		log.Fatalln(err)
 	}

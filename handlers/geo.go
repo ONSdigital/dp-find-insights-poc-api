@@ -20,7 +20,7 @@ func (svr *Server) GetGeo(w http.ResponseWriter, r *http.Request, year int, para
 		geoname = *params.Geoname
 	}
 	if (geocode == "" && geoname == "") || (geocode != "" && geoname != "") {
-		sendError(w, http.StatusBadRequest, "geocode OR geoname query parameter required")
+		sendError(r.Context(), w, http.StatusBadRequest, "geocode OR geoname query parameter required")
 		return
 	}
 

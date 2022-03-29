@@ -1,17 +1,18 @@
 package aws
 
 import (
+	"context"
 	"encoding/base64"
-	"log"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
+	"github.com/ONSdigital/log.go/v2/log"
 )
 
 // GetSecret looks up the secret named in arn.
 // arn looks like: "arn:aws:secretsmanager:eu-central-1:352437599875:secret:fi-pg-x8rw4a"
-func (clients *Clients) GetSecret(arn string) (string, error) {
+func (clients *Clients) GetSecret(ctx context.Context, arn string) (string, error) {
 	input := &secretsmanager.GetSecretValueInput{
 		SecretId:     aws.String(arn),
 		VersionStage: aws.String("AWSCURRENT"), // VersionStage defaults to AWSCURRENT if unspecified
@@ -20,9 +21,9 @@ func (clients *Clients) GetSecret(arn string) (string, error) {
 	result, err := clients.sm.GetSecretValue(input)
 	if err != nil {
 		if aerr, ok := err.(awserr.Error); ok {
-			log.Println(aerr.Error())
+			log.Error(ctx, "AWS error", aerr, log.Data{"code": aerr.Code(), "message": aerr.Message()})
 		} else {
-			log.Println(err.Error())
+			log.Error(ctx, "AWS error", err)
 		}
 		return "", err
 	}
@@ -37,7 +38,7 @@ func (clients *Clients) GetSecret(arn string) (string, error) {
 		decodedBinarySecretBytes := make([]byte, base64.StdEncoding.DecodedLen(len(result.SecretBinary)))
 		len, err := base64.StdEncoding.Decode(decodedBinarySecretBytes, result.SecretBinary)
 		if err != nil {
-			log.Println("Base64 Decode Error:", err)
+			log.Error(ctx, "base64 decode", err)
 			return "", err
 		}
 		decodedBinarySecret = string(decodedBinarySecretBytes[:len])

@@ -41,7 +41,7 @@ func (app *Geodata) PGMetrics(ctx context.Context, year int, geocodes []string, 
 		return nil, err
 	}
 	t.Stop()
-	t.Print()
+	t.Log(ctx)
 	defer rows.Close()
 
 	tnext := timer.New("next")
@@ -76,8 +76,8 @@ func (app *Geodata) PGMetrics(ctx context.Context, year int, geocodes []string, 
 
 		tbl.SetCell(geo, geotype, cat, value)
 	}
-	tnext.Print()
-	tscan.Print()
+	tnext.Log(ctx)
+	tscan.Log(ctx)
 
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -87,7 +87,7 @@ func (app *Geodata) PGMetrics(ctx context.Context, year int, geocodes []string, 
 	tgen.Start()
 	err = tbl.Generate(&body, include)
 	tgen.Stop()
-	tgen.Print()
+	tgen.Log(ctx)
 	if err != nil {
 		return nil, err
 	}

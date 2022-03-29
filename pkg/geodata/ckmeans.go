@@ -88,7 +88,7 @@ func (app *Geodata) CKmeans(ctx context.Context, year int, cat []string, geotype
 		return nil, err
 	}
 	t.Stop()
-	t.Print()
+	t.Log(ctx)
 	defer rows.Close()
 
 	// scan data from rows
@@ -108,8 +108,8 @@ func (app *Geodata) CKmeans(ctx context.Context, year int, cat []string, geotype
 			return nil, err
 		}
 	}
-	tnext.Print()
-	tscan.Print()
+	tnext.Log(ctx)
+	tscan.Log(ctx)
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
@@ -376,7 +376,7 @@ AND data_ver.ver_string = '2.2'
 		return nil, err
 	}
 	t.Stop()
-	t.Print()
+	t.Log(ctx)
 	defer rows.Close()
 
 	tnext := timer.New("next")
@@ -414,8 +414,8 @@ AND data_ver.ver_string = '2.2'
 			metricsCat2[geoID] = metric
 		}
 	}
-	tnext.Print()
-	tscan.Print()
+	tnext.Log(ctx)
+	tscan.Log(ctx)
 
 	if err := rows.Err(); err != nil {
 		return nil, err

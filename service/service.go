@@ -56,7 +56,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 			if err != nil {
 				return nil, err
 			}
-			pgpwd, err = aws.GetSecret(os.Getenv("FI_PG_SECRET_ID"))
+			pgpwd, err = aws.GetSecret(ctx, os.Getenv("FI_PG_SECRET_ID"))
 			if err != nil {
 				return nil, err
 			}
@@ -88,7 +88,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 			if err == nil {
 				break
 			}
-			log.Info(ctx, "cannot-connect-to-postgres-yet")
+			log.Info(ctx, "gorm opening")
 			time.Sleep(1 * time.Second)
 		}
 		if err != nil {
