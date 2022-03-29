@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/ONSdigital/dp-find-insights-poc-api/model"
+	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/database"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -18,7 +18,7 @@ const DefaultPostgresPW = "mylocalsecret"
 func SetupDockerDB(dsn string) {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
-	_, _, host, port, _ := model.ParseDSN(dsn)
+	_, _, host, port, _ := database.ParseDSN(dsn)
 	user := "postgres"
 	db := "postgres"
 
@@ -32,7 +32,7 @@ func SetupDockerDB(dsn string) {
 		os.Setenv("POSTGRES_PASSWORD", DefaultPostgresPW)
 	}
 
-	dsn = model.CreatDSN(user, pw, host, port, db)
+	dsn = database.CreatDSN(user, pw, host, port, db)
 
 	// is docker postgres+postgis running?
 	_, err := net.DialTimeout("tcp", net.JoinHostPort("localhost", port), time.Second)
