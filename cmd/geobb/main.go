@@ -20,6 +20,6 @@ func main() {
 
 	g := geobb.GeoBB{Gdb: gdb}
 
-	fmt.Printf("%s\n", g.AsJSON(geobb.Params{Pretty: false, Geos: []string{"LAD", "MSOA"}}))
+	fmt.Printf("%s\n", g.AsJSON(geobb.Params{Welsh: false, Pretty: false, Geos: []string{"LAD", "MSOA"}}))
 
 }

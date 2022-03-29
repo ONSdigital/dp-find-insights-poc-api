@@ -26,6 +26,7 @@ type GeoObjs []GeoObj
 
 type Params struct {
 	Pretty bool
+	Welsh  bool
 	Geos   []string
 }
 
@@ -69,10 +70,16 @@ func (g *GeoBB) AsJSON(params Params) string {
 		m[4] = "LAD"
 		m[5] = "MSOA"
 
+		var welshName string
+		if params.Welsh {
+			welshName = geo.WelshName
+		}
+
 		lad := GeoObj{
 			En:      geo.Name,
 			GeoType: m[geo.TypeID],
 			GeoCode: geo.Code,
+			Cy:      welshName,
 			Bbox:    []float64{minx, miny, maxx, maxy},
 		}
 
