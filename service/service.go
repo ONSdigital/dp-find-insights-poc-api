@@ -123,12 +123,20 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	}
 	hc.Start(ctx)
 
+	clientInfo := func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			log.Info(r.Context(), "client info", log.Data{"addr": r.RemoteAddr})
+			h.ServeHTTP(w, r)
+		})
+	}
+
 	timeoutHandler := func(h http.Handler) http.Handler {
 		return http.TimeoutHandler(h, cfg.WriteTimeout, "operation timed out\n")
 	}
 
 	// build handler chain
 	chain := alice.New(
+		clientInfo,
 		middleware.Whitelist(middleware.HealthcheckFilter(hc.Handler)),
 		timeoutHandler,
 	).Then(api.Handler(a))
