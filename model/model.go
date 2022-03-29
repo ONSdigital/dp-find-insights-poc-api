@@ -1,6 +1,10 @@
 package model
 
-import "gorm.io/gorm"
+import (
+	"database/sql"
+
+	"gorm.io/gorm"
+)
 
 // this is the schema for Postgres database)
 
@@ -51,21 +55,27 @@ type GeoType struct {
 	Geos []Geo `gorm:"foreignKey:TypeID;references:ID"`
 }
 
-// don't pluralise table name
+// don't pluralise table
 func (GeoType) TableName() string {
 	return "geo_type"
 }
 
 type Geo struct {
-	ID     int32 `gorm:"primaryKey"`
-	TypeID int32
-	Code   string `gorm:"index:unique"`
-	Name   string
-	Lat    float64
-	Long   float64
-	Valid  bool `gorm:"DEFAULT:true"`
-	// wkb_geometry - added via ALTER
-	// wkb_long_lat_geom - added via ALTER
+	ID        int32 `gorm:"primaryKey"`
+	TypeID    int32
+	Code      string `gorm:"index:unique"`
+	Name      string
+	WelshName string
+	Lat       float64 // probably redundant use LongLatGeom
+	Long      float64 // probably redundant use LongLatGeom
+	Valid     bool    `gorm:"DEFAULT:true"`
+
+	// wkb_geometry - added via ALTER don't migrate
+	Wkbgeometry sql.NullString `gorm:"column:wkb_geometry;-:migration"`
+
+	// wkb_long_lat_geom - added via ALTER don't migrate
+	WkbLongLatGeom sql.NullString `gorm:"column:wkb_long_lat_geom;-:migration"`
+
 	GoMetrics []GeoMetric `gorm:"foreignKey:GeoID;references:ID"`
 	PostCodes []PostCode  `gorm:"foreignKey:GeoID;references:ID"`
 }

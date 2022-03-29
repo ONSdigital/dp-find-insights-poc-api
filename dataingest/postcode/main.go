@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/model"
@@ -63,7 +64,7 @@ func parsePostcodeCSV(db *gorm.DB, file string) {
 		field[k] = i
 	}
 
-	j := 0
+	var j int32
 
 	sem := make(chan int, MAX)
 
@@ -96,8 +97,8 @@ func parsePostcodeCSV(db *gorm.DB, file string) {
 				pc.Pcds = pcds
 				db.Save(&pc)
 
-				j++
-				//			println(j)
+				atomic.AddInt32(&j, 1)
+
 				if j%100000 == 0 {
 					fmt.Printf("~%.1f%% ... ", (float64(j)/2300000)*100)
 				}

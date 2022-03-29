@@ -6,7 +6,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"os"
+	"regexp"
 
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 )
@@ -58,4 +60,19 @@ func GetDSN(pw ...string) string {
 		os.Getenv("PGPORT"),
 		os.Getenv("PGDATABASE"),
 	)
+}
+
+func ParseDSN(dsn string) (user, pw, host, port, db string) {
+	re := regexp.MustCompile(`postgres://(.*):(.*)@(.*):(.*)/(.*)`)
+	match := re.FindStringSubmatch(dsn)
+
+	if len(match) != 6 {
+		log.Fatal("match fail")
+	}
+
+	return match[1], match[2], match[3], match[4], match[5]
+}
+
+func CreatDSN(user, pw, host, port, db string) (dsn string) {
+	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s", user, pw, host, port, db)
 }
