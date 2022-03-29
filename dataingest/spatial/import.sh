@@ -50,7 +50,7 @@ WHERE geo.code=lsoa_gis.lsoa11cd AND geo.type_id=6
 EOT2
 
 # copy MSOA data into geo
-# DON'T SET name we use another source (HoC library) of better ones for MSOA!
+# DON'T SET name we use another source (House of Commons library) of better ones for MSOA!
 # but populate welsh_name
 psql <<EOT3
 \x
@@ -59,8 +59,12 @@ FROM msoa_gis
 WHERE geo.code=msoa_gis.msoa11cd AND geo.type_id=5
 EOT3
 
+# clean up temp tables
 psql -c "DROP TABLE lsoa_gis"
 psql -c "DROP TABLE lad_gis"
 psql -c "DROP TABLE msoa_gis"
+
+# set "English Welsh" names (which aren't actually Welsh) to be HoC MSOA names
+psql -c "update geo set welsh_name=name where code like 'E%' and type_id=5;"
 
 psql -c "VACUUM ANALYZE geo"
