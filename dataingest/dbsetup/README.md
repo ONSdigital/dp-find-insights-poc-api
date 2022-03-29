@@ -3,7 +3,7 @@
 These are beta quality instructions and a knowledge of the system is still
 needed.
 
-TODO investigate AWS RDS migration
+TODO investigate AWS RDS migration.  Maybe possible to upload a compressed census.sql type file more rapidly than using `creatdb.sh` (?)
 
 ## create a local dump of the new database
 
@@ -16,7 +16,7 @@ TODO investigate AWS RDS migration
 
 ```
 cd dataingest/dbsetup
-pg_dump census_new > census-20220301.sql (or whatever today's date is!)
+pg_dump census_new > census-$(date +%Y%m%d).sql
 ```
 
 ## import local dump onto live system using a different db name to the live database
@@ -28,18 +28,22 @@ pg_dump census_new > census-20220301.sql (or whatever today's date is!)
 (be careful at this point!)
 
 ```
-./creatdb.sh census-20220301.sql    
+./creatdb.sh census-$(date +%Y%m%d).sql
 ```
 
-* this will load data into `census_new` on the live database server (there may be permissions errors which can ignored at this point since they are fixed up by `make update-schema` automatically in the final line of the script.
+* this will load data into `census_new` on the live database server (there may be permissions errors which can ignored at this point since they are fixed up by `make update-schema` automatically in the final line of the script.  This can take quite some time.
 
 ## cut over 'census_new' to 'census'
 
-* Announce download to slack channel(s)
+* Announce back-end downtime to slack channel(s) to alert front-end devs.
 
 * Anyone with db client connections to the live db server should disconnect. It should be possible to restart RDS via the AWS interface to drop connections if this isn't possible.
 
-ssh to the EC2 server as described in TACTICALEC2.md to drop app db connections.
+ssh to the int EC2 server to drop app db connections.
+
+```
+make ssh-int
+```
 
 sudo to root and
 
@@ -57,13 +61,12 @@ Back to the SSH server.
 
 ```
 systemctl start dp-find-insights-poc-api.service
-systemctl status  dp-find-insights-poc-api.service -l
+systemctl status dp-find-insights-poc-api.service -l
 
 ```
 
-## check responses look sane
+## check response looks sane
 
 ```
-curl -s  "http://ec2-18-193-78-190.eu-central-1.compute.amazonaws.com:25252/health"| jq . 
-curl -s  "http://ec2-18-193-78-190.eu-central-1.compute.amazonaws.com:25252/metadata/2011"|jq .
+make health-int
 ```

@@ -307,6 +307,46 @@ func TestPostCode(t *testing.T ) {
 
 }
 
+func TestWelsh(t *testing.T ) {
+
+	var name string
+	if err := db.Raw(`
+	SELECT name 
+	FROM geo 
+	WHERE welsh_name='Abertawe';
+	`).Scan(&name).Error; err != nil {
+		t.Error(err)
+	}
+
+	if name!="Swansea" {
+		 t.Errorf("got unexpected %s", name)
+	}
+
+}
+
+// TestEnglishWelshMSOA tests "welsh_name" for E (English) codes is the HoC version of English
+//
+// There is no Welsh translation for codes starting with E.
+// There is only real Welsh translation for codes starting with W.
+//
+// We have to fix up these English Welsh Names to be HoC ("nice") version.
+func TestEnglishWelshMSOA(t *testing.T ) {
+
+	var name string
+	if err := db.Raw(`
+	SELECT welsh_name 
+	FROM geo 
+	WHERE code='E02006831';
+	`).Scan(&name).Error; err != nil {
+		t.Error(err)
+	}
+
+	if name!="Cowplain East" {
+		 t.Errorf("got unexpected '%s'", name)
+	}
+
+}
+
 // check short nomis
 func TestShortNomisCode(t *testing.T) {
 
