@@ -1,18 +1,5 @@
 # SWAGGERUI
 
-This is a tactical swaggerui url which allows access to the Find Insights
-Backend Team Census API via a web form.
-
-http://ec2-18-193-78-190.eu-central-1.compute.amazonaws.com:25252/swaggerui
-
-With the caveats that this is a work in progress which we are iterating on
-rapidly and that some of the naming is currently confusing and subject to
-change we thought it useful to give some visibility of the sort of queries
-possible.
-
-The part of the interface which is useful is the "/query/{year}" endpoint.
-Expanding this will give you a list of parameters to send in a query.
-
 ## Queries
 
 We can use the integration tests as a crib for the parameters (eg. rows, cols etc.)
