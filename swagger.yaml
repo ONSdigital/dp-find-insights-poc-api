@@ -157,6 +157,9 @@ paths:
         maximum values (i.e. the upper breakpoint) in each ckmean cluster, keyed to both geotype and category 
         (see examples). Optionally can estimates for data breaks in ratios of one category to another, if the 'divide_by'
         parameter is supplied (see below).
+
+        Also returns a min_max array for each category / geotype requested - this is a two-value array with the min
+        and max values for the category (raw if divide_by not populated, min/max ratios if it is).
       parameters:
         - in: path
           name: year
@@ -231,6 +234,10 @@ paths:
                         0.9072164948453608,
                         0.9783929777177582,
                         1
+                      ],
+                      "LSOA_min_max": [
+                        0.0022461814914645105,
+                        0.8884943181818182
                       ]
                     }
                   }
@@ -245,12 +252,20 @@ paths:
                         0.9869511834452102,
                         0.9963767340679719
                       ],
+                      "LAD_min_max": [
+                        0.0022461814914645105,
+                        0.8884943181818182
+                      ]
                       "LSOA": [
                         0.5433526011560693,
                         0.7609518658734451,
                         0.9072164948453608,
                         0.9783929777177582,
                         1
+                      ],
+                      "LSOA_min_max": [
+                        0.0022461814914645105,
+                        0.8884943181818182
                       ]
                     },
                     "QS101EW0003": {
@@ -261,12 +276,20 @@ paths:
                         0.06462149954832881,
                         0.13338500165500092
                       ],
+                      "LAD_min_max": [
+                        0.0022461814914645105,
+                        0.8884943181818182
+                      ],
                       "LSOA": [
                         0.021602513747054203,
                         0.09240622140896615,
                         0.23637289862455427,
                         0.45350227109729857,
                         0.8673925724285436
+                      ],
+                      "LSOA_min_max": [
+                        0.0022461814914645105,
+                        0.8884943181818182
                       ]
                     }
                   }

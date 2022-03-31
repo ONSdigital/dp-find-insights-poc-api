@@ -177,7 +177,8 @@ func TestCkmeansHappyPathSingleCategorySingleGeotype(t *testing.T) {
 		// THEN we expect the breakpoints to match the example given in the original javascript repo
 		wantBreaks := map[string]map[string][]float64{
 			"category1": {
-				"LAD": {-1.0, 2.0, 6.0},
+				"LAD":         {-1.0, 2.0, 6.0},
+				"LAD_min_max": {-1.0, 6.0},
 			},
 		}
 		if !reflect.DeepEqual(result, wantBreaks) {
@@ -231,13 +232,16 @@ func TestCkmeansHappyPathMultiCategorySingleGeotype(t *testing.T) {
 		// THEN we expect the breakpoints to match the example given in the original javascript repo, after adjustment
 		wantBreaks := map[string]map[string][]float64{
 			"category1": {
-				"LAD": {-1.0, 2.0, 6.0},
+				"LAD":         {-1.0, 2.0, 6.0},
+				"LAD_min_max": {-1.0, 6.0},
 			},
 			"category2": {
-				"LAD": {-10.0, 20.0, 60.0},
+				"LAD":         {-10.0, 20.0, 60.0},
+				"LAD_min_max": {-10.0, 60.0},
 			},
 			"category3": {
-				"LAD": {-100.0, 200.0, 600.0},
+				"LAD":         {-100.0, 200.0, 600.0},
+				"LAD_min_max": {-100.0, 600.0},
 			},
 		}
 		if !reflect.DeepEqual(result, wantBreaks) {
@@ -296,16 +300,22 @@ func TestCkmeansHappyPathMultiCategoryMultiGeotype(t *testing.T) {
 		// THEN we expect the breakpoints to match the example given in the original javascript repo, after adjustment
 		wantBreaks := map[string]map[string][]float64{
 			"category1": {
-				"LAD":  {-1.0, 2.0, 6.0},
-				"MSOA": {-1000.0, 2000.0, 6000.0},
+				"LAD":          {-1.0, 2.0, 6.0},
+				"LAD_min_max":  {-1.0, 6.0},
+				"MSOA":         {-1000.0, 2000.0, 6000.0},
+				"MSOA_min_max": {-1000.0, 6000.0},
 			},
 			"category2": {
-				"LAD":  {-10.0, 20.0, 60.0},
-				"MSOA": {-10000.0, 20000.0, 60000.0},
+				"LAD":          {-10.0, 20.0, 60.0},
+				"LAD_min_max":  {-10.0, 60.0},
+				"MSOA":         {-10000.0, 20000.0, 60000.0},
+				"MSOA_min_max": {-10000.0, 60000.0},
 			},
 			"category3": {
-				"LAD":  {-100.0, 200.0, 600.0},
-				"MSOA": {-100000.0, 200000.0, 600000.0},
+				"LAD":          {-100.0, 200.0, 600.0},
+				"LAD_min_max":  {-100.0, 600.0},
+				"MSOA":         {-100000.0, 200000.0, 600000.0},
+				"MSOA_min_max": {-100000.0, 600000.0},
 			},
 		}
 		if !reflect.DeepEqual(result, wantBreaks) {
@@ -408,13 +418,16 @@ func TestCkmeansRatiosHappyPathSingleGeotype(t *testing.T) {
 		// THEN we expect to get breakpoints matching the order-of-magnitude breaks in our test data
 		wantBreaks := map[string]map[string][]float64{
 			"numerator1": {
-				"LAD": {3.0, 30.0, 300},
+				"LAD":         {3.0, 30.0, 300},
+				"LAD_min_max": {1.5, 300},
 			},
 			"numerator2": {
-				"LAD": {6.0, 60.0, 600},
+				"LAD":         {6.0, 60.0, 600},
+				"LAD_min_max": {4.5, 600},
 			},
 			"numerator3": {
-				"LAD": {12.0, 120.0, 1200},
+				"LAD":         {12.0, 120.0, 1200},
+				"LAD_min_max": {1, 1200},
 			},
 		}
 		if !reflect.DeepEqual(result, wantBreaks) {
@@ -477,16 +490,22 @@ func TestCkmeansRatiosHappyPathMultipleGeotypes(t *testing.T) {
 		// THEN we expect to get breakpoints matching the order-of-magnitude breaks in our test data
 		wantBreaks := map[string]map[string][]float64{
 			"numerator1": {
-				"LAD":  {3.0, 30.0, 300},
-				"MSOA": {24.0, 240.0, 2400},
+				"LAD":          {3.0, 30.0, 300},
+				"LAD_min_max":  {1.5, 300.0},
+				"MSOA":         {24.0, 240.0, 2400},
+				"MSOA_min_max": {22.5, 2400},
 			},
 			"numerator2": {
-				"LAD":  {6.0, 60.0, 600},
-				"MSOA": {48, 480.0, 4800},
+				"LAD":          {6.0, 60.0, 600},
+				"LAD_min_max":  {4.5, 600},
+				"MSOA":         {48, 480.0, 4800},
+				"MSOA_min_max": {46.5, 4800},
 			},
 			"numerator3": {
-				"LAD":  {12.0, 120.0, 1200},
-				"MSOA": {96.0, 960.0, 9600},
+				"LAD":          {12.0, 120.0, 1200},
+				"LAD_min_max":  {1.0, 1200},
+				"MSOA":         {96.0, 960.0, 9600},
+				"MSOA_min_max": {94.5, 9600},
 			},
 		}
 		if !reflect.DeepEqual(result, wantBreaks) {
@@ -722,16 +741,22 @@ func TestCkmeansArgParsingAndValidation(t *testing.T) {
 			// THEN we expect to get breakpoints matching the order-of-magnitude breaks in our test data, in all cases
 			wantBreaks := map[string]map[string][]float64{
 				"numerator1": {
-					"LAD":  {3.0, 30.0, 300},
-					"MSOA": {24.0, 240.0, 2400},
+					"LAD":          {3.0, 30.0, 300},
+					"LAD_min_max":  {1.5, 300.0},
+					"MSOA":         {24.0, 240.0, 2400},
+					"MSOA_min_max": {22.5, 2400},
 				},
 				"numerator2": {
-					"LAD":  {6.0, 60.0, 600},
-					"MSOA": {48, 480.0, 4800},
+					"LAD":          {6.0, 60.0, 600},
+					"LAD_min_max":  {4.5, 600},
+					"MSOA":         {48, 480.0, 4800},
+					"MSOA_min_max": {46.5, 4800},
 				},
 				"numerator3": {
-					"LAD":  {12.0, 120.0, 1200},
-					"MSOA": {96.0, 960.0, 9600},
+					"LAD":          {12.0, 120.0, 1200},
+					"LAD_min_max":  {1.0, 1200},
+					"MSOA":         {96.0, 960.0, 9600},
+					"MSOA_min_max": {94.5, 9600},
 				},
 			}
 			if !reflect.DeepEqual(result, wantBreaks) {
