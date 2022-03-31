@@ -2,12 +2,12 @@ package handlers
 
 import (
 	"errors"
-	"log"
 	"net/http"
 	"strings"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/cache"
 	"github.com/ONSdigital/dp-find-insights-poc-api/sentinel"
+	"github.com/ONSdigital/log.go/v2/log"
 )
 
 const (
@@ -32,9 +32,9 @@ func (svr *Server) respond(w http.ResponseWriter, r *http.Request, contentType s
 	ser := svr.cm.AllocateEntry(key)
 	defer ser.Free()
 
-	func() {
-		ctx := r.Context()
+	ctx := r.Context()
 
+	func() {
 		// lock cache key before doing any cache operations
 		ser.Lock()
 		defer ser.Unlock()
@@ -54,7 +54,7 @@ func (svr *Server) respond(w http.ResponseWriter, r *http.Request, contentType s
 		// if there is a problem saving response in cache, log it, but still send to client
 		err = ser.Set(ctx, body)
 		if err != nil {
-			log.Printf("could not cache: %q (%d bytes): %v\n", key, len(body), err)
+			log.Warn(ctx, "cannot cache", log.Data{"message": err.Error(), "uri": key, "size": len(body)})
 			err = nil
 		}
 	}()
@@ -74,7 +74,7 @@ func (svr *Server) respond(w http.ResponseWriter, r *http.Request, contentType s
 	case errors.Is(err, sentinel.ErrNotSupported):
 		code = http.StatusNotFound
 	}
-	sendError(w, code, err.Error())
+	sendError(ctx, w, code, err.Error())
 }
 
 // noCache is true if a Cache-Control header contains "no-cache"

@@ -3,9 +3,8 @@ package handlers
 // XXX move config into Server and don't call config.Get
 
 import (
+	"context"
 	"encoding/json"
-	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/api"
@@ -15,6 +14,7 @@ import (
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/geodata"
 	"github.com/ONSdigital/dp-find-insights-poc-api/postcode"
 	Swagger "github.com/ONSdigital/dp-find-insights-poc-api/swagger"
+	"github.com/ONSdigital/log.go/v2/log"
 )
 
 type Server struct {
@@ -39,7 +39,7 @@ func (svr *Server) GetSwagger(w http.ResponseWriter, r *http.Request) {
 	spec, _ := Swagger.GetOpenAPISpec()
 	b, err := spec.MarshalJSON()
 	if err != nil {
-		sendError(w, http.StatusInternalServerError, err.Error())
+		sendError(r.Context(), w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -49,14 +49,15 @@ func (svr *Server) GetSwagger(w http.ResponseWriter, r *http.Request) {
 func (svr *Server) GetSwaggerui(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "html")
 	w.WriteHeader(http.StatusOK)
+	ctx := r.Context()
 	c, err := config.Get()
 	if err != nil {
-		sendError(w, http.StatusInternalServerError, err.Error())
+		sendError(ctx, w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	b, err := Swagger.GetSwaggerUIPage("http://"+c.BindAddr+"/swagger", "")
 	if err != nil {
-		sendError(w, http.StatusInternalServerError, err.Error())
+		sendError(ctx, w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -76,7 +77,7 @@ func (svr *Server) GetMetadataYear(w http.ResponseWriter, r *http.Request, year 
 			filtertotals = false
 		}
 
-		return svr.md.Get(year, filtertotals)
+		return svr.md.Get(r.Context(), year, filtertotals)
 	}
 
 	svr.respond(w, r, mimeCSV, generate)
@@ -144,15 +145,16 @@ func (svr *Server) GetQueryYear(w http.ResponseWriter, r *http.Request, year int
 }
 
 func (svr *Server) GetClearCache(w http.ResponseWriter, r *http.Request) {
-	if !svr.assertPrivate(w) || !svr.assertAuthorized(w, r) {
+	if !svr.assertPrivate(w, r) || !svr.assertAuthorized(w, r) {
 		return
 	}
 
-	err := svr.cm.Clear(r.Context())
+	ctx := r.Context()
+	err := svr.cm.Clear(ctx)
 	if err == nil {
 		return
 	}
-	sendError(w, http.StatusInternalServerError, fmt.Sprintf("problem clearing cache: %s", err.Error()))
+	sendError(ctx, w, http.StatusInternalServerError, "problem clearing cache", log.Data{"error": err.Error()})
 }
 
 func (svr *Server) Preflight(w http.ResponseWriter, r *http.Request, path string, year int) {
@@ -162,11 +164,11 @@ func (svr *Server) Preflight(w http.ResponseWriter, r *http.Request, path string
 
 // assertPrivate sends an error to the client if private endpoints are not enabled.
 // Returns true if private endpoints are enabled.
-func (svr *Server) assertPrivate(w http.ResponseWriter) bool {
+func (svr *Server) assertPrivate(w http.ResponseWriter, r *http.Request) bool {
 	if svr.private {
 		return true
 	}
-	sendError(w, http.StatusNotFound, "endpoint not enabled")
+	sendError(r.Context(), w, http.StatusNotFound, "endpoint not enabled")
 	return false
 }
 
@@ -178,12 +180,21 @@ func (svr *Server) assertAuthorized(w http.ResponseWriter, req *http.Request) bo
 	if !c.EnableHeaderAuth {
 		return true
 	}
-	auth := req.Header.Get("Authorization")
+
+	ahdr := "Authorization"
+	auth := req.Header.Get(ahdr)
 	if auth == c.APIToken {
 		return true
 	}
-	sendError(w, http.StatusUnauthorized, "unauthorized")
-	fmt.Printf("failed auth header '%s' from '%s'", auth, req.Header.Get("X-Forwarded-For"))
+
+	xhdr := "X-Forwarded-For"
+	sendError(
+		req.Context(),
+		w,
+		http.StatusUnauthorized,
+		"unauthorized",
+		log.Data{ahdr: auth, xhdr: req.Header.Get(xhdr)},
+	)
 	return false
 }
 
@@ -193,19 +204,34 @@ func (svr *Server) assertDatabaseEnabled(w http.ResponseWriter, req *http.Reques
 	if svr.querygeodata != nil {
 		return true
 	}
-	sendError(w, http.StatusNotImplemented, "database not enabled")
+	sendError(req.Context(), w, http.StatusNotImplemented, "database not enabled")
 	return false
 }
 
-func sendError(w http.ResponseWriter, code int, message string) {
-	log.Printf("request error: %s", message)
+// sendError returns an http status code and message to the client, and logs a message.
+// message is the string sent to the client in the body of the response.
+// code is the http status code.
+func sendError(ctx context.Context, w http.ResponseWriter, code int, message string, opts ...log.Data) {
+	event := "request error"
+	if code == http.StatusInternalServerError {
+		event = "internal error"
+	}
+
+	data := log.Data{"response": message}
+	for _, opt := range opts {
+		for k, v := range opt {
+			data[k] = v
+		}
+	}
+	log.Info(ctx, event, log.Data{"response": message}, data)
+
 	e := api.Error{
 		Error: message,
 	}
 	w.WriteHeader(code)
 	err := json.NewEncoder(w).Encode(e)
 	if err != nil {
-		log.Printf("SendResult: %s", err)
+		log.Error(ctx, "json encode", err)
 	}
 }
 

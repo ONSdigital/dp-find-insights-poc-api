@@ -56,7 +56,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 			if err != nil {
 				return nil, err
 			}
-			pgpwd, err = aws.GetSecret(os.Getenv("FI_PG_SECRET_ID"))
+			pgpwd, err = aws.GetSecret(ctx, os.Getenv("FI_PG_SECRET_ID"))
 			if err != nil {
 				return nil, err
 			}
@@ -88,7 +88,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 			if err == nil {
 				break
 			}
-			log.Info(ctx, "cannot-connect-to-postgres-yet")
+			log.Info(ctx, "gorm opening")
 			time.Sleep(1 * time.Second)
 		}
 		if err != nil {
@@ -123,12 +123,20 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	}
 	hc.Start(ctx)
 
+	clientInfo := func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			log.Info(r.Context(), "client info", log.Data{"addr": r.RemoteAddr})
+			h.ServeHTTP(w, r)
+		})
+	}
+
 	timeoutHandler := func(h http.Handler) http.Handler {
 		return http.TimeoutHandler(h, cfg.WriteTimeout, "operation timed out\n")
 	}
 
 	// build handler chain
 	chain := alice.New(
+		clientInfo,
 		middleware.Whitelist(middleware.HealthcheckFilter(hc.Handler)),
 		timeoutHandler,
 	).Then(api.Handler(a))

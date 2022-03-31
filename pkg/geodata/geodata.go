@@ -12,6 +12,7 @@ import (
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/timer"
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/where"
 	"github.com/ONSdigital/dp-find-insights-poc-api/sentinel"
+	"github.com/ONSdigital/log.go/v2/log"
 	_ "github.com/jackc/pgx/v4/stdlib"
 	geom "github.com/twpayne/go-geom"
 )
@@ -59,7 +60,7 @@ func (app *Geodata) collectCells(ctx context.Context, sql string, include []stri
 		return "", err
 	}
 	t.Stop()
-	t.Print()
+	t.Log(ctx)
 	defer rows.Close()
 
 	tnext := timer.New("next")
@@ -94,8 +95,8 @@ func (app *Geodata) collectCells(ctx context.Context, sql string, include []stri
 
 		tbl.SetCell(geo, geotype, cat, value)
 	}
-	tnext.Print()
-	tscan.Print()
+	tnext.Log(ctx)
+	tscan.Log(ctx)
 
 	if err := rows.Err(); err != nil {
 		return "", err
@@ -105,7 +106,7 @@ func (app *Geodata) collectCells(ctx context.Context, sql string, include []stri
 	tgen.Start()
 	err = tbl.Generate(&body, include)
 	tgen.Stop()
-	tgen.Print()
+	tgen.Log(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -153,7 +154,7 @@ func (app *Geodata) censusQuery(ctx context.Context, year int, geos []string, bb
 		return "", err
 	}
 
-	fmt.Printf("sql: %s\n", sql)
+	log.Info(ctx, "sql", log.Data{"query": sql})
 
 	return app.collectCells(ctx, sql, include)
 }

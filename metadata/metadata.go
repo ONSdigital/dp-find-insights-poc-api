@@ -34,7 +34,7 @@ func New(dbs ...*gorm.DB) (*Metadata, error) {
 	return &Metadata{gdb: dbs[0]}, err
 }
 
-func (md *Metadata) Get(year int, filterTotals bool) ([]byte, error) {
+func (md *Metadata) Get(ctx context.Context, year int, filterTotals bool) ([]byte, error) {
 	var topics []model.NomisTopic
 
 	md.gdb.Preload(
@@ -94,9 +94,8 @@ func (md *Metadata) Get(year int, filterTotals bool) ([]byte, error) {
 	}
 
 	b, err := json.Marshal(&mdr)
-
 	if err != nil {
-		log.Error(context.Background(), err.Error(), err)
+		log.Error(ctx, "json marshal", err)
 		return b, err
 	}
 

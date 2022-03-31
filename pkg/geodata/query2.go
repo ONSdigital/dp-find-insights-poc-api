@@ -38,7 +38,7 @@ func (app *Geodata) Query2(ctx context.Context, year int, bbox, location string,
 		return nil, err
 	}
 	t.Stop()
-	t.Print()
+	t.Log(ctx)
 	defer rows.Close()
 
 	var result []string
@@ -63,8 +63,8 @@ func (app *Geodata) Query2(ctx context.Context, year int, bbox, location string,
 
 		result = append(result, geo)
 	}
-	tnext.Print()
-	tscan.Print()
+	tnext.Log(ctx)
+	tscan.Log(ctx)
 
 	if err := rows.Err(); err != nil {
 		return nil, err

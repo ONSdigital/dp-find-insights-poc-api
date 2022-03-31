@@ -1,6 +1,14 @@
 # dp-find-insights-poc-api
 Experimental application for developing CI/CD pipeline
 
+### Further Docs
+
+* [EC2 Envs](TACTICALEC2.md) Description of (tactical) Env and int and dev instances
+* [Geodata CLI](cli.md) Query Geodata API from the command line (useful for debugging)
+* [Local Docker Stack](docker.md) Allows devs to run the system from docker
+* [Live Database Update](dataingest/dbsetup/README.md) Description of ingest processes
+* [S3 Buckets](dataingest/S3-BUCKETS.md) Backups of various source data files (.jeojson etc.) for ingest
+
 ### Getting started
 
 * Run `make debug`

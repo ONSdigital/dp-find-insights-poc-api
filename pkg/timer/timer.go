@@ -1,8 +1,10 @@
 package timer
 
 import (
-	"log"
+	"context"
 	"time"
+
+	"github.com/ONSdigital/log.go/v2/log"
 )
 
 type Timer struct {
@@ -25,6 +27,6 @@ func (t *Timer) Stop() {
 	t.accum += time.Since(t.start)
 }
 
-func (t *Timer) Print() {
-	log.Printf("%s: %s", t.note, t.accum)
+func (t *Timer) Log(ctx context.Context) {
+	log.Info(ctx, "timer", log.Data{"note": t.note, "elapsed": t.accum})
 }
