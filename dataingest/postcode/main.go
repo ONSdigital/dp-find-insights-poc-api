@@ -16,7 +16,7 @@ import (
 	"gorm.io/gorm"
 )
 
-const MAX = 8
+const MAX = 4
 
 func readCsvFile(filePath string) (records [][]string) {
 	func() {

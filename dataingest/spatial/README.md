@@ -40,3 +40,7 @@ https://geoportal.statistics.gov.uk/datasets/middle-layer-super-output-areas-dec
 
 LSOA boundaries:
 https://geoportal.statistics.gov.uk/datasets/lower-layer-super-output-areas-december-2011-boundaries-super-generalised-clipped-bsc-ew-v3/explore
+
+# download
+
+Use `./download.sh` to download files needed in this directory.

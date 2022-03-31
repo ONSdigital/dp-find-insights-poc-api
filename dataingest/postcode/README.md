@@ -32,3 +32,7 @@ $ curl "http://localhost:25252/msoa/ox4%205aa"
 E02005956, Blackbird Leys
 
 ```
+
+# download
+
+Use `./download.sh` to download files needed in this directory.
