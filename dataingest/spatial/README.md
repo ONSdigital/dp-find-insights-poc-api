@@ -1,7 +1,12 @@
 * AWS
 https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Appendix.PostgreSQL.CommonDBATasks.PostGIS.html
 
-## Location of GeoJSON downloads
+# S3 buckets
+
+See `dataingest/S3-BUCKETS.md`
+
+
+## Original Location of GeoJSON downloads
 
 * LAD
 
