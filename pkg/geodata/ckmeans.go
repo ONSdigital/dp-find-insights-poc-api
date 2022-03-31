@@ -100,6 +100,14 @@ func (app *Geodata) CKmeans(ctx context.Context, year int, cat []string, geotype
 		tnext.Stop()
 
 		if !ok {
+			// return blank if we found no data at all
+			if ckparser.nmetrics == 0 {
+				return ckparser.breaks, err
+			}
+			// ensure last chunk is processed
+			if err := ckparser.processChunk(); err != nil {
+				return nil, err
+			}
 			break
 		}
 
@@ -268,6 +276,7 @@ func (ckparser *CkmeansParser) processBreaks() error {
 	for _, catcode := range ckparser.catcodes {
 		for _, geotype := range ckparser.geotypes {
 			catBreaks, err := getBreaks(ckparser.metrics[catcode][geotype], ckparser.k)
+			catMaxMin := getMinMax(ckparser.metrics[catcode][geotype])
 			if err != nil {
 				return err
 			}
@@ -276,6 +285,7 @@ func (ckparser *CkmeansParser) processBreaks() error {
 				ckparser.breaks[catcode] = map[string][]float64{}
 			}
 			ckparser.breaks[catcode][geotype] = catBreaks
+			ckparser.breaks[catcode][geotype+"_min_max"] = catMaxMin
 		}
 	}
 	return nil
@@ -328,6 +338,20 @@ func getBreaks(metrics []float64, k int) ([]float64, error) {
 		breaks = append(breaks, bp)
 	}
 	return breaks, nil
+}
+
+func getMinMax(values []float64) []float64 {
+	max := values[0]
+	min := values[0]
+	for _, v := range values {
+		if v > max {
+			max = v
+		}
+		if v < min {
+			min = v
+		}
+	}
+	return []float64{min, max}
 }
 
 // !!!! DEPRECATED CKMEANSRATIO TO BE REMOVED WHEN FRONT END REMOVES DEPENDENCY ON IT !!!!
