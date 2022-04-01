@@ -10,7 +10,7 @@ fi
 
 otime=$SECONDS
 set -e -x
-dropdb "$PGDATABASE"
+dropdb --if-exists "$PGDATABASE"
 yes | make update-schema
 go run ./dataingest/addtodb
 (yes | make update-schema) 
