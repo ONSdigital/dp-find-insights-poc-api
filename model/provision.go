@@ -1,10 +1,12 @@
 package model
 
 import (
+	"fmt"
 	"log"
 	"os"
 
 	"github.com/ONSdigital/dp-find-insights-poc-api/pkg/database"
+	"github.com/lib/pq"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -16,7 +18,7 @@ import (
 // It's OK to call this more than once on the same DB
 func SetupUpdateDB(dsn string) {
 
-	_, _, host, port, db := database.ParseDSN(dsn)
+	user, pw, host, port, db := database.ParseDSN(dsn)
 
 	{
 		gdb, err := gorm.Open(postgres.Open(database.CreatDSN("postgres", os.Getenv("POSTGRES_PASSWORD"), host, port, "postgres")), &gorm.Config{})
@@ -25,9 +27,9 @@ func SetupUpdateDB(dsn string) {
 		}
 
 		execSQL(gdb, []string{
-			"CREATE USER insights WITH PASSWORD 'insights'", // XXX pw hardcoded
-			"CREATE DATABASE " + db + " WITH OWNER insights",
-			"ALTER USER insights WITH CREATEDB"})
+			fmt.Sprintf("CREATE USER %s WITH PASSWORD %s CREATEDB", pq.QuoteIdentifier(user), pq.QuoteLiteral(pw)),
+			fmt.Sprintf("CREATE DATABASE %s WITH OWNER %s", pq.QuoteIdentifier(db), pq.QuoteIdentifier(user)),
+		})
 	}
 
 	{

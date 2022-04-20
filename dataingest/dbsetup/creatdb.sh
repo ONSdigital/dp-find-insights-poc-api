@@ -8,6 +8,12 @@ if [[ $1 == "" ]]; then
     exit 1
 fi
 
+# generate SQL without exposing password on a command line
+echo "If $PGUSER already exists, the next line will fail; that's OK"
+cat <<EOF | PGPASSWORD="$POSTGRES_PASSWORD" psql -U postgres -d postgres -f -
+CREATE USER $PGUSER WITH PASSWORD '$PGPASSWORD' CREATEDB
+EOF
+
 createdb "$PGDATABASE"
 PGPASSWORD="$POSTGRES_PASSWORD" psql -U postgres -d "$PGDATABASE" -c "CREATE EXTENSION postgis"
 

@@ -10,7 +10,7 @@ fi
 
 otime=$SECONDS
 set -e -x
-dropdb --if-exists "$PGDATABASE"
+PGPASSWORD=$POSTGRES_PASSWORD dropdb --username postgres --if-exists "$PGDATABASE"
 yes | make update-schema
 go run ./dataingest/addtodb
 (yes | make update-schema) 
