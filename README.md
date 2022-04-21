@@ -1,5 +1,6 @@
 # dp-find-insights-poc-api
-Experimental application for developing CI/CD pipeline
+
+Census Atlas geodata API and database.
 
 ### Further Docs
 
