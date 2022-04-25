@@ -77,6 +77,8 @@ Census Atlas geodata API and database.
 
 * How-Tos
     * [quick start running local API](docker.md#a-id"quick-starts"a-quick-starts)
+    * [end to end how to](end-to-end.md)
+    
 ### Getting started
 
 * Run `make debug`
