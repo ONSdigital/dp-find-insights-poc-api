@@ -10,14 +10,29 @@ Environment variables are important! Always verify the `PG_*` and `POSTGRES_PASS
 
 ## Prerequisites
 
-* `dp-find-insights-poc-api` and `dp-setup` repos checked out
-* postgres cli tools installed
-* aws cli installed and able to access AWS `develop` environment
-* go compiler installed
-* terraform installed
-* `develop` gpg key
-* ssh access to the `develop` environment
+* [dp-find-insights-poc-api](https://github.com/ONSdigitsl/dp-find-insights-poc-api) and
+  [dp-setup](https://github.com/ONSdigital/dp-setup) repos checked out
 
+* postgres cli tools installed
+
+    (I use [Postgres.app](https://postgresapp.com) and add `/Applications/Postgres.app/Contents/Versions/latest`
+    to `PATH` and `/Applications/Postgres.app/Contents/Versions/latest/share/man` to `MANPATH`.)
+
+* aws cli installed and able to access AWS `develop` environment
+
+    [AWS cli](https://aws.amazon.com/cli/)
+
+    [AWS Credentials](https://github.com/ONSdigital/dp/blob/main/guides/AWS_CREDENTIALS.md)
+
+* [go compiler](https://go.dev/dl/) installed
+
+* [terraform](https://www.terraform.io/downloads) installed
+
+* [develop gpg key](https://github.com/ONSdigital/dp-ci/tree/master/gpg-keys/environments) (must get passphrase from tech lead)
+
+* [ssh access](https://github.com/ONSdigital/dp-cli) to the `develop` environment
+
+## Contents
 
 [Create local Postgres instance](#create-local-postgres-instance)
 
@@ -47,7 +62,7 @@ Environment variables are important! Always verify the `PG_*` and `POSTGRES_PASS
 
     # It is possible to create the instance that does not need a superuser
     # password from localhost, but our scripts are meant to be used against any
-    # type of instance, so for consistency we create the local isntance to
+    # type of instance, so for consistency we create the local instance to
     # expect a superuser password.
     export POSTGRES_PASSWORD=supassword
 
