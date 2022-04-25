@@ -156,7 +156,10 @@ The superuser password is found in `develop.tfvars`.
 
 ## Import into RDS
 
-Verify your environment variables point to the tunnel and use the RDS credentials, then:
+Verify your environment variables point to the tunnel and use the RDS credentials.
+(Set the environment the same as 'Set up SSH tunnel' above.)
+
+Then run the import:
 
     cd <dp-find-insights-poc-api repo>
     cd dataingest/dbsetup
@@ -168,6 +171,8 @@ Verify your environment variables point to the tunnel and use the RDS credential
 
 In another terminal on your workstation, set the environment to point to the tunnel and
 use the RDS credentials.
+(Set the environment the same as 'Set up SSH tunnel' above.)
+
 Then build and start a local API:
 
     make build
