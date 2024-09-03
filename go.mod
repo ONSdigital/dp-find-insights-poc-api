@@ -1,3 +1,4 @@
+// Deprecated: This repository will be archived in September 2024 as it is no longer in development
 module github.com/ONSdigital/dp-find-insights-poc-api
 
 go 1.17
