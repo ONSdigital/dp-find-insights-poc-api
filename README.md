@@ -2,6 +2,8 @@
 
 Census Atlas geodata API and database.
 
+⚠️ This repository will be archived in September 2024 as it is no longer in development. ⚠️
+
 ### Further Docs
 
 * Environment Variables
